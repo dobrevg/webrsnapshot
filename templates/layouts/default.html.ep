@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="default/css/jquery-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="default/css/style.css" />
+    <script src="default/js/jquery-2.0.2.min.js"></script>
+    <script src="default/js/jquery-ui.min.js"></script>
+    <script src="default/js/webrsnapshot.js"></script>
+    <script>
+      if ("<%= flash 'saved' %>" == "yes") {
+        $(function() { $( "#saved_yes" ).dialog({
+          show: { effect: "scale", duration: 400 },
+          modal: true, buttons: { Ok: function() {
+            $( this ).dialog( "close" );}}
+          });
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <%= content %>
+    <div id="footer">
+      <div>
+        Webrsnapshot 2013
+      </div>
+    </div> <!-- End of the footer -->
+  </body>
+</html>

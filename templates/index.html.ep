@@ -1,0 +1,27 @@
+% layout 'default';
+% title 'Web-rsnapshot';
+<div id="headcontainer">
+  <div id="logocontainer"></div>
+  <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
+</div>
+<div id="bodycontainer">
+  <div id="menucontainer">
+    <ul id="menu">
+      <li><a href=<%= url_for->path('/') %> >Home</a></li>
+      <li><a href=<%= url_for->path('/config') %> >Config</a></li>
+    </ul>
+  </div>
+  <div id="content">
+    <div id="tabs">
+      <ul>
+        <li><a>Home</a></li>
+      </ul>
+
+      <div id="tabs-1">
+      <br/><br/>
+      There is nothing here, but you can switch to the <a href="<%= url_for->path('/config') %>">config</a> 
+      over the main menu.
+      </div> <!--	 End of Tab 1 -->
+    </div>
+  </div> <!-- End of "content" -->
+</div> <!-- End of "bodycontainer" -->

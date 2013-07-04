@@ -1,0 +1,483 @@
+% layout 'default';
+% title 'Web-rsnapshot';
+
+<div id="headcontainer">
+  <div id="logocontainer"></div>
+  <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div><br/>
+  <div id="saved_yes" title="Configuration saved">
+    <p>Configuration successful saved</p>
+  </div>
+  <div id="saved_error" title="Configuration saved">
+    <p>There was an error saving the configuration</p>
+  </div>
+</div>
+<div id="bodycontainer">
+  <form method="post" action="/config">
+  <div id="menucontainer">
+    <ul id="menu">
+      <li><a href=<%= url_for->path('/') %> >Home</a></li>
+      <li><a href=<%= url_for->path('/config') %> >Config</a></li>
+    </ul>
+  </div>
+  <div id="content">
+    <div id="tabs">
+      <ul>
+        <li><a href="#tabs-1">Root</a></li>
+        <li><a href="#tabs-2">Commands</a></li>
+        <li><a href="#tabs-3">Global Config</a></li>
+        <li><a href="#tabs-4">Backup Interval</a></li>
+        <li><a href="#tabs-5">Include/Exclude</a></li>
+        <li><a href="#tabs-6">Servers</a></li>
+        <li><a href="#tabs-7">Scripts</a></li>
+      </ul>
+      <INPUT type="submit" class="submit_btn" value="Save">
+<!-- Tab 1: Root config -->
+      <div id="tabs-1">
+        <div class="infoicon"><img src="default/img/info.png" title="You should not change this now!" /></div>
+        <div class="configlabel"><LABEL>config_version</LABEL></div>
+        <div><INPUT type="text" name="config_version" value="<%= $config_version %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" title="All snapshots will be stored under this root directory.<br>
+          <b>Don't forget the trailing slash!!!</b>" />
+        </div>
+        <div class="configlabel"><LABEL>snapshot_root</LABEL></div>
+        <div><INPUT type="text" name="snapshot_root" value="<%= $snapshot_root %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" 
+            title="If no_create_root is enabled (checked), rsnapshot will not automatically create the
+            <b>snapshot_root</b> directory. This is particularly useful if you are backing up to removable
+            media, such as a FireWire or USB drive." />
+        </div>
+        <div class="configlabel"><LABEL>no_create_root</LABEL></div>
+        <div><INPUT type="checkbox" name="no_create_root" <%= $no_create_root %> /></div>
+        <br/>
+
+<!-- TODO: include_conf To be implemented
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="This is recursive, but you may need to be careful about paths when specifying which file
+            to include. We check to see if the file you have specified is readable, and will yell an error
+            if it isn't. We recommend using a full path. As a special case, include_conf's value may be
+            enclosed in `backticks` in which case it will be executed and whatever it spits to STDOUT will
+            be included in the configuration. Note that shell meta-characters may be interpreted." />
+        </div>
+        <div class="configlabel"><LABEL>include_conf</LABEL></div>
+        <div><INPUT type="file" disabled title="Waiting for development" /></div>
+-->
+
+      </div>
+<!-- Tab 2: Optional programs and scripts used -->
+      <div id="tabs-2">
+        <div class="infoicon">
+          <img src="default/img/info.png" title="<b>rsync</b> must be enabled for anything to work.
+            This is the only command that must be enabled." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_rsync</LABEL></div>
+        <div><INPUT type="text" name="cmd_rsync" value="<%= $cmd_rsync %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" 
+            title="<b>LINUX USERS:</b> Be sure to use 'cmd_cp'. This gives you extra features.<br/>
+            <b>EVERYONE ELSE:</b> Don't use 'cmd_cp' for compatibility." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_cp</LABEL></div>
+        <div><INPUT type="text" name="cmd_cp" value="<%= $cmd_cp %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" 
+            title="Use the <b>rm</b> program instead of the built-in perl routine." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_rm</LABEL></div>
+        <div><INPUT type="text" name="cmd_rm" value="<%= $cmd_rm %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="Full path to ssh (optional)\nUse this to enable remote ssh backups over rsync." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_ssh</LABEL></div>
+        <div><INPUT type="text" name="cmd_ssh" value="<%= $cmd_ssh %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" title="Disable this if you don't want syslog support." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_logger</LABEL></div>
+        <div><INPUT type="text" name="cmd_logger" value="<%= $cmd_logger %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="Use this to specify the path to <b>du</b> for disk usage checks. If you have an older
+            version of <b>du</b>, you may also want to check the <b>du_args</b> parameter below." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_du</LABEL></div>
+        <div><INPUT type="text" name="cmd_du" value="<%= $cmd_du %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png" title="Fill out this to specify the path to <b>rsnapshot-diff</b>." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_rsnapshot_diff</LABEL></div>
+        <div><INPUT type="text" name="cmd_rsnapshot_diff" value="<%= $cmd_rsnapshot_diff %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Specify the path to a script (and any optional arguments) to run right before rsnapshot
+          syncs files." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_preexec</LABEL></div>
+        <div><INPUT type="text" name="cmd_preexec" value="<%= $cmd_preexec %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="Specify the path to a script (and any optional arguments) to run right after rsnapshot
+            syncs files." />
+        </div>
+        <div class="configlabel"><LABEL>cmd_postexec</LABEL></div>
+        <div><INPUT type="text" name="cmd_postexec" value="<%= $cmd_postexec %>" /></div>
+      </div>
+<!-- Tab 3: Global Options -->
+      <div id="tabs-3">
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="Verbose level, 1 through 5.<p/><b>1 Quiet</b> - Print fatal errors only<br/>
+            <b>2 Default</b> - Print errors and warnings only<br/><b>3 Verbose</b> - Show equivalent
+            shell commands being executed<br/><b>4 Extra Verbose</b> - Show extra verbose information<br/>
+            <b>5 Debug mode</b> - Everything" />
+        </div>
+        <div class="configlabel"><LABEL>verbose</LABEL></div>
+        <div><INPUT type="number" min="1" max="5" name="verbose" value="<%= $verbose %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Same as <b>'verbose'</b> above, but controls the amount of data sent to the logfile,
+          if one is being used. The <b>default</b> is 3." />
+      </div>
+      <div class="configlabel"><LABEL>loglevel</LABEL></div>
+      <div><INPUT type="text" name="loglevel" value="<%= $loglevel %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="If you enable this, data will be written to the file you specify. The amount of data
+          written is controlled by the <b>'loglevel'</b> parameter." />
+      </div>
+      <div class="configlabel"><LABEL>logfile</LABEL></div>
+      <div><INPUT type="text" name="logfile" value="<%= $logfile %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="If enabled, rsnapshot will write a lockfile to prevent two instances from running
+          simultaneously (and messing up the snapshot_root). If you enable this, make sure the lockfile
+          directory is not world writable. Otherwise anyone can prevent the program from running." />
+      </div>
+      <div class="configlabel"><LABEL>lockfile</LABEL></div>
+      <div><INPUT type="text" name="lockfile" value="<%= $lockfile %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png" title="List of short arguments to pass to rsync.
+          If not specified, <b>'-a'</b> is the default. Please note that these must be all next to each
+          other. For example, <b>'-az'</b> is valid, while <b>'-a -z'</b> is not.<br/><br/>
+          <b>'-a'</b> is rsync's <b>'archive mode'</b> which tells it to copy as much of the filesystem
+          metadata as it can for each file. This specifically does *not* include information about hard
+          links, as that would greatly increase rsync's memory usage and slow it down. If you need to
+          preserve hard links in your backups, then add 'H' to this. " />
+      </div>
+      <div class="configlabel"><LABEL>rsync_short_args</LABEL></div>
+      <div><INPUT type="text" name="rsync_short_args" value="<%= $rsync_short_args %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="List of long arguments to pass to rsync. The default values are <b>--delete
+          --numeric-ids --relative --delete-excluded</b> This means that the directory structure in each
+          backup point destination will match that in the backup point source.<br/><br/>
+          Quotes are permitted in rsync_long_args, eg <b>--rsync-path='sudo /usr/bin/rsync'</b>.
+          You may use either single (') or double (``) quotes, but nested quotes (including mixed nested
+          quotes) are not permitted. Similar quoting is also allowed in per-backup-point rsync_long_args." />
+      </div>
+      <div class="configlabel"><LABEL>rsync_long_args</LABEL></div>
+      <div><INPUT type="text" name="rsync_long_args" value="<%= $rsync_long_args %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png" title="ssh has no args passed by default, but you can specify some here." />
+      </div>
+      <div class="configlabel"><LABEL>ssh_args</LABEL></div>
+      <div><INPUT type="text" name="ssh_args" value="<%= $ssh_args %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Arguments to be passed to du. If not specified, the default is -csh. GNU du supports
+          <b>-csh</b>, BSD du supports <b>-csk</b>, Solaris du doesn't support <b>-c</b> at all. The GNU
+          version is recommended, since it offers the most features." />
+      </div>
+      <div class="configlabel"><LABEL>du_args </LABEL></div>
+      <div><INPUT type="text" name="du_args" value="<%= $du_args %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Prevents rsync from crossing filesystem partitions. Setting this to a value of 1 enables
+          this feature. 0 turns it off. This parameter is optional. The default is 0 (not selected)." />
+      </div>
+      <div class="configlabel"><LABEL>one_fs</LABEL></div>
+      <div><INPUT type="checkbox" name="one_fs" <%= $one_fs %> /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="If your version of rsync supports <b>--link-dest</b> (2.5.7 or newer), you can enable
+          this to let rsync handle some things that GNU cp or the built-in subroutines would otherwise do.
+          Enabling this makes rsnapshot take a slightly more complicated code branch, but it's the best
+          way to support special files on non-Linux systems." />
+      </div>
+      <div class="configlabel"><LABEL>link_dest</LABEL></div>
+      <div><INPUT type="checkbox" name="link_dest" <%= $link_dest %> /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="<b>sync_first</b> changes the behaviour of rsnapshot. When this is enabled, all calls
+          to rsnapshot with various backup levels simply rotate files. All backups are handled by calling
+          rsnapshot with the <b>'sync'</b> argument. The synced files are stored in a <b>'.sync'</b>
+          directory under the snapshot_root.<br/><br/>
+          This allows better recovery in the event that rsnapshot is interrupted in the middle of a sync
+          operation, since the sync step and rotation steps are separated. This also means that you can
+          easily run <b>'rsnapshot sync'</b> on the command line without fear of forcing all the other
+          directories to rotate up. This benefit comes at the cost of one more snapshot worth of disk
+          space. The default is 0 (unchecked)." />
+      </div>
+      <div class="configlabel"><LABEL>sync_first</LABEL></div>
+      <div><INPUT type="checkbox" name="sync_first" <%= $sync_first %> /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Changes default behavior of rsnapshot and does not initially remove the oldest snapshot.
+          Instead it moves that directory to <b>_delete.[processid]</b> and continues as normal. Once the
+          backup has been completed, the lockfile will be removed before rsnapshot starts deleting the
+          directory.<br/><br/>
+          Enabling this means that snapshots get taken sooner (since the delete doesn't come first), and
+          any other rsnapshot processes are allowed to start while the final delete is happening. This
+          benefit comes at the cost of using more disk space. The default is 0 (uncheckd).<br/><br/>
+          The details of how this works have changed in rsnapshot version 1.3.1. Originally you could
+          only ever have one <b>.delete</b> directory per backup level. Now you can have many, so if your
+          next (eg) hourly backup kicks off while the previous one is still doing a lazy delete you may
+          temporarily have extra <b>_delete</b> directories hanging around. " />
+      </div>
+      <div class="configlabel"><LABEL>use_lazy_deletes</LABEL></div>
+      <div><INPUT type="checkbox" name="use_lazy_deletes" <%= $use_lazy_deletes %> /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="Number of rsync re-tries. If you experience any network problems or network card issues
+          that tend to cause ssh to crap-out with <b>'Corrupted MAC on input'</b> errors, for example,
+          set this to a non-zero value to have the rsync operation re-tried" />
+      </div>
+      <div class="configlabel"><LABEL>rsync_numtries</LABEL></div>
+      <div><INPUT type="text" name="rsync_numtries" value="<%= $rsync_numtries %>" /></div>
+      </div>
+<!-- Tab 4: Backup Intervals -->
+      <div id="tabs-4">
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="The number of snapshots that will be retained for hourly backups." />
+        </div>
+        <div class="configlabel"><LABEL>retain hourly</LABEL></div>
+        <div><INPUT type="text" name="retain_hourly" value="<%= $interval_hourly %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="The number of snapshots that will be retained for daily backups." />
+        </div>
+        <div class="configlabel"><LABEL>retain daily</LABEL></div>
+        <div><INPUT type="text" name="retain_daily" value="<%= $interval_daily %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="The number of snapshots that will be retained for weekly backups." />
+        </div>
+        <div class="configlabel"><LABEL>retain weekly</LABEL></div>
+        <div><INPUT type="text" name="retain_weekly" value="<%= $interval_weekly %>" /></div>
+        <br/>
+
+        <div class="infoicon">
+        <img src="default/img/info.png"
+          title="The number of snapshots that will be retained for monthly backups." />
+        </div>
+        <div class="configlabel"><LABEL>retain monthly</LABEL></div>
+        <div><INPUT type="text" name="retain_monthly" value="<%= $interval_monthly %>" /></div>
+        <br/>
+      </div>
+<!-- Tab 5: Includes/Excludes -->
+      <div id="tabs-5">
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="This gets passed directly to rsync using the <b>--include-from</b> directive.<br/><br/>
+          This option is related to the <b>--include</b> option, but it specifies a FILE that contains
+          include	patterns (one per line).  Blank lines in the file and lines starting with ’;’  or  ’#’
+          are	ignored." />
+      </div>
+      <div class="configlabel"><LABEL>include_file</LABEL></div>
+      <div><INPUT type="text" name="include_file" value="<%= $include_file %>" /></div>
+      <br/>
+
+      <div class="infoicon">
+        <img src="default/img/info.png"
+          title="This gets passed directly to rsync using the <b>--exclude-from</b> directive.<br/><br/>
+          This option is related to the <b>--exclude</b> option, but it specifies a FILE that contains
+          exclude patterns (one per line).  Blank lines in the file and lines starting with ’;’ or ’#’
+          are ignored." />
+      </div>
+      <div class="configlabel"><LABEL>exclude_file</LABEL></div>
+      <div><INPUT type="text" name="exclude_file" value="<%= $exclude_file %>" /></div>
+      <br/>
+
+<!-- Include Patterns -->
+      <div id="include">
+        <% my $include_ptr = 0; %>
+          <% if (!(@$include[$include_ptr] eq "")) { %>
+            <% while (@$include > $include_ptr) { %>
+              <div class="infoicon" id="include_<%= $include_ptr %>_info">
+                <img src="default/img/info.png" 
+                  title="This gets passed directly to rsync using the <b>--include</b> directive.
+                  This parameter can be specified as many times as needed, with one pattern defined
+                  per line." />
+              </div>
+              <div class="configlabel" id="include_<%= $include_ptr %>_label"><LABEL>include</LABEL></div>
+              <div id="include_<%= $include_ptr %>">
+                <INPUT type="button" value="Delete" onclick="delExIn('include_<%= $include_ptr %>');">
+                <INPUT type="text" name="include_<%= $include_ptr %>" 
+                  value="<%= @$include[$include_ptr++] %>" />
+              </div>
+            <% } %>
+          <% } %>
+        </div>
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="This gets passed directly to rsync using the <b>--include</b> directive.
+            This parameter can be specified as many times as needed, with one pattern defined
+            per line." />
+        </div>
+        <div class="configlabel"><LABEL>include</LABEL></div>
+        <div>
+          <INPUT type="hidden" id="include_count" name="include_count" value="<%= $include_ptr %>" />
+          <INPUT type="button" value="Add" id="include_add" name="<%= $include_ptr %>"
+            onclick="addInclude(this.id, this.name)" />
+        </div>
+        <br/> <!-- End of Include Patterns -->
+
+<!-- Exclude Patterns -->
+        <div id="exclude">
+          <% my $exclude_ptr = 0; %>
+          <% if (@$exclude[0] ne "") { %>
+            <% while (@$exclude > $exclude_ptr) { %>
+              <div class="infoicon" id="exclude_<%= $exclude_ptr %>_info">
+                <img src="default/img/info.png"
+                  title="This gets passed directly to rsync using the <b>--exclude</b> directive. 
+                  This parameter can be specified as many times as needed, with one pattern defined 
+                  per line." />
+              </div>
+              <div class="configlabel" id="exclude_<%= $exclude_ptr %>_label"><LABEL>exclude</LABEL></div>
+              <div id="exclude_<%= $exclude_ptr %>">
+                <INPUT type="button" value="Delete" onclick="delExIn('exclude_<%= $exclude_ptr %>');" />
+                <INPUT type="text" name="exclude_<%= $exclude_ptr %>" value="<%= @$exclude[$exclude_ptr++] %>" />
+              </div>
+            <% } %>
+          <% } %>
+        </div>
+        <div class="infoicon">
+          <img src="default/img/info.png"
+            title="This gets passed directly to rsync using the <b>--exclude</b> directive.
+            This parameter can be specified as many times as needed, with one pattern defined
+            per line." />
+        </div>
+        <div class="configlabel"><LABEL>exclude</LABEL></div>
+        <div>
+          <INPUT type="hidden" id="exclude_count" name="exclude_count" value="<%= $exclude_ptr %>" />
+          <INPUT type="button" id="exclude_add" name="<%= $exclude_ptr %>"
+            onclick="addExclude(this.id, this.name)" value="Add"/>
+        </div> <!-- End of Exclude Patterns -->
+      </div> <!-- End of Tab 5 -->
+
+<!-- Tab 6: Servers to backup -->
+      <div id="tabs-6">
+        <div id="accordion">
+          <% my $bkp_srv_ptr = 0; %>
+          <% if (@$backup_servers[$bkp_srv_ptr] ne "") { %>
+            <% while ( @$backup_servers > $bkp_srv_ptr) { %>
+              <% my $serverid = $bkp_srv_ptr; %>
+              <% my $server = @$backup_servers[$bkp_srv_ptr]; %>
+              <h3 id="server_<%= $serverid %>_name">
+                Server: <b><%= substr($server->[1], 0, -1) %></b>
+                <INPUT type="button" value="Delete" onclick="serverDelete(<%= $serverid %>)" />
+              </h3>
+              <div id="server_<%= $serverid %>_config">
+                <INPUT type="hidden" id="server_label_<%= $serverid %>"
+                  name="server_label_<%= $serverid %>" value="<%= substr($server->[1], 0, -1)%>"/>
+                <div id="server_<%= $serverid %>_dirs">
+                <% my $newserver = ""; %>
+                <% my $newdirid = 0; %>
+                <% SRVLABEL: $newserver = @$backup_servers[$bkp_srv_ptr]; %>
+                <% if (@$backup_servers > $bkp_srv_ptr and !($server->[1] ne $newserver->[1])) { %>
+                  <div id="server_<%= $serverid %>_dir_<%= $newdirid %>">
+                    <INPUT type="button" value="Delete" 
+                      id="server_<%= $serverid %>_dir_<%= $newdirid %>_del"
+                      onclick="srvDelDir(<%= $serverid %>, <%= $newdirid %>)" />
+                    <INPUT type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
+                      name="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
+                      value="<%= $newserver->[0] %>" />
+                    <INPUT type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_args"
+                      name="server_<%= $serverid %>_dir_<%= $newdirid %>_args"
+                      value="<%= $newserver->[2] %>" />
+                    <br/>
+                  </div>
+                  <% $bkp_srv_ptr++; $newdirid++; %>
+                  <% goto SRVLABEL; %>
+                <% } %>
+              </div>
+              <INPUT type="hidden" id="server_<%= $serverid %>_dircount"
+                name="server_<%= $serverid %>_dircount" value="<%= $newdirid %>" />
+              <INPUT type="button" value="Add"
+                id="srvAddDir_<%= $serverid %>" name="<%= $newdirid %>"
+                onclick="srvAddDir(this.id,this.name,'<%= $serverid %>');" />
+            </div>
+<!-- End of Server -->
+          <% } %>	
+        <% } %>
+
+        </div> <!-- End of Accordion -->
+        <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
+        <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
+          onclick="srvAdd(this.id, this.name)" />
+      </div> <!-- End of Tab 6 -->
+
+<!-- Tab 7: Scripts executed while backuping -->
+      <div id="tabs-7">
+<!--
+        <div class="infoicon"><img src="default/img/info.png" title="" /></div>
+        <div class="configlabel"><LABEL>backup scripts</LABEL></div>
+        <div><INPUT type="text" value="<%= @$backup_scripts[0] %>" /></div>
+-->
+      </div>
+    </div> <!-- End of "tabs" -->
+  </div> <!-- End of "content" -->
+  </form>
+</div> <!-- End of "bodycontainer" -->
