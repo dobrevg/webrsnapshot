@@ -12,7 +12,6 @@ This is still development version. Backuping servers supports at this time only 
 ## Quick start
 ============ 
 
-* Install [Mojolicious](http://mojolicio.us/) `curl -L cpanmin.us | perl - -n  --sudo Mojolicious`
 * Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want
 * Run `./bin/production.pl start.pl`
 * Access the application via http://mySecretIP:8080
@@ -22,7 +21,7 @@ This is still development version. Backuping servers supports at this time only 
 ## Bug tracker
 ============
 
-Have a bug or a feature request? Please read first the [Issue Guidelines](https://github.com/necolas/issue-guidelines), written by [Nicolas Gallagher](https://github.com/necolas/). Before opening any issue, please search for existing issues. [Open a new issue](https://github.com/dobrevg/webrsnapshot/issues).
+Have a bug or a feature request? Please read first the [Issue Guidelines](https://github.com/necolas/issue-guidelines), written by [Nicolas Gallagher](https://github.com/necolas/). Before opening any issue, please search for existing issues. Open a new issue [here](https://github.com/dobrevg/webrsnapshot/issues).
 
 
 ## Copyright and license
