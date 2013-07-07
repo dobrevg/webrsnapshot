@@ -1,9 +1,6 @@
 % layout 'default';
 % title 'Web-rsnapshot';
-<div id="headcontainer">
-  <div id="logocontainer"></div>
-  <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
-</div>
+
 <div id="bodycontainer">
   <div id="menucontainer">
     <ul id="menu">
@@ -21,7 +18,7 @@
       <br/><br/>
       There is nothing here, but you can switch to the <a href="<%= url_for->path('/config') %>">config</a> 
       over the main menu.
-      </div> <!--	 End of Tab 1 -->
+      </div> <!--  End of Tab 1 -->
     </div>
   </div> <!-- End of "content" -->
 </div> <!-- End of "bodycontainer" -->

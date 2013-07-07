@@ -1,16 +1,6 @@
 % layout 'default';
 % title 'Web-rsnapshot';
 
-<div id="headcontainer">
-  <div id="logocontainer"></div>
-  <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div><br/>
-  <div id="saved_yes" title="Configuration saved">
-    <p>Configuration successful saved</p>
-  </div>
-  <div id="saved_error" title="Configuration saved">
-    <p>There was an error saving the configuration</p>
-  </div>
-</div>
 <div id="bodycontainer">
   <form method="post" action="/config">
   <div id="menucontainer">

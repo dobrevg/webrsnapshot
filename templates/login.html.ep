@@ -1,0 +1,9 @@
+<br/><br/>
+<center>
+<form method="post" action="/login">
+    <h1>Login</h1><br/>
+    <LABEL>Username:</LABEL> <INPUT type="text" name="u" /> <br/>
+    <LABEL>Password:&nbsp;&nbsp;</LABEL> <INPUT type="password" name="p" /> <br/>
+    <INPUT type="submit" value="Login" />
+</form>
+</center>

@@ -12,6 +12,7 @@
 .infoicon           { width:25px; float:left; }
 .configlabel        { width:170px; float:left; }
 .tooltip            { max-width:500px; }
+#logout             { float:right; }
 
 #saved_yes, #saved_error { display:none; }
 
@@ -19,4 +20,4 @@ input[type="text"]  { width:300px; }
 #accordion h3 input[type="button"] { float:right; }
 .submit_btn         { float:right; margin-right:10px; margin-top:-34px; }
 
-#footer             { float:left; margin-top:10px; }
+#footer             { float:left; margin-top:10px; width:100%;}
