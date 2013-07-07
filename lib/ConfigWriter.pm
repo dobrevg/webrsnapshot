@@ -75,7 +75,7 @@ sub saveConfig
   my $scripts_count = $arguments[3];
   # printf ("[ConfigWriter] Scripts Count %s\n",$scripts_count);
   # Open the config file for writing
-  open (CONFIG, ">$configfile") || die ("ConfigWriter->saveConfig(): Cannot open config file $configfile");
+  open (CONFIG, ">$configfile") || die $!; # ("ConfigWriter->saveConfig(): Cannot open config file $configfile");
   foreach my $arg (@arguments)
   {
     if ( $counter > 3 )

@@ -17,6 +17,14 @@
           });
         });
       }
+      if ("<%= flash 'saved' %>" == "no") {
+        $(function() { $( "#saved_no" ).dialog({
+          show: { effect: "scale", duration: 400 },
+          modal: true, buttons: { Ok: function() {
+            $( this ).dialog( "close" );}}
+          });
+        });
+      }
     </script>
   </head>
   <body>
@@ -25,10 +33,12 @@
       <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
       <div id="logout"><a href="/logout">Logout</a></div><br/>
       <div id="saved_yes" title="Configuration saved">
-        <p>Configuration successful saved</p>
+         <p><span class="ui-icon ui-icon-check" style="float: left; margin: 0 7px 50px 0;"></span>
+        Configuration successful saved</p>
       </div>
-      <div id="saved_error" title="Configuration saved">
-        <p>There was an error saving the configuration</p>
+      <div id="saved_no" class="ui-state-error" title="Configuration not saved">
+        <p><span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 50px 0;"></span>
+        ERROR: <%= flash 'error_message' %></p>
       </div>
     </div>
     <%= content %>

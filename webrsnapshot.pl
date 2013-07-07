@@ -158,7 +158,8 @@ post '/config' => sub {
     my $scripts_count = 0;
   
     # And send everything to the ConfigWriter
-    ConfigWriter::saveConfig(
+    eval {
+    my $saveResult = ConfigWriter::saveConfig(
       # Extra Parameter
       scalar @include,
       scalar @exclude,
@@ -207,7 +208,14 @@ post '/config' => sub {
       # Tab 7 - Scripts
       @scripts? @scripts : (""),
     );
-    $self->flash(saved=>'yes');
+    };
+
+    $self->flash(saved=>'yes') if (!$@);
+    if ($@)
+    {
+      $self->flash(saved=>'no');
+      $self->flash(error_message=>$@)
+    }
     $self->redirect_to('/config');
   }
   else

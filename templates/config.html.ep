@@ -430,7 +430,8 @@
                   <div id="server_<%= $serverid %>_dir_<%= $newdirid %>">
                     <INPUT type="button" value="Delete" 
                       id="server_<%= $serverid %>_dir_<%= $newdirid %>_del"
-                      onclick="srvDelDir(<%= $serverid %>, <%= $newdirid %>)" />
+                      onclick="srvDelDir(<%= $serverid %>, <%= $newdirid %>)" 
+                      title="Delete this directory from the backup."/>
                     <INPUT type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
                       name="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
                       value="<%= $newserver->[0] %>" />
@@ -447,7 +448,8 @@
                 name="server_<%= $serverid %>_dircount" value="<%= $newdirid %>" />
               <INPUT type="button" value="Add"
                 id="srvAddDir_<%= $serverid %>" name="<%= $newdirid %>"
-                onclick="srvAddDir(this.id,this.name,'<%= $serverid %>');" />
+                onclick="srvAddDir(this.id,this.name,'<%= $serverid %>');" 
+                title="Add new directory for backup for: <b><%= substr($server->[1], 0, -1) %></b>"/>
             </div>
 <!-- End of Server -->
           <% } %>	
