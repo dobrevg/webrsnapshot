@@ -13,7 +13,7 @@ This is still development version. Backuping servers supports at this time only 
 ============ 
 
 * Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want
-* Run `./bin/production.pl start.pl`
+* Run `./bin/production.pl webrsnapshot.pl`
 * Access the application via http://mySecretIP:8080
 * For development run `./bin/development.pl`
 

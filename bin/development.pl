@@ -3,4 +3,4 @@ use strict;
 use warnings;
 use File::Basename;
 my $dirname = dirname(__FILE__);
-system("$dirname/morbo $dirname/../start.pl");
+system("$dirname/morbo $dirname/../webrsnapshot.pl");
