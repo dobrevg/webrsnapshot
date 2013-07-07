@@ -40,8 +40,6 @@ Feature Request
 
 * Validating configuration (before saving it would be nice)
 
-* Add login or some kind of protection like IP restrictions
-
 
 **Priority Normal**
 
@@ -50,3 +48,8 @@ Feature Request
 * Showing some server info like free space, load etc.
 
 * Showing logfile or some part of it
+
+
+**Priority Low**
+
+* Internationalisation
