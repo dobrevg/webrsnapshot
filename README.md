@@ -14,7 +14,7 @@ This is still development version. Backuping servers supports at this time only 
 
 * Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want
 * Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
-* Run `./bin/appStart.sh` to start the server
+* Run `./bin/appStart.sh` to start the server (have to be executed as root, or rsnapshot.conf have to be user-writable)
 * Run `./bin/appStop.sh` to stop the server
 * Access the application via http://mySecretIP:8080
 * For development run `./bin/development.pl`
