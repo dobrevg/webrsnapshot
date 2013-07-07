@@ -22,8 +22,8 @@ plugin 'authentication', {
     my ($app, $uid) = @_;
     return 
     {
-      'username' => 'root',
-      'password' => 'pass',
+      'username' => $config->{rootuser},
+      'password' => $config->{rootpass},
       'name' => 'BackupAdministrator'
     } if ($uid eq 'userid');
     return undef;
@@ -35,7 +35,7 @@ plugin 'authentication', {
     my $pass  = shift || '';
 #    my $extradata = shift || {};
 
-    return 'userid' if($user eq 'root' && $pass eq 'pass');
+    return 'userid' if($user eq $config->{rootuser} && $pass eq $config->{rootpass});
     return undef;
   },
 };
