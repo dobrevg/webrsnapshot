@@ -280,5 +280,5 @@ get '/config' => sub {
   }
 };
 
-app->secret('My very secret passphrase.');
+app->secret($config->{appsecret});
 app->start;
