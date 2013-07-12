@@ -12,17 +12,13 @@
       if ("<%= flash 'saved' %>" == "yes") {
         $(function() { $( "#saved_yes" ).dialog({
           show: { effect: "scale", duration: 400 },
-          modal: true, buttons: { Ok: function() {
-            $( this ).dialog( "close" );}}
-          });
+          modal: true });
         });
       }
       if ("<%= flash 'saved' %>" == "no") {
-        $(function() { $( "#saved_no" ).dialog({
+        $(function() { $( "#error" ).dialog({
           show: { effect: "scale", duration: 400 },
-          modal: true, buttons: { Ok: function() {
-            $( this ).dialog( "close" );}}
-          });
+          modal: true });
         });
       }
     </script>
@@ -32,11 +28,11 @@
       <div id="logocontainer"></div>
       <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
       <div id="logout"><a href="/logout">Logout</a></div><br/>
-      <div id="saved_yes" title="Configuration saved">
+      <div id="saved_yes" class="hidden" title="Configuration saved">
          <p><span class="ui-icon ui-icon-check" style="float: left; margin: 0 7px 50px 0;"></span>
         Configuration successful saved</p>
       </div>
-      <div id="saved_no" class="ui-state-error" title="Configuration not saved">
+      <div id="error" class="ui-state-error hidden" title="ERROR">
         <p><span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 50px 0;"></span>
         ERROR: <%= flash 'error_message' %></p>
       </div>

@@ -459,6 +459,27 @@
         <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
         <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
           onclick="srvAdd(this.id, this.name)" />
+        <div id="addServer-dialog-form" class="hidden" title="Create new Server">
+          <p class="validateTips">All form fields are required.</p>
+          <form>
+            <fieldset>
+              <label for="label">Server label</label><br/>
+              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
+              <label for="protocol">Connection Protocol</label><br/>
+              <select class="text ui-widget-content ui-corner-all">
+                <option value="localhost">LOCALHOST</option>
+                <option value="ssh">SSH</option>
+                <option value="rsync">RSYNC</option>
+                <option value="custom">CUSTOM</option>
+              </select> 
+              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
+              <label for="directory">Directory</label><br/>
+              <input type="text" value="/etc/" class="text ui-widget-content ui-corner-all" /><br/><br/>
+              <label for="option">Backup options for this directory</label><br/>
+              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
+            </fieldset>
+          </form>
+        </div>
       </div> <!-- End of Tab 6 -->
 
 <!-- Tab 7: Scripts executed while backuping -->

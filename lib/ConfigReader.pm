@@ -61,78 +61,73 @@ sub new
 sub doInitialisation
 {
   printf ("[%s] Start reading config file: $configfile\n",scalar localtime);
-  if (open (CONFIG, $configfile))
+  open (CONFIG, $configfile) || die $!;
+  while (<CONFIG>)
   {
-    while (<CONFIG>)
-    {
-      #print ("Readed Line: $_");
-      my $temp = "";
-      next if /^#/;                   # Ignore every comment 
-      chop;                           # Remove the new line character
-      # and start parsing the config file
-      # Tab 1: Root config
-      if    ("$_" =~ /^config_version\t+(.*)/)     { $config_version     = $1; }
-      elsif ("$_" =~ /^snapshot_root\t+(.*)/ )     { $snapshot_root      = $1; }
-      elsif ("$_" =~ /^no_create_root\t+(.*)/)     { $no_create_root     = $1; }
-      # Tab 2: Optional programs and scripts used
-      elsif ("$_" =~ /^cmd_cp\t+(.*)/)             { $cmd_cp             = $1; }
-      elsif ("$_" =~ /^cmd_rm\t+(.*)/)             { $cmd_rm             = $1; }
-      elsif ("$_" =~ /^cmd_rsync\t+(.*)/)          { $cmd_rsync          = $1; }
-      elsif ("$_" =~ /^cmd_ssh\t+(.*)/)            { $cmd_ssh            = $1; }
-      elsif ("$_" =~ /^cmd_logger\t+(.*)/)         { $cmd_logger         = $1; }
-      elsif ("$_" =~ /^cmd_du\t+(.*)/)             { $cmd_du             = $1; }
-      elsif ("$_" =~ /^cmd_rsnapshot_diff\t+(.*)/) { $cmd_rsnapshot_diff = $1; }
-      elsif ("$_" =~ /^cmd_preexec\t+(.*)/)        { $cmd_preexec        = $1; }
-      elsif ("$_" =~ /^cmd_postexec\t+(.*)/)       { $cmd_postexec       = $1; }
-      # Tab 3: Global configuration
-      elsif ("$_" =~ /^verbose\t+(.*)/)            { $verbose            = $1; }
-      elsif ("$_" =~ /^loglevel\t+(.*)/)           { $loglevel           = $1; }
-      elsif ("$_" =~ /^logfile\t+(.*)/)            { $logfile            = $1; }
-      elsif ("$_" =~ /^lockfile\t+(.*)/)           { $lockfile           = $1; }
-      elsif ("$_" =~ /^rsync_short_args\t+(.*)/)   { $rsync_short_args   = $1; }
-      elsif ("$_" =~ /^rsync_long_args\t+(.*)/)    { $rsync_long_args    = $1; }
-      elsif ("$_" =~ /^ssh_args\t+(.*)/)           { $ssh_args           = $1; }
-      elsif ("$_" =~ /^du_args\t+(.*)/)            { $du_args            = $1; }
-      elsif ("$_" =~ /^one_fs\t+(.*)/)             { $one_fs             = $1; }
-      elsif ("$_" =~ /^link_dest\t+(.*)/)          { $link_dest          = $1; }
-      elsif ("$_" =~ /^sync_first\t+(.*)/)         { $sync_first         = $1; }
-      elsif ("$_" =~ /^use_lazy_deletes\t+(.*)/)   { $use_lazy_deletes   = $1; }
-      elsif ("$_" =~ /^rsync_numtries\t+(.*)/)     { $rsync_numtries     = $1; }
-      # Tab 4: Backup intervals, OpenSuSE still uses interval
-      # Let us support the old "interval" and the new "retain"
-      elsif ("$_" =~ /^interval\t+hourly\t+(.*)/ ||
-          "$_" =~ /^retain\t+hourly\t+(.*)/)   { $interval_hourly    = $1; }
-      elsif ("$_" =~ /^interval\t+daily\t+(.*)/  ||
-          "$_" =~ /^retain\t+daily\t+(.*)/)    { $interval_daily     = $1; }
-      elsif ("$_" =~ /^interval\t+weekly\t+(.*)/ ||
-          "$_" =~ /^retain\t+weekly\t+(.*)/)   { $interval_weekly    = $1; }
-      elsif ("$_" =~ /^interval\t+monthly\t+(.*)/||
-          "$_" =~ /^retain\t+monthly\t+(.*)/)  { $interval_monthly   = $1; }
-      # Tab 5: Include und Exclude
-      elsif ("$_" =~ /^include\t+(.*)/)            { $include[$include_ptr++] = $1; }
-      elsif ("$_" =~ /^exclude\t+(.*)/)            { $exclude[$exclude_ptr++] = $1; }
-      elsif ("$_" =~ /^include_file\t+(.*)/)       { $include_file            = $1; }
-      elsif ("$_" =~ /^exclude_file\t+(.*)/)       { $exclude_file            = $1; }
-      # Tab 6: Server config is complicated
-      # Filter servers with extra arguments
-      elsif ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/) {
-        my @servers = ($1, $2, $3);
-        $backup_servers[$backup_servers_ptr++] = (\@servers);
-      }
-      # And then the rest without arguments
-      elsif ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*)/) {
-        my @servers = ($1, $2, "");
-        $backup_servers[$backup_servers_ptr++] = (\@servers);
-      }
-      # TODO: Tab 7: Scripts have to be configured
-      elsif ("$_" =~ /^backup_script\t+(.*)/)      { $backup_scripts[$backup_scripts_ptr++] = $1; }
-      else  { }    # Unknown Line. Don't know what to do now?
+    #print ("Readed Line: $_");
+    my $temp = "";
+    next if /^#/;                   # Ignore every comment 
+    chop;                           # Remove the new line character
+    # and start parsing the config file
+    # Tab 1: Root config
+    if    ("$_" =~ /^config_version\t+(.*)/)     { $config_version     = $1; }
+    elsif ("$_" =~ /^snapshot_root\t+(.*)/ )     { $snapshot_root      = $1; }
+    elsif ("$_" =~ /^no_create_root\t+(.*)/)     { $no_create_root     = $1; }
+    # Tab 2: Optional programs and scripts used
+    elsif ("$_" =~ /^cmd_cp\t+(.*)/)             { $cmd_cp             = $1; }
+    elsif ("$_" =~ /^cmd_rm\t+(.*)/)             { $cmd_rm             = $1; }
+    elsif ("$_" =~ /^cmd_rsync\t+(.*)/)          { $cmd_rsync          = $1; }
+    elsif ("$_" =~ /^cmd_ssh\t+(.*)/)            { $cmd_ssh            = $1; }
+    elsif ("$_" =~ /^cmd_logger\t+(.*)/)         { $cmd_logger         = $1; }
+    elsif ("$_" =~ /^cmd_du\t+(.*)/)             { $cmd_du             = $1; }
+    elsif ("$_" =~ /^cmd_rsnapshot_diff\t+(.*)/) { $cmd_rsnapshot_diff = $1; }
+    elsif ("$_" =~ /^cmd_preexec\t+(.*)/)        { $cmd_preexec        = $1; }
+    elsif ("$_" =~ /^cmd_postexec\t+(.*)/)       { $cmd_postexec       = $1; }
+    # Tab 3: Global configuration
+    elsif ("$_" =~ /^verbose\t+(.*)/)            { $verbose            = $1; }
+    elsif ("$_" =~ /^loglevel\t+(.*)/)           { $loglevel           = $1; }
+    elsif ("$_" =~ /^logfile\t+(.*)/)            { $logfile            = $1; }
+    elsif ("$_" =~ /^lockfile\t+(.*)/)           { $lockfile           = $1; }
+    elsif ("$_" =~ /^rsync_short_args\t+(.*)/)   { $rsync_short_args   = $1; }
+    elsif ("$_" =~ /^rsync_long_args\t+(.*)/)    { $rsync_long_args    = $1; }
+    elsif ("$_" =~ /^ssh_args\t+(.*)/)           { $ssh_args           = $1; }
+    elsif ("$_" =~ /^du_args\t+(.*)/)            { $du_args            = $1; }
+    elsif ("$_" =~ /^one_fs\t+(.*)/)             { $one_fs             = $1; }
+    elsif ("$_" =~ /^link_dest\t+(.*)/)          { $link_dest          = $1; }
+    elsif ("$_" =~ /^sync_first\t+(.*)/)         { $sync_first         = $1; }
+    elsif ("$_" =~ /^use_lazy_deletes\t+(.*)/)   { $use_lazy_deletes   = $1; }
+    elsif ("$_" =~ /^rsync_numtries\t+(.*)/)     { $rsync_numtries     = $1; }
+    # Tab 4: Backup intervals, OpenSuSE still uses interval
+    # Let us support the old "interval" and the new "retain"
+    elsif ("$_" =~ /^interval\t+hourly\t+(.*)/ ||
+        "$_" =~ /^retain\t+hourly\t+(.*)/)   { $interval_hourly    = $1; }
+    elsif ("$_" =~ /^interval\t+daily\t+(.*)/  ||
+        "$_" =~ /^retain\t+daily\t+(.*)/)    { $interval_daily     = $1; }
+    elsif ("$_" =~ /^interval\t+weekly\t+(.*)/ ||
+        "$_" =~ /^retain\t+weekly\t+(.*)/)   { $interval_weekly    = $1; }
+    elsif ("$_" =~ /^interval\t+monthly\t+(.*)/||
+        "$_" =~ /^retain\t+monthly\t+(.*)/)  { $interval_monthly   = $1; }
+    # Tab 5: Include und Exclude
+    elsif ("$_" =~ /^include\t+(.*)/)            { $include[$include_ptr++] = $1; }
+    elsif ("$_" =~ /^exclude\t+(.*)/)            { $exclude[$exclude_ptr++] = $1; }
+    elsif ("$_" =~ /^include_file\t+(.*)/)       { $include_file            = $1; }
+    elsif ("$_" =~ /^exclude_file\t+(.*)/)       { $exclude_file            = $1; }
+    # Tab 6: Server config is complicated
+    # Filter servers with extra arguments
+    elsif ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/) {
+      my @servers = ($1, $2, $3);
+      $backup_servers[$backup_servers_ptr++] = (\@servers);
     }
+    # And then the rest without arguments
+    elsif ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*)/) {
+      my @servers = ($1, $2, "");
+      $backup_servers[$backup_servers_ptr++] = (\@servers);
+    }
+    # TODO: Tab 7: Scripts have to be configured
+    elsif ("$_" =~ /^backup_script\t+(.*)/)      { $backup_scripts[$backup_scripts_ptr++] = $1; }
+    else  { }    # Unknown Line. Don't know what to do now?
   }
-  else
-  {
-    die ("ConfigReader->doInitialisation(): Cannot open input file $configfile");
-  }
+
   # And close the file	
   close CONFIG;
   # Clear the Array pointers for the next run 
