@@ -1,5 +1,5 @@
-% layout 'default';
-% title 'Web-rsnapshot';
+% layout $custom_template;
+% title 'Config:Webrsnapshot';
 
 <div id="bodycontainer">
   <form method="post" action="/config">

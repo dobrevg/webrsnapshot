@@ -49,6 +49,8 @@ get '/' => sub {
   my $password = $self->session( 'password' )?$self->session( 'password' ):"";
   if ( $self->authenticate( $username, $password ) )
   {
+    # User defined temaplate
+    $self->stash( custom_template => $config->{template} );
     $self->render('index');
   }
   else
@@ -69,6 +71,8 @@ get '/login' => sub
   }
   else
   {
+    # User defined temaplate
+    $self->stash( custom_template => $config->{template} );
     $self->render('login');
   }
 };
@@ -77,10 +81,12 @@ post '/login' => sub {
   my $self = shift;
 
   # Filter Post data
-  my $username = $self->req->param('u');
-  my $password = $self->req->param('p');
+  my $username = $self->req->param('username');
+  my $password = $self->req->param('password');
   if ( $self->authenticate( $username, $password ) )
   {
+    # User defined temaplate
+    $self->stash( custom_template => $config->{template} );
     # And save as session data
     $self->session(username => $username);
     $self->session(password => $password);
@@ -111,7 +117,9 @@ get '/log' => sub
   {
     eval
     {
-      $self->stash( log_content  => LogReader->getContent($config->{loglines}) );
+      # User defined temaplate
+      $self->stash( custom_template => $config->{template} );
+      $self->stash( log_content     => LogReader->getContent($config->{loglines}) );
       $self->render('log');
     };
     
@@ -256,6 +264,8 @@ get '/config' => sub {
   my $password = $self->session('password')?$self->session('password'):"";
   if ( $self->authenticate( $username, $password ) )
   {
+    # User defined temaplate
+    $self->stash( custom_template => $config->{template} );
     # Create object from the Config File
     my $parser = new ConfigReader;
     # Tab 1 - Root

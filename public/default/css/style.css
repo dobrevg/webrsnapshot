@@ -12,6 +12,8 @@
 .infoicon           { width:25px; float:left; }
 .configlabel        { width:170px; float:left; }
 .tooltip            { max-width:500px; }
+.center             { margin-left:auto; margin-right:auto;}
+#loginform          { width:30%; }
 #logout             { float:right; }
 
 .hidden             { display:none; }
@@ -21,4 +23,5 @@ input[type="text"]  { width:300px; }
 #accordion h3 input[type="button"] { float:right; }
 .submit_btn         { float:right; margin-right:10px; margin-top:-34px; }
 
+/* Footer Positivioning */
 #footer             { float:left; margin-top:10px; width:100%;}

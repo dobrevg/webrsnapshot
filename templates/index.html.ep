@@ -1,5 +1,5 @@
-% layout 'default';
-% title 'Web-rsnapshot';
+% layout $custom_template;
+% title 'Home:Webrsnapshot';
 
 <div id="bodycontainer">
   <div id="menucontainer">

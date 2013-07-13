@@ -1,9 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Login:Webrsnapshot</title>
+    <link rel="stylesheet" type="text/css" href="<%= $custom_template %>/css/style.css" />
+  </head>
+<body>
 <br/><br/>
-<center>
-<form method="post" action="/login">
+<div id="loginform" class="center">
+  <form method="post" action="/login">
     <h1>Login</h1><br/>
-    <LABEL>Username:</LABEL> <INPUT type="text" name="u" /> <br/>
-    <LABEL>Password:&nbsp;&nbsp;</LABEL> <INPUT type="password" name="p" /> <br/>
+    <LABEL>Username:</LABEL> <INPUT type="text" name="username" /> <br/>
+    <LABEL>Password:&nbsp;&nbsp;</LABEL> <INPUT type="password" name="password" /> <br/>
     <INPUT type="submit" value="Login" />
-</form>
-</center>
+  </form>
+</div>
