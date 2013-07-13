@@ -18,7 +18,9 @@
       if ("<%= flash 'saved' %>" == "no") {
         $(function() { $( "#error" ).dialog({
           show: { effect: "scale", duration: 400 },
-          modal: true });
+          modal: true,
+          minHeight: 250,
+          minWidth: 450 });
         });
       }
     </script>
@@ -28,13 +30,13 @@
       <div id="logocontainer"></div>
       <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
       <div id="logout"><a href="/logout">Logout</a></div><br/>
-      <div id="saved_yes" class="hidden" title="Configuration saved">
+      <div id="saved_yes" class="hidden <%= flash 'warning' %>" title="Configuration saved">
          <p><span class="ui-icon ui-icon-check" style="float: left; margin: 0 7px 50px 0;"></span>
-        Configuration successful saved</p>
+        Configuration successful saved</p><%= flash 'warning_message' %>
       </div>
       <div id="error" class="ui-state-error hidden" title="ERROR">
         <p><span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 50px 0;"></span>
-        ERROR: <%= flash 'error_message' %></p>
+        ERROR:</p><%= flash 'error_message' %>
       </div>
     </div>
     <%= content %>

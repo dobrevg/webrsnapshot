@@ -1,5 +1,5 @@
 % layout $custom_template;
-% title 'Home:Webrsnapshot';
+% title 'Webrsnapshot';
 
 <div id="bodycontainer">
   <div id="menucontainer">

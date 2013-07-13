@@ -188,10 +188,11 @@ post '/config' => sub {
     # Scripts loop
     my @scripts = ();
     my $scripts_count = 0;
+    my @saveResult = {};
   
     # And send everything to the ConfigWriter
     eval {
-      ConfigWriter::saveConfig(
+      @saveResult = ConfigWriter::saveConfig(
         # Extra Parameter
         scalar @include,
         scalar @exclude,
@@ -242,11 +243,22 @@ post '/config' => sub {
       );
     };
 
-    $self->flash(saved=>'yes') if (!$@);
-    if ($@)
+    # If eval doesn't evaluate some error, 
+    if (!$@)
+    {
+      $self->flash(saved=>'yes');
+    }
+    # If eval gets some error, show it
+    elsif ($@)
     {
       $self->flash(saved=>'no');
-      $self->flash(error_message=>$@)
+      $self->flash(error_message=>$@);
+    }
+    # If return not 1, then we have warning but successfull save
+    if ( $saveResult[0] ne "1")
+    {
+      $self->flash(warning=>'ui-state-highlight');
+      $self->flash(warning_message=>@saveResult)
     }
     $self->redirect_to('/config');
   }

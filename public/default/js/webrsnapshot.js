@@ -104,7 +104,10 @@ function srvAdd(buttonid, serverid) {
       "Examples: localhost, john-s-server, 192.168.1.1\n\t\t  example.com, server.example.com");
   if (serverlabel) { var serverip = prompt("Please type the server IP or QFDN?\n\n" +
       "This should be the server ip or the server FQDN (Fully Qualified Domain Name)\n" +
-      "Over this domain name the server should be reachable in the internet.\n\n" +
+      "Over this domain name the server should be reachable in the internet.\n " +
+      "If you want to use different access method than root@server-ip you can\n" + 
+      "change this after adding the server. Other possible connections can be:\n" +
+      "user@example.com, rsync://example.com\n\n" +
       "Examples: localhost, 127.0.0.1, 192.168.10.34, 10.0.45.154\n" +
       "\t\t  example.com, server.example.com" ); }
 

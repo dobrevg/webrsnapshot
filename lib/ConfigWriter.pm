@@ -2,7 +2,9 @@ package ConfigWriter;
 use strict;
 use warnings;
 
-my $configfile        = "/etc/rsnapshot.conf";
+my $configfile         = "/etc/rsnapshot.conf";
+my $configfile_to_test = $configfile."_$$";
+
 ## Root
 my @config_parameters =
 (
@@ -75,7 +77,7 @@ sub saveConfig
   my $scripts_count = $arguments[3];
   # printf ("[ConfigWriter] Scripts Count %s\n",$scripts_count);
   # Open the config file for writing
-  open (CONFIG, ">$configfile") || die $!;
+  open (CONFIG, ">$configfile_to_test") || die $!;
   foreach my $arg (@arguments)
   {
     if ( $counter > 3 )
@@ -132,6 +134,29 @@ sub saveConfig
   }
   # Close the config file
   close CONFIG;
+
+  # Check here if the config is well formed and return any warnings and errors
+  my @configtest = `rsnapshot -c $configfile_to_test configtest 2>&1`;
+  my $syntaxOK = 0;
+  
+  # Check if Syntax ok
+  foreach (@configtest) 
+  { 
+    $syntaxOK = 1 if ("$_" =~ /^Syntax\sOK/); 
+  }
+
+  # Save the tested config file on the real place
+  if ($syntaxOK == 1) 
+  { 
+    system ("cp", $configfile_to_test, $configfile);
+    system ("rm", "-f",$configfile_to_test);
+    return @configtest if (scalar (@configtest) > 1);
+  }
+  else
+  { 
+    system ("rm", "-f",$configfile_to_test);
+    die ("@configtest");
+  }
   printf ("[%s] [ConfigWriter] Writing config file: $configfile finished.\n",scalar localtime);
 }
 

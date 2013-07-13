@@ -1,5 +1,5 @@
 % layout $custom_template;
-% title 'Config:Webrsnapshot';
+% title 'Webrsnapshot';
 
 <div id="bodycontainer">
   <form method="post" action="/config">
@@ -24,7 +24,11 @@
       <INPUT type="submit" class="submit_btn" value="Save">
 <!-- Tab 1: Root config -->
       <div id="tabs-1">
-        <div class="infoicon"><img src="default/img/info.png" title="You should not change this now!" /></div>
+        <div class="infoicon">
+          <img src="default/img/info.png" 
+            title="<b>Default: 1.2</b> (required)<br/> 
+            Config file version<br/>You should not change this!!!" />
+        </div>
         <div class="configlabel"><LABEL>config_version</LABEL></div>
         <div>
           <INPUT type="text" name="config_version" class="configfield" value="<%= $config_version %>" />
@@ -32,7 +36,7 @@
         <br/>
 
         <div class="infoicon">
-          <img src="default/img/info.png" title="All snapshots will be stored under this root directory.<br>
+          <img src="default/img/info.png" title="Local filesystem path to save all snapshots.<br>
           <b>Don't forget the trailing slash!!!</b>" />
         </div>
         <div class="configlabel"><LABEL>snapshot_root</LABEL></div>
@@ -94,7 +98,7 @@
 
         <div class="infoicon">
           <img src="default/img/info.png"
-            title="Full path to ssh (optional)\nUse this to enable remote ssh backups over rsync." />
+            title="Full path to <b>ssh</b> (optional)<br/>Use this to enable remote ssh backups over rsync." />
         </div>
         <div class="configlabel"><LABEL>cmd_ssh</LABEL></div>
         <div><INPUT type="text" name="cmd_ssh" class="configfield" value="<%= $cmd_ssh %>" /></div>
@@ -110,7 +114,7 @@
         <div class="infoicon">
           <img src="default/img/info.png"
             title="Use this to specify the path to <b>du</b> for disk usage checks. If you have an older
-            version of <b>du</b>, you may also want to check the <b>du_args</b> parameter below." />
+            version of <b>du</b>, you may also want to check the <b>du_args</b> parameter." />
         </div>
         <div class="configlabel"><LABEL>cmd_du</LABEL></div>
         <div><INPUT type="text" name="cmd_du" class="configfield" value="<%= $cmd_du %>" /></div>
@@ -146,8 +150,8 @@
       <div id="tabs-3">
         <div class="infoicon">
           <img src="default/img/info.png"
-            title="Verbose level, 1 through 5.<p/><b>1 Quiet</b> - Print fatal errors only<br/>
-            <b>2 Default</b> - Print errors and warnings only<br/><b>3 Verbose</b> - Show equivalent
+            title="Verbose level, 1 through 5.<br/><br/><b>1 Quiet</b> - Print fatal errors only<br/>
+            <b>2 Normal</b>(default) - Print errors and warnings only<br/><b>3 Verbose</b> - Show equivalent
             shell commands being executed<br/><b>4 Extra Verbose</b> - Show extra verbose information<br/>
             <b>5 Debug mode</b> - Everything" />
         </div>
@@ -158,7 +162,10 @@
       <div class="infoicon">
         <img src="default/img/info.png"
           title="Same as <b>'verbose'</b> above, but controls the amount of data sent to the logfile,
-          if one is being used. The <b>default</b> is 3." />
+          if one is being used.<br/><br/><b>1 Quiet</b> - Print fatal errors only<br/>
+            <b>2 Normal</b> - Print errors and warnings only<br/><b>3 Verbose</b>(default) - Show equivalent
+            shell commands being executed<br/><b>4 Extra Verbose</b> - Show extra verbose information<br/>
+            <b>5 Debug mode</b> - Everything" />
       </div>
       <div class="configlabel"><LABEL>loglevel</LABEL></div>
       <div><INPUT type="text" name="loglevel" class="configfield" value="<%= $loglevel %>" /></div>
@@ -439,7 +446,9 @@
               <% my $server = @$backup_servers[$bkp_srv_ptr]; %>
               <h3 id="server_<%= $serverid %>_name">
                 Server: <b><%= substr($server->[1], 0, -1) %></b>
-                <INPUT type="button" value="Delete" onclick="serverDelete(<%= $serverid %>)" />
+                <INPUT type="button" value="Delete" onclick="serverDelete(<%= $serverid %>)" 
+                  title="Delete the server: <b><%= substr($server->[1], 0, -1) %></b> from 
+                  the backup configuration." />
               </h3>
               <div id="server_<%= $serverid %>_config">
                 <INPUT type="hidden" id="server_label_<%= $serverid %>"
@@ -480,28 +489,7 @@
         </div> <!-- End of Accordion -->
         <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
         <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
-          onclick="srvAdd(this.id, this.name)" />
-        <div id="addServer-dialog-form" class="hidden" title="Create new Server">
-          <p class="validateTips">All form fields are required.</p>
-          <form>
-            <fieldset>
-              <label for="label">Server label</label><br/>
-              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
-              <label for="protocol">Connection Protocol</label><br/>
-              <select class="text ui-widget-content ui-corner-all">
-                <option value="localhost">LOCALHOST</option>
-                <option value="ssh">SSH</option>
-                <option value="rsync">RSYNC</option>
-                <option value="custom">CUSTOM</option>
-              </select> 
-              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
-              <label for="directory">Directory</label><br/>
-              <input type="text" value="/etc/" class="text ui-widget-content ui-corner-all" /><br/><br/>
-              <label for="option">Backup options for this directory</label><br/>
-              <input type="text" class="text ui-widget-content ui-corner-all" /><br/><br/>
-            </fieldset>
-          </form>
-        </div>
+          onclick="srvAdd(this.id, this.name)" title="Add new server to backup."/>
       </div> <!-- End of Tab 6 -->
 
 <!-- Tab 7: Scripts executed while backuping -->
