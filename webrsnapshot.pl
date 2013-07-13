@@ -109,8 +109,12 @@ get '/log' => sub
   my $password = $self->session('password')?$self->session('password'):"";
   if ( $self->authenticate( $username, $password ) )
   {
-    $self->stash(log_content  => LogReader->getContent( $config->{loglines} ));
-    $self->render('log');
+    eval
+    {
+      $self->stash( log_content  => LogReader->getContent($config->{loglines}) );
+      $self->render('log');
+    };
+    
   }
   else
   {

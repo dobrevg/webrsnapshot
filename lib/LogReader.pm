@@ -9,10 +9,10 @@ sub getContent
 {
   my $parser  = new ConfigReader;
   my $logfile = $parser->getLogFile();
-  my $result;
+  my $result  = "";
   my $linecounter = $_[1]? $_[1]:100;
 
-  my $bwlogfile = File::ReadBackwards->new( $logfile ) || die $!;
+  my $bwlogfile = File::ReadBackwards->new( $logfile ) || return $!.": $logfile";
   until ( $bwlogfile->eof ) {
     if ($linecounter-- > 0)
     {
