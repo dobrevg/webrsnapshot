@@ -26,7 +26,9 @@
       <div id="tabs-1">
         <div class="infoicon"><img src="default/img/info.png" title="You should not change this now!" /></div>
         <div class="configlabel"><LABEL>config_version</LABEL></div>
-        <div><INPUT type="text" name="config_version" value="<%= $config_version %>" /></div>
+        <div>
+          <INPUT type="text" name="config_version" class="configfield" value="<%= $config_version %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -34,7 +36,9 @@
           <b>Don't forget the trailing slash!!!</b>" />
         </div>
         <div class="configlabel"><LABEL>snapshot_root</LABEL></div>
-        <div><INPUT type="text" name="snapshot_root" value="<%= $snapshot_root %>" /></div>
+        <div>
+          <INPUT type="text" name="snapshot_root" class="configfield" value="<%= $snapshot_root %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -68,7 +72,7 @@
             This is the only command that must be enabled." />
         </div>
         <div class="configlabel"><LABEL>cmd_rsync</LABEL></div>
-        <div><INPUT type="text" name="cmd_rsync" value="<%= $cmd_rsync %>" /></div>
+        <div><INPUT type="text" name="cmd_rsync" class="configfield" value="<%= $cmd_rsync %>" /></div>
         <br/>
 
         <div class="infoicon">
@@ -77,7 +81,7 @@
             <b>EVERYONE ELSE:</b> Don't use 'cmd_cp' for compatibility." />
         </div>
         <div class="configlabel"><LABEL>cmd_cp</LABEL></div>
-        <div><INPUT type="text" name="cmd_cp" value="<%= $cmd_cp %>" /></div>
+        <div><INPUT type="text" name="cmd_cp" class="configfield" value="<%= $cmd_cp %>" /></div>
         <br/>
 
         <div class="infoicon">
@@ -85,7 +89,7 @@
             title="Use the <b>rm</b> program instead of the built-in perl routine." />
         </div>
         <div class="configlabel"><LABEL>cmd_rm</LABEL></div>
-        <div><INPUT type="text" name="cmd_rm" value="<%= $cmd_rm %>" /></div>
+        <div><INPUT type="text" name="cmd_rm" class="configfield" value="<%= $cmd_rm %>" /></div>
         <br/>
 
         <div class="infoicon">
@@ -93,14 +97,14 @@
             title="Full path to ssh (optional)\nUse this to enable remote ssh backups over rsync." />
         </div>
         <div class="configlabel"><LABEL>cmd_ssh</LABEL></div>
-        <div><INPUT type="text" name="cmd_ssh" value="<%= $cmd_ssh %>" /></div>
+        <div><INPUT type="text" name="cmd_ssh" class="configfield" value="<%= $cmd_ssh %>" /></div>
         <br/>
 
         <div class="infoicon">
           <img src="default/img/info.png" title="Disable this if you don't want syslog support." />
         </div>
         <div class="configlabel"><LABEL>cmd_logger</LABEL></div>
-        <div><INPUT type="text" name="cmd_logger" value="<%= $cmd_logger %>" /></div>
+        <div><INPUT type="text" name="cmd_logger" class="configfield" value="<%= $cmd_logger %>" /></div>
         <br/>
 
         <div class="infoicon">
@@ -109,14 +113,16 @@
             version of <b>du</b>, you may also want to check the <b>du_args</b> parameter below." />
         </div>
         <div class="configlabel"><LABEL>cmd_du</LABEL></div>
-        <div><INPUT type="text" name="cmd_du" value="<%= $cmd_du %>" /></div>
+        <div><INPUT type="text" name="cmd_du" class="configfield" value="<%= $cmd_du %>" /></div>
         <br/>
 
         <div class="infoicon">
           <img src="default/img/info.png" title="Fill out this to specify the path to <b>rsnapshot-diff</b>." />
         </div>
         <div class="configlabel"><LABEL>cmd_rsnapshot_diff</LABEL></div>
-        <div><INPUT type="text" name="cmd_rsnapshot_diff" value="<%= $cmd_rsnapshot_diff %>" /></div>
+        <div>
+          <INPUT type="text" name="cmd_rsnapshot_diff" class="configfield" value="<%= $cmd_rsnapshot_diff %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -125,7 +131,7 @@
           syncs files." />
         </div>
         <div class="configlabel"><LABEL>cmd_preexec</LABEL></div>
-        <div><INPUT type="text" name="cmd_preexec" value="<%= $cmd_preexec %>" /></div>
+        <div><INPUT type="text" name="cmd_preexec" class="configfield" value="<%= $cmd_preexec %>" /></div>
         <br/>
 
         <div class="infoicon">
@@ -134,7 +140,7 @@
             syncs files." />
         </div>
         <div class="configlabel"><LABEL>cmd_postexec</LABEL></div>
-        <div><INPUT type="text" name="cmd_postexec" value="<%= $cmd_postexec %>" /></div>
+        <div><INPUT type="text" name="cmd_postexec" class="configfield" value="<%= $cmd_postexec %>" /></div>
       </div>
 <!-- Tab 3: Global Options -->
       <div id="tabs-3">
@@ -155,7 +161,7 @@
           if one is being used. The <b>default</b> is 3." />
       </div>
       <div class="configlabel"><LABEL>loglevel</LABEL></div>
-      <div><INPUT type="text" name="loglevel" value="<%= $loglevel %>" /></div>
+      <div><INPUT type="text" name="loglevel" class="configfield" value="<%= $loglevel %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -164,7 +170,7 @@
           written is controlled by the <b>'loglevel'</b> parameter." />
       </div>
       <div class="configlabel"><LABEL>logfile</LABEL></div>
-      <div><INPUT type="text" name="logfile" value="<%= $logfile %>" /></div>
+      <div><INPUT type="text" name="logfile" class="configfield" value="<%= $logfile %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -174,7 +180,7 @@
           directory is not world writable. Otherwise anyone can prevent the program from running." />
       </div>
       <div class="configlabel"><LABEL>lockfile</LABEL></div>
-      <div><INPUT type="text" name="lockfile" value="<%= $lockfile %>" /></div>
+      <div><INPUT type="text" name="lockfile" class="configfield" value="<%= $lockfile %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -187,7 +193,9 @@
           preserve hard links in your backups, then add 'H' to this. " />
       </div>
       <div class="configlabel"><LABEL>rsync_short_args</LABEL></div>
-      <div><INPUT type="text" name="rsync_short_args" value="<%= $rsync_short_args %>" /></div>
+      <div>
+        <INPUT type="text" name="rsync_short_args" class="configfield" value="<%= $rsync_short_args %>" />
+      </div>
       <br/>
 
       <div class="infoicon">
@@ -200,14 +208,16 @@
           quotes) are not permitted. Similar quoting is also allowed in per-backup-point rsync_long_args." />
       </div>
       <div class="configlabel"><LABEL>rsync_long_args</LABEL></div>
-      <div><INPUT type="text" name="rsync_long_args" value="<%= $rsync_long_args %>" /></div>
+      <div>
+        <INPUT type="text" name="rsync_long_args" class="configfield" value="<%= $rsync_long_args %>" />
+      </div>
       <br/>
 
       <div class="infoicon">
         <img src="default/img/info.png" title="ssh has no args passed by default, but you can specify some here." />
       </div>
       <div class="configlabel"><LABEL>ssh_args</LABEL></div>
-      <div><INPUT type="text" name="ssh_args" value="<%= $ssh_args %>" /></div>
+      <div><INPUT type="text" name="ssh_args" class="configfield" value="<%= $ssh_args %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -217,7 +227,7 @@
           version is recommended, since it offers the most features." />
       </div>
       <div class="configlabel"><LABEL>du_args </LABEL></div>
-      <div><INPUT type="text" name="du_args" value="<%= $du_args %>" /></div>
+      <div><INPUT type="text" name="du_args" class="configfield" value="<%= $du_args %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -281,7 +291,9 @@
           set this to a non-zero value to have the rsync operation re-tried" />
       </div>
       <div class="configlabel"><LABEL>rsync_numtries</LABEL></div>
-      <div><INPUT type="text" name="rsync_numtries" value="<%= $rsync_numtries %>" /></div>
+      <div>
+        <INPUT type="text" name="rsync_numtries" class="configfield" value="<%= $rsync_numtries %>" />
+      </div>
       </div>
 <!-- Tab 4: Backup Intervals -->
       <div id="tabs-4">
@@ -290,7 +302,9 @@
             title="The number of snapshots that will be retained for hourly backups." />
         </div>
         <div class="configlabel"><LABEL>retain hourly</LABEL></div>
-        <div><INPUT type="text" name="retain_hourly" value="<%= $interval_hourly %>" /></div>
+        <div>
+          <INPUT type="text" name="retain_hourly" class="configfield" value="<%= $interval_hourly %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -298,7 +312,9 @@
             title="The number of snapshots that will be retained for daily backups." />
         </div>
         <div class="configlabel"><LABEL>retain daily</LABEL></div>
-        <div><INPUT type="text" name="retain_daily" value="<%= $interval_daily %>" /></div>
+        <div>
+          <INPUT type="text" name="retain_daily" class="configfield" value="<%= $interval_daily %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -306,7 +322,9 @@
             title="The number of snapshots that will be retained for weekly backups." />
         </div>
         <div class="configlabel"><LABEL>retain weekly</LABEL></div>
-        <div><INPUT type="text" name="retain_weekly" value="<%= $interval_weekly %>" /></div>
+        <div>
+          <INPUT type="text" name="retain_weekly" class="configfield" value="<%= $interval_weekly %>" />
+        </div>
         <br/>
 
         <div class="infoicon">
@@ -314,7 +332,9 @@
           title="The number of snapshots that will be retained for monthly backups." />
         </div>
         <div class="configlabel"><LABEL>retain monthly</LABEL></div>
-        <div><INPUT type="text" name="retain_monthly" value="<%= $interval_monthly %>" /></div>
+        <div>
+          <INPUT type="text" name="retain_monthly" class="configfield" value="<%= $interval_monthly %>" />
+        </div>
         <br/>
       </div>
 <!-- Tab 5: Includes/Excludes -->
@@ -327,7 +347,7 @@
           are	ignored." />
       </div>
       <div class="configlabel"><LABEL>include_file</LABEL></div>
-      <div><INPUT type="text" name="include_file" value="<%= $include_file %>" /></div>
+      <div><INPUT type="text" name="include_file" class="configfield" value="<%= $include_file %>" /></div>
       <br/>
 
       <div class="infoicon">
@@ -338,7 +358,7 @@
           are ignored." />
       </div>
       <div class="configlabel"><LABEL>exclude_file</LABEL></div>
-      <div><INPUT type="text" name="exclude_file" value="<%= $exclude_file %>" /></div>
+      <div><INPUT type="text" name="exclude_file" class="configfield" value="<%= $exclude_file %>" /></div>
       <br/>
 
 <!-- Include Patterns -->
@@ -355,7 +375,7 @@
               <div class="configlabel" id="include_<%= $include_ptr %>_label"><LABEL>include</LABEL></div>
               <div id="include_<%= $include_ptr %>">
                 <INPUT type="button" value="Delete" onclick="delExIn('include_<%= $include_ptr %>');">
-                <INPUT type="text" name="include_<%= $include_ptr %>" 
+                <INPUT type="text" name="include_<%= $include_ptr %>"  class="configfield"
                   value="<%= @$include[$include_ptr++] %>" />
               </div>
             <% } %>
@@ -389,7 +409,8 @@
               <div class="configlabel" id="exclude_<%= $exclude_ptr %>_label"><LABEL>exclude</LABEL></div>
               <div id="exclude_<%= $exclude_ptr %>">
                 <INPUT type="button" value="Delete" onclick="delExIn('exclude_<%= $exclude_ptr %>');" />
-                <INPUT type="text" name="exclude_<%= $exclude_ptr %>" value="<%= @$exclude[$exclude_ptr++] %>" />
+                <INPUT type="text" name="exclude_<%= $exclude_ptr %>" 
+                  class="configfield" value="<%= @$exclude[$exclude_ptr++] %>" />
               </div>
             <% } %>
           <% } %>
@@ -435,10 +456,10 @@
                       title="Delete this directory from the backup."/>
                     <INPUT type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
                       name="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
-                      value="<%= $newserver->[0] %>" />
+                       class="configfield" value="<%= $newserver->[0] %>" />
                     <INPUT type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_args"
                       name="server_<%= $serverid %>_dir_<%= $newdirid %>_args"
-                      value="<%= $newserver->[2] %>" />
+                       class="configfield" value="<%= $newserver->[2] %>" />
                     <br/>
                   </div>
                   <% $bkp_srv_ptr++; $newdirid++; %>
@@ -488,7 +509,7 @@
 <!--
         <div class="infoicon"><img src="default/img/info.png" title="" /></div>
         <div class="configlabel"><LABEL>backup scripts</LABEL></div>
-        <div><INPUT type="text" value="<%= @$backup_scripts[0] %>" /></div>
+        <div><INPUT type="text" class="configfield" value="<%= @$backup_scripts[0] %>" /></div>
 -->
       </div>
     </div> <!-- End of "tabs" -->
