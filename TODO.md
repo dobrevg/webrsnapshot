@@ -47,8 +47,6 @@ Feature Request
 
 * Showing some server info like free space, load etc.
 
-* Showing logfile or some part of it
-
 
 **Priority Low**
 
