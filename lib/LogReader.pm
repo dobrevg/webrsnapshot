@@ -7,7 +7,7 @@ use File::ReadBackwards;
 
 sub getContent
 {
-  my $parser  = new ConfigReader;
+  my $parser  = new ConfigReader($_[2]?$_[2]:"/etc/rsnapshot.conf");
   my $logfile = $parser->getLogFile();
   my $result  = "";
   my $linecounter = $_[1]? $_[1]:100;

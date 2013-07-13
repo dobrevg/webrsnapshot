@@ -119,10 +119,11 @@ get '/log' => sub
     {
       # User defined temaplate
       $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
-      $self->stash( log_content     => LogReader->getContent($config->{loglines}) );
+      $self->stash( log_content     => LogReader->getContent( 
+                                                      $config->{loglines},
+                                                      $config->{rs_config}) );
       $self->render('log');
     };
-    
   }
   else
   {
@@ -198,6 +199,7 @@ post '/config' => sub {
         scalar @exclude,
         $servers_line_count,
         $scripts_count,
+        $config->{rs_config}? $config->{rs_config}:"/etc/rsnapshot.conf",
         # Tab 1 - Root	
         $self->param('config_version'),
         $self->param('snapshot_root' ),
@@ -277,9 +279,9 @@ get '/config' => sub {
   if ( $self->authenticate( $username, $password ) )
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
+    $self->stash( custom_template => $config->{template}? $config->{template}:"default" );
     # Create object from the Config File
-    my $parser = new ConfigReader;
+    my $parser = new ConfigReader($config->{rs_config}? $config->{rs_config}:"/etc/rsnapshot.conf");
     # Tab 1 - Root
     $self->stash(config_version => $parser->getConfigVersion() );
     $self->stash(snapshot_root  => $parser->getSnapshotRoot()  );

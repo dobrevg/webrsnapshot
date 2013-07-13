@@ -2,9 +2,6 @@ package ConfigWriter;
 use strict;
 use warnings;
 
-my $configfile         = "/etc/rsnapshot.conf";
-my $configfile_to_test = $configfile."_$$";
-
 ## Root
 my @config_parameters =
 (
@@ -13,74 +10,78 @@ my @config_parameters =
   "exclude_count",         # 1
   "server_count",          # 2
   "scrips_count",          # 3
+  "rs_config_file",        # 4
   # Tab 1: Root config
-  "config_version\t",      # 4
-  "snapshot_root\t",       # 5
-  "no_create_root\t",      # 6
+  "config_version\t",      # 5
+  "snapshot_root\t",       # 6
+  "no_create_root\t",      # 7
   # Tab 2: Optional programs and scripts used
-  "cmd_cp\t\t\t",          # 7
-  "cmd_rm\t\t\t",          # 8
-  "cmd_rsync\t\t",         # 9
-  "cmd_ssh\t\t\t",         # 10
-  "cmd_logger\t\t",        # 11
-  "cmd_du\t\t\t",          # 12
-  "cmd_rsnapshot_diff",    # 13
-  "cmd_preexec",           # 14
-  "cmd_postexec",          # 15
+  "cmd_cp\t\t\t",          # 8
+  "cmd_rm\t\t\t",          # 9
+  "cmd_rsync\t\t",         # 10
+  "cmd_ssh\t\t\t",         # 11
+  "cmd_logger\t\t",        # 12
+  "cmd_du\t\t\t",          # 13
+  "cmd_rsnapshot_diff",    # 14
+  "cmd_preexec",           # 15
+  "cmd_postexec",          # 16
   # Tab 4: Backup Intervals
-  "retain\t\t\t\thourly",  # 16
-  "retain\t\t\t\tdaily",   # 17
-  "retain\t\t\t\tweekly",  # 18
-  "retain\t\t\t\tmonthly", # 19
+  "retain\t\t\t\thourly",  # 17
+  "retain\t\t\t\tdaily",   # 18
+  "retain\t\t\t\tweekly",  # 19
+  "retain\t\t\t\tmonthly", # 20
   # Tab 3: Global Options
-  "verbose\t\t\t",         # 20
-  "loglevel\t\t",          # 21
-  "logfile\t\t\t",         # 22
-  "lockfile\t\t",          # 23
-  "rsync_short_args",      # 24
-  "rsync_long_args\t",     # 25
-  "ssh_args\t",            # 26
-  "du_args\t\t",           # 27
-  "one_fs\t\t",            # 28
-  "link_dest\t\t",         # 29
-  "sync_first",            # 30
-  "use_lazy_deletes",      # 31
-  "rsync_numtries\t",      # 32
+  "verbose\t\t\t",         # 21
+  "loglevel\t\t",          # 22
+  "logfile\t\t\t",         # 23
+  "lockfile\t\t",          # 24
+  "rsync_short_args",      # 25
+  "rsync_long_args\t",     # 26
+  "ssh_args\t",            # 27
+  "du_args\t\t",           # 28
+  "one_fs\t\t",            # 29
+  "link_dest\t\t",         # 30
+  "sync_first",            # 31
+  "use_lazy_deletes",      # 32
+  "rsync_numtries\t",      # 33
   # Tab 5: Includes/Excludes
-  "include_file\t",        # 33
-  "exclude_file\t",        # 34
-  "include\t\t\t",         # 35
-  "exclude\t\t\t",         # 36
+  "include_file\t",        # 34
+  "exclude_file\t",        # 35
+  "include\t\t\t",         # 36
+  "exclude\t\t\t",         # 37
   # Tab 6: Servers
-  "backup\t\t\t\t",        # 37
+  "backup\t\t\t\t",        # 38
   # Tab 7: Scripts
-  "backup_script\t",       # 38
+  "backup_script\t",       # 39
 );
 
 # and save the config File
 # Parameters is all post data from config
 sub saveConfig
 {
-  my $counter = 0;
-  my $include_start = 35;
-  my @arguments = @_;
+  my $counter       = 0;
+  my $include_start = 36;
+  my @arguments     = @_;
 
-  my $include_count = $arguments[0];
-  my $incl_counter  = 0;
+  my $include_count   = $arguments[0];
+  my $incl_counter    = 0;
 
-  my $exclude_count = $arguments[1];
-  my $excl_counter  = 0;
+  my $exclude_count   = $arguments[1];
+  my $excl_counter    = 0;
 
   my $servers_count   = $arguments[2];
   my $servers_counter = 0;
 
-  my $scripts_count = $arguments[3];
-  # printf ("[ConfigWriter] Scripts Count %s\n",$scripts_count);
+  my $scripts_count   = $arguments[3];
+
+  my $configfile      = $arguments[4];
+  my $config_to_test  = $configfile."_$$";
+
   # Open the config file for writing
-  open (CONFIG, ">$configfile_to_test") || die $!;
+  open (CONFIG, ">$config_to_test") || die $!;
   foreach my $arg (@arguments)
   {
-    if ( $counter > 3 )
+    if ( $counter > 4 )
     { 
       # If not defined, we brake off
       if (!defined $arg || $arg eq "" || $arg eq "off") {}
@@ -136,7 +137,7 @@ sub saveConfig
   close CONFIG;
 
   # Check here if the config is well formed and return any warnings and errors
-  my @configtest = `rsnapshot -c $configfile_to_test configtest 2>&1`;
+  my @configtest = `rsnapshot -c $config_to_test configtest 2>&1`;
   my $syntaxOK = 0;
   
   # Check if Syntax ok
@@ -148,13 +149,13 @@ sub saveConfig
   # Save the tested config file on the real place
   if ($syntaxOK == 1) 
   { 
-    system ("cp", $configfile_to_test, $configfile);
-    system ("rm", "-f",$configfile_to_test);
+    system ("cp", $config_to_test, $configfile);
+    system ("rm", "-f",$config_to_test);
     return @configtest if (scalar (@configtest) > 1);
   }
   else
   { 
-    system ("rm", "-f",$configfile_to_test);
+    system ("rm", "-f",$config_to_test);
     die ("@configtest");
   }
   printf ("[%s] [ConfigWriter] Writing config file: $configfile finished.\n",scalar localtime);

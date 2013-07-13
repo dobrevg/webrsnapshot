@@ -2,7 +2,7 @@ package ConfigReader;
 use strict;
 use warnings;
 
-my $configfile         = "/etc/rsnapshot.conf";
+my $configfile         = "";
 # Root
 my $config_version     = "";
 my $snapshot_root      = "";
@@ -54,12 +54,8 @@ sub new
 {
   my $this = {};             # Create an anonymouns hash, and #self points to it
   bless   $this;             # Connect the hash to the package
-  $this->doInitialisation();
-  return  $this;             # Return the reference to the hash
-}
+  $configfile = $_[1];
 
-sub doInitialisation
-{
   printf ("[%s] Start reading config file: $configfile\n",scalar localtime);
   open (CONFIG, $configfile) || die $!;
   while (<CONFIG>)
@@ -135,6 +131,7 @@ sub doInitialisation
   $exclude_ptr        = 0;
   $backup_servers_ptr = 0;
   $backup_scripts_ptr = 0;
+  return  $this;             # Return the reference to the hash
 }
 
 # Tab1

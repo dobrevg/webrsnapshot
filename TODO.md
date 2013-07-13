@@ -38,8 +38,6 @@ Feature Request
 
 * Editing Crontab(s)
 
-* Validating configuration (before saving it would be nice)
-
 
 **Priority Normal**
 
