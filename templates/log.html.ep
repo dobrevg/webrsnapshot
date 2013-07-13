@@ -12,14 +12,9 @@
   <div id="content">
     <div id="tabs">
       <ul>
-        <li><a>Home</a></li>
+        <li><a>Log: </a></li>
       </ul>
-
-      <div id="tabs-1">
-      <br/><br/>
-      There is nothing here, but you can switch to the <a href="<%= url_for->path('/config') %>">config</a> 
-      over the main menu.
-      </div> <!--  End of Tab 1 -->
-    </div>
-  </div> <!-- End of "content" -->
+      <textarea id="logtextarea" readonly><%= $log_content %></textarea>
+    </div> <!-- End of Tabs -->
+  </div> <!-- End of Content -->
 </div> <!-- End of "bodycontainer" -->

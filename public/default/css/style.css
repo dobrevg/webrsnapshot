@@ -15,6 +15,7 @@
 #logout             { float:right; }
 
 .hidden             { display:none; }
+#logtextarea        { width: 99.5%; height: 29em;}
 
 input[type="text"]  { width:300px; }
 #accordion h3 input[type="button"] { float:right; }

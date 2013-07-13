@@ -6,7 +6,7 @@
     <link rel="stylesheet" type="text/css" href="default/css/jquery-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="default/css/style.css" />
     <script src="default/js/jquery-2.0.3.min.js"></script>
-    <script src="default/js/jquery-ui.min.js"></script>
+    <script src="default/js/jquery-ui-1.10.3.min.js"></script>
     <script src="default/js/webrsnapshot.js"></script>
     <script>
       if ("<%= flash 'saved' %>" == "yes") {

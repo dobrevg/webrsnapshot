@@ -8,10 +8,12 @@ use lib "$FindBin::Bin/lib";     # use the lib directory
 
 use ConfigReader;
 use ConfigWriter;
+use LogReader;
 use Mojolicious::Lite;
 use Mojolicious::Plugin::Authentication;
 use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
+
 
 my $config = plugin 'Config';
 
@@ -98,6 +100,24 @@ any '/logout' => sub {
   $self->redirect_to('/login');
 };
 
+
+# And write the log file here.
+get '/log' => sub 
+{
+  my $self = shift;
+  my $username = $self->session('username')?$self->session('username'):"";
+  my $password = $self->session('password')?$self->session('password'):"";
+  if ( $self->authenticate( $username, $password ) )
+  {
+    $self->stash(log_content  => LogReader->getContent( $config->{loglines} ));
+    $self->render('log');
+  }
+  else
+  {
+    $self->redirect_to('/login');
+  }
+};
+
 # Write confguration file
 post '/config' => sub {
   my $self = shift;
@@ -129,7 +149,7 @@ post '/config' => sub {
         $exclude[$i++] = $self->param('exclude_'.$c++);
       }
     }
-  
+
     # Servers loop do get all configured server lines from the post data
     my @servers = ();
     my $servers_count = $self->param('servers_count');
@@ -151,7 +171,7 @@ post '/config' => sub {
         }
       }
     }
-  
+
     # TODO
     # Scripts loop
     my @scripts = ();
@@ -276,11 +296,12 @@ get '/config' => sub {
     $self->stash(backup_servers => [ $parser->getServers() ]);
     # Tab 7 - Scripts
     $self->stash(backup_scripts => [ $parser->getScripts() ]);
-    # And render the web interface
-    $self->render('config');
-  
+
     # Object have to be destroyed, to not show the config from the first read
     $parser->DESTROY();
+
+    # And render the web interface
+    $self->render('config');
   }
   else
   {
