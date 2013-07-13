@@ -50,7 +50,7 @@ get '/' => sub {
   if ( $self->authenticate( $username, $password ) )
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template} );
+    $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
     $self->render('index');
   }
   else
@@ -72,7 +72,7 @@ get '/login' => sub
   else
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template} );
+    $self->stash( custom_template => $config->{template}? $config->{template}:'default');
     $self->render('login');
   }
 };
@@ -118,7 +118,7 @@ get '/log' => sub
     eval
     {
       # User defined temaplate
-      $self->stash( custom_template => $config->{template} );
+      $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
       $self->stash( log_content     => LogReader->getContent($config->{loglines}) );
       $self->render('log');
     };
@@ -265,7 +265,7 @@ get '/config' => sub {
   if ( $self->authenticate( $username, $password ) )
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template} );
+    $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
     # Create object from the Config File
     my $parser = new ConfigReader;
     # Tab 1 - Root
