@@ -12,7 +12,7 @@
   <div id="content">
     <div id="tabs">
       <ul>
-        <li><a>Log: </a></li>
+        <li><a>Log</a></li>
       </ul>
       <textarea id="logtextarea" readonly><%= $log_content %></textarea>
     </div> <!-- End of Tabs -->

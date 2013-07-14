@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Webrsnapshot</title>
+  </head>
+<body>
+<h1>Unknown Error!</h1>
+Oops, there was na error accessing this website. Please <a href=<%= url_for->path('/') %> >go back</a> and try again.<br/>
+If you see this message for the second time, contact the system administrator.
+</body>
+</html>
