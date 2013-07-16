@@ -22,7 +22,13 @@
         <li><a href="#tabs-7">Scripts</a></li>
       </ul>
       <INPUT type="submit" class="submit_btn" value="Save">
-<!-- Tab 1: Root config -->
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 1: Root config
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-1">
         <div class="infoicon">
           <img src="default/img/info.png" 
@@ -67,9 +73,15 @@
         <div class="configlabel"><LABEL>include_conf</LABEL></div>
         <div><INPUT type="file" disabled title="Waiting for development" /></div>
 -->
-
       </div>
-<!-- Tab 2: Optional programs and scripts used -->
+
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 2: Optional programs and scripts used
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-2">
         <div class="infoicon">
           <img src="default/img/info.png" title="<b>rsync</b> must be enabled for anything to work.
@@ -146,7 +158,14 @@
         <div class="configlabel"><LABEL>cmd_postexec</LABEL></div>
         <div><INPUT type="text" name="cmd_postexec" class="configfield" value="<%= $cmd_postexec %>" /></div>
       </div>
-<!-- Tab 3: Global Options -->
+
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 3: Global Options 
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-3">
         <div class="infoicon">
           <img src="default/img/info.png"
@@ -302,7 +321,14 @@
         <INPUT type="text" name="rsync_numtries" class="configfield" value="<%= $rsync_numtries %>" />
       </div>
       </div>
-<!-- Tab 4: Backup Intervals -->
+
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 4: Backup Intervals
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-4">
         <div class="infoicon">
           <img src="default/img/info.png"
@@ -344,7 +370,16 @@
         </div>
         <br/>
       </div>
-<!-- Tab 5: Includes/Excludes -->
+
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 5: Includes/Excludes 
+      ##########################################################
+      ##########################################################
+-->
+
+<!-- ##### INCLUDE/EXLUDE FILES ##### -->
       <div id="tabs-5">
       <div class="infoicon">
         <img src="default/img/info.png"
@@ -368,7 +403,7 @@
       <div><INPUT type="text" name="exclude_file" class="configfield" value="<%= $exclude_file %>" /></div>
       <br/>
 
-<!-- Include Patterns -->
+<!-- ##### Include Patterns ##### -->
       <div id="include">
         <% my $include_ptr = 0; %>
           <% if (!(@$include[$include_ptr] eq "")) { %>
@@ -402,7 +437,7 @@
         </div>
         <br/> <!-- End of Include Patterns -->
 
-<!-- Exclude Patterns -->
+<!-- ##### Exclude Patterns ##### -->
         <div id="exclude">
           <% my $exclude_ptr = 0; %>
           <% if (@$exclude[0] ne "") { %>
@@ -436,7 +471,13 @@
         </div> <!-- End of Exclude Patterns -->
       </div> <!-- End of Tab 5 -->
 
-<!-- Tab 6: Servers to backup -->
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 6: Servers to backup 
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-6">
         <div id="accordion">
           <% my $bkp_srv_ptr = 0; %>
@@ -492,7 +533,13 @@
           onclick="srvAdd(this.id, this.name)" title="Add new server to backup."/>
       </div> <!-- End of Tab 6 -->
 
-<!-- Tab 7: Scripts executed while backuping -->
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab 7: Scripts executed while backuping 
+      ##########################################################
+      ##########################################################
+-->
       <div id="tabs-7">
 <!--
         <div class="infoicon"><img src="default/img/info.png" title="" /></div>
