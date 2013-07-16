@@ -75,7 +75,7 @@ sub saveConfig
   my $scripts_count   = $arguments[3];
 
   my $configfile      = $arguments[4];
-  my $config_to_test  = $configfile."_$$";
+  my $config_to_test  = "/tmp/rsnapshot_".(int(rand(899))+100);
 
   # Open the config file for writing
   open (CONFIG, ">$config_to_test") || die $!;
