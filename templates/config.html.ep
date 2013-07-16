@@ -6,7 +6,7 @@
   <div id="menucontainer">
     <ul id="menu">
       <li><a href=<%= url_for->path('/') %> >Home</a></li>
-      <li><a href=<%= url_for->path('/config') %> >Config</a></li>
+      <li><a href=<%= url_for->path('/config') %> class="active" >Config</a></li>
       <li><a href=<%= url_for->path('/log') %> >Log</a></li>
     </ul>
   </div>
