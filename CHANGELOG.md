@@ -3,6 +3,7 @@ Version 0.next
 
 * [feature] - Implement backup_scripts
 * [fix]     - webrsnapshot.sample.conf defaults values
+* [new]     - Show some system information (openSUSE)
 
 
 Version 0.4

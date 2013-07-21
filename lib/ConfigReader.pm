@@ -54,7 +54,7 @@ sub new
 {
   my $this = {};             # Create an anonymouns hash, and #self points to it
   bless   $this;             # Connect the hash to the package
-  $configfile = $_[1];
+  $configfile = $_[1]?$_[1]:"/etc/rsnapshot.conf";
 
   printf ("[%s] Start reading config file: $configfile\n",scalar localtime);
   open (CONFIG, $configfile) || die $!;

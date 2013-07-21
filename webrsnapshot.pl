@@ -13,9 +13,12 @@ use Mojolicious::Lite;
 use Mojolicious::Plugin::Authentication;
 use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
+use SystemInfo;
 
 
-my $config = plugin 'Config';
+my $config           = plugin 'Config';
+my $rs_config        = $config->{rs_config}? $config->{rs_config}: '/etc/rsnapshot.conf';
+my $default_template = $config->{template}? $config->{template}:'default';
 
 plugin 'authentication', {
   autoload_user => 0,
@@ -49,9 +52,26 @@ get '/' => sub {
   my $password = $self->session( 'password' )?$self->session( 'password' ):"";
   if ( $self->authenticate( $username, $password ) )
   {
-    # User defined temaplate
-    $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
-    $self->render('index');
+    eval
+    {
+      # User defined temaplate
+      $self->stash( custom_template => $default_template );
+      $self->stash( rs_configfile   => $rs_config);
+      my $parser = new ConfigReader($rs_config);
+      $self->stash( rs_root_dir     => $parser->getSnapshotRoot());
+      # Get info about the operating system
+      my @operatingsystem = SystemInfo->getSystem();
+      $self->stash( operatingSystemDist => $operatingsystem[0]);
+      # Get info about the file system
+      my @partition = SystemInfo->getPartitionInfo( $rs_config );
+      $self->stash( partitionInfoPart => $partition[0]);
+      $self->stash( partitionInfoSize => $partition[1]);
+      $self->stash( partitionInfoUsed => $partition[2]);
+      $self->stash( partitionInfoFree => $partition[3]);
+      $self->stash( partitionInfoPerc => $partition[4]);
+      $self->stash( partitionInfoMP   => $partition[5]);
+      $self->render('index');
+    };
   }
   else
   {
@@ -72,7 +92,7 @@ get '/login' => sub
   else
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template}? $config->{template}:'default');
+    $self->stash( custom_template => $default_template);
     $self->render('login');
   }
 };
@@ -86,7 +106,7 @@ post '/login' => sub {
   if ( $self->authenticate( $username, $password ) )
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template} );
+    $self->stash( custom_template => $default_template );
     # And save as session data
     $self->session(username => $username);
     $self->session(password => $password);
@@ -118,7 +138,7 @@ get '/log' => sub
     eval
     {
       # User defined temaplate
-      $self->stash( custom_template => $config->{template}? $config->{template}:'default' );
+      $self->stash( custom_template => $default_template );
       $self->stash( log_content     => LogReader->getContent( 
                                                       $config->{loglines},
                                                       $config->{rs_config}) );
@@ -208,7 +228,7 @@ post '/config' => sub {
         scalar @exclude,
         $servers_line_count,
         $scripts_count,
-        $config->{rs_config}? $config->{rs_config}:"/etc/rsnapshot.conf",
+        $rs_config,
         # Tab 1 - Root	
         $self->param('config_version'),
         $self->param('snapshot_root' ),
@@ -288,9 +308,9 @@ get '/config' => sub {
   if ( $self->authenticate( $username, $password ) )
   {
     # User defined temaplate
-    $self->stash( custom_template => $config->{template}? $config->{template}:"default" );
+    $self->stash( custom_template => $default_template );
     # Create object from the Config File
-    my $parser = new ConfigReader($config->{rs_config}? $config->{rs_config}:"/etc/rsnapshot.conf");
+    my $parser = new ConfigReader($rs_config);
     # Tab 1 - Root
     $self->stash(config_version => $parser->getConfigVersion() );
     $self->stash(snapshot_root  => $parser->getSnapshotRoot()  );

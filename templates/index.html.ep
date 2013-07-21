@@ -5,8 +5,8 @@
   <div id="menucontainer">
     <ul id="menu">
       <li><a href=<%= url_for->path('/') %> class="active" >Home</a></li>
-      <li><a href=<%= url_for->path('/config') %> >Config</a></li>
-      <li><a href=<%= url_for->path('/log') %> >Log</a></li>
+      <li><a href=<%= url_for->path('/config') %> >Rsnapshot Config</a></li>
+      <li><a href=<%= url_for->path('/log') %> >Rsnapshot Log</a></li>
     </ul>
   </div>
   <div id="content">
@@ -16,9 +16,23 @@
       </ul>
 
       <div id="tabs-1">
-      <br/><br/>
-      There is nothing here, but you can switch to the <a href="<%= url_for->path('/config') %>">config</a> 
-      over the main menu.
+      
+      <ul>
+      <h3>General Server Information</h3>
+        <li>Operating  system: <strong><%= $operatingSystemDist %></strong></li>
+        <li>Rsnapshot config file: <strong><%= $rs_configfile %></strong></li>
+        <li>Rsnapshot root(backup folder): <strong><%= $rs_root_dir %></strong></li>
+        <li>
+          Backup partition:<strong> <%= $partitionInfoPart %></strong>
+          with mount point: <strong><%= $partitionInfoMP %></strong>
+        </li>
+        <li>
+          Allocation: <strong><%= $partitionInfoPerc %></strong>
+          (Size: <strong><%= $partitionInfoSize %></strong>, 
+           Used: <strong><%= $partitionInfoUsed %></strong>,
+           Free: <strong><%= $partitionInfoFree %></strong>)
+        </li>
+      </ul>
       </div> <!--  End of Tab 1 -->
     </div>
   </div> <!-- End of "content" -->
