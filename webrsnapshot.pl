@@ -163,7 +163,7 @@ post '/config' => sub {
       }
     }
 
-    # Servers loop do get all configured server lines from the post data
+    # Servers loop to get all configured server lines from the post data
     my @servers = ();
     my $servers_count = $self->param('servers_count');
     my $count = 0;
@@ -180,15 +180,24 @@ post '/config' => sub {
           my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
             "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : ""; 
           $servers[$servers_line_count++] = 
-          $self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
+            $self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
         }
       }
     }
 
-    # TODO
-    # Scripts loop
+    # backup_script loop to get all configured scripts from the post data
     my @scripts = ();
+    my $scripts_count_postdata = $self->param('bkp_script_count');
     my $scripts_count = 0;
+    for (my $c=0; $c<$scripts_count_postdata; $c++)
+    {
+      my $scriptname = $self->param('bkp_script_'.$c.'_script');
+      if ($scriptname)
+      {
+        $scripts[$scripts_count++] = $scriptname."\t\t".$self->param('bkp_script_'.$c.'_target');
+      }
+    }
+
     my @saveResult = {};
   
     # And send everything to the ConfigWriter

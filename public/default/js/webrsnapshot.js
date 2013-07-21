@@ -157,3 +157,25 @@ function delBkpScript(id) {
 	$("#bkp_script_"+id+"_label").remove();
 	$("#bkp_script_"+id).remove();
 }
+
+//Add line to backup_script 
+function addBkpScript(buttonid,count) {
+  var next = parseInt(count)+1;
+  document.getElementById(buttonid).name            = next;
+  document.getElementById("bkp_script_count").value = next;
+  $("#bkp_scripts").append('<div class="infoicon" id="bkp_script_' + count + '_info">' +
+      '<img src="default/img/info.png"' +
+        'title="This script should simply create files and/or directories in its current working directory.' +
+        '<b>rsnapshot</b> will then take that output and move it into the directory specified in the third' +
+        'column.<br/>' +
+        'Please note that whatever is in the destination directory will be completely deleted and recreated.' +
+        'For this reason, rsnapshot prevents you from specifying a destination directory for a ' +
+        '<b>backup_script</b> that will clobber other backups." />' +
+    '</div>' +
+    '<div class="configlabel" id="bkp_script_' + count + '_label"><LABEL>backup_script</LABEL></div>' +
+    '<div id="bkp_script_' + count + '">' +
+      '<INPUT type="button" value="Delete" onclick="delBkpScript(' + count + ');"> ' +
+      '<INPUT type="text" class="configfieldsmall" value="" name="bkp_script_' + count + '_script"/> ' +
+      '<INPUT type="text" class="configfieldsmall" value="" name="bkp_script_' + count + '_target"/> ' +
+    '</div>');
+}

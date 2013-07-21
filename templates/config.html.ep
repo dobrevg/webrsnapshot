@@ -541,11 +541,12 @@
       ##########################################################
 -->
       <div id="tabs-7">
+        <div id="bkp_scripts">
         <br/><br/>
         <% my $bkp_script_ptr = 0; %>
         <% if (@$backup_scripts[$bkp_script_ptr] ne "") { %>
           <% my $script = ""; %>
-          <% while ( (@$backup_scripts + 1) > $bkp_script_ptr) { %>
+          <% while ( @$backup_scripts > $bkp_script_ptr) { %>
             <% $script = @$backup_scripts[$bkp_script_ptr]; %>
             <div class="infoicon" id="bkp_script_<%= $bkp_script_ptr %>_info">
               <img src="default/img/info.png" 
@@ -557,18 +558,32 @@
                 <b>backup_script</b> that will clobber other backups." />
             </div>
             <div class="configlabel" id="bkp_script_<%= $bkp_script_ptr %>_label"><LABEL>backup_script</LABEL></div>
-            <% if ( @$backup_scripts != $bkp_script_ptr) { %>
-              <div id="bkp_script_<%= $bkp_script_ptr %>">
-                <INPUT type="button" value="Delete" onclick="delBkpScript(<%= $bkp_script_ptr %>);">
-                <INPUT type="text" class="configfieldsmall" value="<%= $script->[0] %>" />
-                <INPUT type="text" class="configfieldsmall" value="<%= $script->[1] %>" />
-              </div>
-            <% } else { %>
-              <div><INPUT type="button" value="Add"></div>
-            <% } %>
+            <div id="bkp_script_<%= $bkp_script_ptr %>">
+              <INPUT type="button" value="Delete" onclick="delBkpScript(<%= $bkp_script_ptr %>);">
+              <INPUT type="text" class="configfieldsmall" value="<%= $script->[0] %>" 
+                name="bkp_script_<%= $bkp_script_ptr %>_script" />
+              <INPUT type="text" class="configfieldsmall" value="<%= $script->[1] %>" 
+                name="bkp_script_<%= $bkp_script_ptr %>_target"/>
+            </div>
             <% $bkp_script_ptr++; %>
           <% } %>
         <% } %>
+        </div> <!-- End of Backup Scripts-->
+        <div class="infoicon">
+          <img src="default/img/info.png" 
+            title="This script should simply create files and/or directories in its current working directory.
+            <b>rsnapshot</b> will then take that output and move it into the directory specified in the third
+            column.<br/>
+            Please note that whatever is in the destination directory will be completely deleted and recreated.
+            For this reason, rsnapshot prevents you from specifying a destination directory for a
+            <b>backup_script</b> that will clobber other backups." />
+         </div>
+         <div class="configlabel"><LABEL>backup_script</LABEL></div>
+         <div>
+           <INPUT type="hidden" id="bkp_script_count" name="bkp_script_count" value="<%= $bkp_script_ptr %>" />
+           <INPUT type="button" value="Add" id="add_bkp_script" name="<%= $bkp_script_ptr %>" 
+             onclick="addBkpScript(this.id,this.name);" />
+         </div>
       </div>
     </div> <!-- End of "tabs" -->
   </div> <!-- End of "content" -->

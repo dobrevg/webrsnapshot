@@ -26,9 +26,6 @@ Missing impementations
 
 * backup (partial implemented)
 
-* backup_script
-
-
 
 Feature Request
 ---------------------------------------------------------------------------------------------------

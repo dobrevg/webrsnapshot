@@ -73,6 +73,7 @@ sub saveConfig
   my $servers_counter = 0;
 
   my $scripts_count   = $arguments[3];
+  my $scripts_counter = 0;
   # Create random config file under /tmp for configtest later
   my $configfile      = $arguments[4];
   my $config_to_test  = "/tmp/rsnapshot_".(int(rand(8999))+1000);
@@ -121,9 +122,15 @@ sub saveConfig
         }
       }
       # Scripts
-      elsif ($counter == $include_start + $exclude_count + $servers_count + $scripts_count)
+      #elsif ($counter == $include_start + $exclude_count + $servers_count + $scripts_count)
+      elsif ($counter == $include_start + 3)
       {
-
+        if ($scripts_counter++ < $scripts_count)
+        {
+          printf CONFIG ($config_parameters[$counter]."\t".$arg."\n");
+          # Don't switch back if we reached the last member
+          $scripts_counter == $scripts_count || $counter --;
+        }
       }
       # And everything else ... just write to the file
       else
