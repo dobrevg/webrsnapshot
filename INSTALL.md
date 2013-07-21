@@ -14,6 +14,13 @@
 * For development run `./bin/development.pl`
 
 
+## Requirements
+============ 
+
+* /etc/rsnapshot.conf have to be readable and writable for the user running this web application
+* rsnapshot log file have to be readabe for for the user running this web application
+
+
 ## Create your own template
 ---------------- 
 
