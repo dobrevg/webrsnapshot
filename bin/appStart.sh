@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SERVER_BIN="hypnotoad"
+SERVER_BIN="./hypnotoad"
 APP_BIN="../webrsnapshot.pl"
 
 
