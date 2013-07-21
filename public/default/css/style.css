@@ -21,6 +21,7 @@
 #logtextarea        { width: 99.5%; height: 29em; background:#FFFF99;}
 
 .configfield        { width:300px; }
+.configfieldsmall   { width:230px; }
 #accordion h3 input[type="button"] { float:right; }
 .submit_btn         { float:right; margin-right:10px; margin-top:-34px; }
 

@@ -30,6 +30,7 @@ function delExIn(id) {
   $("#"+id).remove();
 }
 
+
 //Add field to include Config
 function addInclude(buttonid, count) {
   var next = parseInt(count)+1;
@@ -147,4 +148,12 @@ function srvAdd(buttonid, serverid) {
       '</div>');
     $( "#accordion" ).accordion( "refresh" );
   } // End of if
+}
+
+
+//Delete line from backup_script 
+function delBkpScript(id) {
+	$("#bkp_script_"+id+"_info").remove();
+	$("#bkp_script_"+id+"_label").remove();
+	$("#bkp_script_"+id).remove();
 }
