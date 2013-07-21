@@ -115,12 +115,17 @@ sub new
       $backup_servers[$backup_servers_ptr++] = (\@servers);
     }
     # And then the rest without arguments
-    elsif ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*)/) {
+    elsif ("$_" =~ /^backup\t+(.*?[^\t+])\t+(.*)/) 
+    {
       my @servers = ($1, $2, "");
       $backup_servers[$backup_servers_ptr++] = (\@servers);
     }
-    # TODO: Tab 7: Scripts have to be configured
-    elsif ("$_" =~ /^backup_script\t+(.*)/)      { $backup_scripts[$backup_scripts_ptr++] = $1; }
+    # Tab 7: Scripts have to be configured
+    elsif ("$_" =~ /^backup_script\t+(.*?[^\t+])\t+(.*)/) 
+    { 
+      my @scripts = ($1, $2);
+      $backup_scripts[$backup_scripts_ptr++] = (\@scripts);
+    }
     else  { }    # Unknown Line. Don't know what to do now?
   }
 

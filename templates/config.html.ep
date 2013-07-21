@@ -527,7 +527,7 @@
           <% } %>	
         <% } %>
 
-        </div> <!-- End of Accordion -->
+        </div> <!-- End of Servers Accordion -->
         <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
         <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
           onclick="srvAdd(this.id, this.name)" title="Add new server to backup."/>
@@ -541,11 +541,24 @@
       ##########################################################
 -->
       <div id="tabs-7">
-<!--
-        <div class="infoicon"><img src="default/img/info.png" title="" /></div>
-        <div class="configlabel"><LABEL>backup scripts</LABEL></div>
-        <div><INPUT type="text" class="configfield" value="<%= @$backup_scripts[0] %>" /></div>
--->
+        <br/><br/>
+        <% my $bkp_script_ptr = 0; %>
+        <% if (@$backup_scripts[$bkp_script_ptr] ne "") { %>
+          <% my $script = ""; %>
+          <% while ( @$backup_scripts > $bkp_script_ptr) { %>
+            <% $script = @$backup_scripts[$bkp_script_ptr]; %>
+            <div class="infoicon"><img src="default/img/info.png" title="" /></div>
+            <div class="configlabel"><LABEL>backup_script</LABEL></div>
+            <div>
+              <INPUT type="button" value="Delete">
+              <INPUT type="text" class="configfield" value="<%= $script->[0] %>" />
+              <INPUT type="text" class="configfield" value="<%= $script->[1] %>" />
+              <br/><br/>
+            </div>
+            <% $bkp_script_ptr++; %>
+          <% } %> 
+          <INPUT type="button" value="Add">
+        <% } %> 
       </div>
     </div> <!-- End of "tabs" -->
   </div> <!-- End of "content" -->
