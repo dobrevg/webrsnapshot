@@ -5,7 +5,7 @@ APP_BIN="../webrsnapshot.pl"
 
 
 # Get script directory and go there
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$(cd $(dirname $0) && pwd)
 cd $DIR
 
 # Test if we can read and execute hypnotoad file
@@ -18,4 +18,4 @@ test -e ${APP_BIN}   || { echo "${APP_BIN}: does not exists."; exit 10; }
 test -f ${APP_BIN}   || { echo "${APP_BIN}: not regular file."; exit 11; }
 test -x ${APP_BIN}   || { echo "${APP_BIN}: is not executable."; exit 12; }
 
-$( $SERVER_BIN -s $APP_BIN ) 2&> /dev/null
+$SERVER_BIN -s $APP_BIN) 2&> /dev/null
