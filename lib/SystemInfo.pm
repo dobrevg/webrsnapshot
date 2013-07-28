@@ -25,37 +25,69 @@ sub getPartitionInfo
 sub getSystem
 {
   my @result = {};
-  my $issue  = "/etc/issue";
-  my $issue_content   = "";
+  my $distro = getDistro();
   my $operatingsystem = "";
-  if (-r $issue)
+  
+  # Linux with lsb command
+  if ( $distro eq "lsbLinux" )
   {
-    $issue_content = `cat /etc/issue | head -1`;
+    my $issue_content = `lsb_release -d`;
+    $issue_content =~ /^(.*[^\t+])\t+(.*)/;
+    $operatingsystem = $2;
+  }
 
-    # OpenSUSE
-    if ( $issue_content =~ m/openSUSE/)
-    {
-      $issue_content =~ 
-        /^(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+/;
-      $operatingsystem  = `uname -o`;
-      $operatingsystem .= " ".$2." ".$3." ".$4." ";
-      $operatingsystem .= `uname -i`;
-    }
+  # Linux with issue file
+  if ( $distro eq "issueLinux" )
+  {
+    $operatingsystem = `cat /etc/issue | head -1`;
+  }
 
-    # Debian
-    if ( $issue_content =~ m/Debian/)
-    {
-      $issue_content =~ 
-        /^(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+/;
-      $operatingsystem  = `uname -o`;
-      $operatingsystem .= " ".$1." ";
-      $operatingsystem .= `cat /etc/debian_version`;
-      $operatingsystem .= `uname -i`;
-    }
+  # FreeBSD
+  if ( $distro eq "FreeBSD" ) 
+  {
+    $operatingsystem  = `uname -rs`;
+    $operatingsystem .= " ";
+    $operatingsystem .= `uname -m`;
+  }
 
-
+  # SunOS
+  if ( $distro eq "SunOS" ) 
+  {
+    $operatingsystem  = `uname -a`;
+  }
   $result[0] = $operatingsystem;
   return @result;
+}
+
+# Detect the distro
+sub getDistro
+{
+  my $distro = "";
+  my $lsb = `which lsb_release`; 
+  chomp($lsb);
+
+  if ( -x $lsb)
+  {
+    return "lsbLinux";
+#    my $lsb_release = `$lsb -i`;
+#
+#    if ($lsb_release =~ m/Debian/)   { return "lsbLinux" } 
+#    if ($lsb_release =~ m/Ubuntu/)   { return "lsbLinux" } 
+#    if ($lsb_release =~ m/openSUSE/) { return "lsbLinux" } 
   }
+  elsif ( -r "/etc/issue")
+  {
+    my $issue_content = `cat /etc/issue | head -1`;
+
+    if ($issue_content =~ m/Fedora/) { return "issueLinux" }
+  }
+  else
+  {
+    my $uname = `uname -a`;
+    if ( $uname =~ m/FreeBSD/) { return "FreeBSD"; }
+    if ( $uname =~ m/SunOS/)   { return "SunOS";   }
+  }
+  
+  return "unknown";
 }
 1;

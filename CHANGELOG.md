@@ -1,9 +1,10 @@
-Version 0.next
+Version 0.5
 -----------
 
 * [feature] - Implement backup_scripts
 * [fix]     - webrsnapshot.sample.conf defaults values
-* [new]     - Show some system information (openSUSE)
+* [new]     - Show some system information (openSUSE,Debian,Solaris,FreeBSD,Fedora)
+* [fix]     - Fix the Cookie size while saving(Cookie is bigger than 4096 bytes.)
 
 
 Version 0.4
