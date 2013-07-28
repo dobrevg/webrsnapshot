@@ -83,13 +83,15 @@ sub saveConfig
   foreach my $arg (@arguments)
   {
     if ( $counter > 4 )
-    { 
+    {
       # If not defined, we brake off
       if (!defined $arg || $arg eq "" || $arg eq "off") {}
 
       # If argument is on, we used checkbox and have to be changed to 1
-      elsif ( defined $arg && $arg eq "on")  { printf CONFIG ($config_parameters[$counter]."\t1\n"); }
-
+      elsif ( defined $arg && $arg eq "on")  
+      {
+        printf CONFIG ($config_parameters[$counter]."\t1\n"); 
+      }
       # Include Patterns
       elsif ($counter == $include_start)
       {
@@ -145,27 +147,25 @@ sub saveConfig
 
   # Check here if the config is well formed and return any warnings and errors
   my @configtest = `rsnapshot -c $config_to_test configtest 2>&1`;
-  my $syntaxOK = 0;
-  
+  # Set configtest array with following code
+  # $configtest[-1] = 0 - No Errors, File Saved
+  # $configtest[-1] = 1 - Warnings, File Saved
+  # $configtest[-1] = 2 - Errors, File NOT Saved
+
   # Check if Syntax ok
   foreach (@configtest) 
   { 
-    $syntaxOK = 1 if ("$_" =~ /^Syntax\sOK/); 
+    if ("$_" =~ /^Syntax\sOK/)
+    {
+      $configtest[-1] = 0 if (scalar (@configtest) == 1);
+      $configtest[-1] = 1 if (scalar (@configtest) > 1);
+    }
   }
-
-  # Save the tested config file on the real place
-  if ($syntaxOK == 1) 
-  { 
-    system ("cp", $config_to_test, $configfile);
-    system ("rm", "-f",$config_to_test);
-    return @configtest if (scalar (@configtest) > 1);
-  }
-  else
-  { 
-    system ("rm", "-f",$config_to_test);
-    die ("@configtest");
-  }
-  printf ("[%s] [ConfigWriter] Writing config file: $configfile finished.\n",scalar localtime);
+  push (@configtest, "2") if ( $configtest[-1] ne "1" && scalar (@configtest) > 1 );
+  # Save the tested config file on the real place only if Syntax OK
+  system ("cp", $config_to_test, $configfile) if ($configtest[-1] ne "2");
+  system ("rm", "-f",$config_to_test);
+  return @configtest;
 }
 
 1;
