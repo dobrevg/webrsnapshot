@@ -59,9 +59,6 @@ get '/' => sub {
       $self->stash( rs_configfile   => $rs_config);
       my $parser = new ConfigReader($rs_config);
       $self->stash( rs_root_dir     => $parser->getSnapshotRoot());
-      # Get info about the operating system
-      my @operatingsystem = SystemInfo->getSystem();
-      $self->stash( operatingSystemDist => $operatingsystem[0]);
       # Get info about the file system
       my @partition = SystemInfo->getPartitionInfo( $rs_config );
       $self->stash( partitionInfoPart => $partition[0]);
