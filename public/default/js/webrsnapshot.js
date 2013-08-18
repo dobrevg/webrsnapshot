@@ -95,60 +95,76 @@ function srvAddDir(buttonid, dir_id, serverid) {
               'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /><br/></div>');
 }
 
-// Add new Server 
-function srvAdd(buttonid, serverid) {
-  // Ask for the server label and server IP of FQDN
-  var serverlabel = prompt("Please type the server label?\n\n" +
-      "The server label will be used for better desribing the server.\n" +
-      "It can be any name you can assign to the given server.\n" +
-      "Using spaces is possible, but not desired.\n\n" +
-      "Examples: localhost, john-s-server, 192.168.1.1\n\t\t  example.com, server.example.com");
-  if (serverlabel) { var serverip = prompt("Please type the server IP or QFDN?\n\n" +
-      "This should be the server ip or the server FQDN (Fully Qualified Domain Name)\n" +
-      "Over this domain name the server should be reachable in the internet.\n " +
-      "If you want to use different access method than root@server-ip you can\n" + 
-      "change this after adding the server. Other possible connections can be:\n" +
-      "user@example.com, rsync://example.com\n\n" +
-      "Examples: localhost, 127.0.0.1, 192.168.10.34, 10.0.45.154\n" +
-      "\t\t  example.com, server.example.com" ); }
+//Add new Server 
+$(function() {
+  var newservername = $( "#newservername" ),
+      newserverip   = $( "#fqdn" );
+      newserverid   = $( "#servers_count" ).val();
 
-  // Remove localhost or 127.0.0.1 from the name and access the local machine direct
-  if (serverip == "localhost" || serverip == "127.0.0.1")
-  {
-    var serverip_new = "";
+  function checkInput( inputValue ) {
+    if ( inputValue ) {
+      return true;
+    } else {
+      return false;
+    }
   }
-  else
-  {
-    var serverip_new = "root@" + serverip + ":";
-  }
-  // Set the button with the ID for the next Server and type hidden for the save function 
-  var next = parseInt(serverid)+1;
-  document.getElementById(buttonid).name         = next;
-  document.getElementById("servers_count").value = next;
-  // And add the Server configuration
-  if (serverlabel && serverip) {	
-    $("#accordion").append('<h3 id="server_' + serverid + '_name">' +
-          'Server: <b>' + serverlabel + '</b>' +
-        '<INPUT type="button" value="Delete" onclick="serverDelete(' + serverid + ')" />' +
-      '</h3>' +
-      '<div id="server_' + serverid + '_config">' +
-        '<INPUT type="hidden" id="server_' + serverid + '_label" name="' + serverlabel + '"/>' +
-        '<div id="server_' + serverid + '_dirs">' +
-          '<div id="server_' + serverid + '_dir_0">' +
-            '<INPUT type="button" value="Delete" id="server_' + serverid + '_dir_0_del" ' +
-                    'onclick="srvDelDir(' + serverid + ', 0)" /> ' +
-            '<INPUT type="text" id="server_' + serverid + '_dir_0_dir" ' +
-                    'name="server_' + serverid + '_dir_0_dir" value="' + serverip_new + '/etc/" /> ' +
-            '<INPUT type="text" id="server_' + serverid + '_dir_0_args" ' +
-                    'name="server_' + serverid + '_dir_0_args" value="" /><br/>' +
-          '</div>' +
+
+  $( "#add-server-form" ).dialog({
+    autoOpen: false,
+    height: 320,
+    width: 400,
+    modal: true,
+    buttons: 
+    {
+      "Append server": function()
+      {
+        var inputValid = true;
+        inputValid     = inputValid && checkInput( newservername.val() );
+        inputValid     = inputValid && checkInput( newserverip.val() );
+
+        var serverdir  = "root@" + newserverip.val() + ":";
+        var newserverstring = '<div id="server_' + newserverid + '_config">' +
+        '<INPUT type="hidden" id="server_label_' + newserverid + '"' +
+        'name="server_label_' + newserverid + '" value="' + newservername.val() + '"/>' +
+      '<div id="server_' + newserverid + '_dirs">' +
+        '<div id="server_' + newserverid + '_dir_0">' +
+          '<INPUT type="hidden" id="server_' + newserverid + '_dir_0_dir"' +
+            'name="server_' + newserverid + '_dir_0_dir"' +
+            'class="configfield" value="' + serverdir + '/etc/" />' +
+          '<INPUT type="hidden" id="server_' + newserverid + '_dir_0_args"' +
+            'name="server_' + newserverid + '_dir_0_args"' +
+            'class="configfield" value="" />' +
+          '<br/>' +
         '</div>' +
-        '<INPUT type="button" value="Add" id="srvAddDir_' + serverid + '" ' +
-                'name="0" onclick="srvAddDir(this.id, this.name, \'' + serverid + '\', \'1\');" />' +
-      '</div>');
-    $( "#accordion" ).accordion( "refresh" );
-  } // End of if
-}
+    '</div>' +
+    '<INPUT type="hidden" id="server_' + newserverid + '_dircount"' +
+        'name="server_' + newserverid + '_dircount" value="1" />' +
+  '</div>';
+
+        if ( inputValid )
+        {
+          $("#accordion").append(newserverstring);
+          // VERY IMPORTANT. Increate the Server count so the new server can be parsed
+          document.getElementById('servers_count').value = parseInt(newserverid) + 1;
+          document.rsnapshotconfform.submit();
+        }
+      },
+      Cancel: function() { 
+        $( this ).dialog( "close" );
+      }
+    },
+    close: function() 
+    {
+      allFields.val( "" ).removeClass( "ui-state-error" );
+    }
+  });
+  
+  $( "#serverAdd" ).button().click(function() 
+  {
+    $( "#add-server-form" ).dialog( "open" );
+  });
+});
+
 
 
 //Delete line from backup_script 

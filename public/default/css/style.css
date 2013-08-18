@@ -14,6 +14,7 @@
 .configlabel        { width:170px; float:left; }
 .tooltip            { max-width:500px; }
 .center             { margin-left:auto; margin-right:auto;}
+#add-server-form label, #add-server-form input  { display:block; }
 
 #logout             { float:right; }
 

@@ -2,7 +2,7 @@
 % title 'Webrsnapshot';
 
 <div id="bodycontainer">
-  <form method="post" action="/config">
+  <form method="post" action="/config" name="rsnapshotconfform">
   <div id="menucontainer">
     <ul id="menu">
       <li><a href=<%= url_for->path('/') %> >Home</a></li>
@@ -528,9 +528,26 @@
         <% } %>
 
         </div> <!-- End of Servers Accordion -->
+<!-- Add new Server Button -->
         <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
         <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
-          onclick="srvAdd(this.id, this.name)" title="Add new server to backup."/>
+          title="Add new server to backup configuration."/>
+<!-- Add new Server Form -->
+        <div id="add-server-form" title="Create new server">
+          <form>
+            <fieldset>
+              <label for="name">*Name</label>
+              <input type="text" name="newservername" id="newservername" 
+                class="text ui-widget-content ui-corner-all" /><br/>
+              Example: myserver, john-server
+            </fieldset>
+            <fieldset>
+              <label for="ip">*FQDN or server ip</label>
+              <input type="text" name="fqdn" id="fqdn" value="" class="text ui-widget-content ui-corner-all" /><br/>
+              Example: myserver.org, 10.1.1.24
+            </fieldset>
+          </form>
+        </div>
       </div> <!-- End of Tab 6 -->
 
 <!-- 
