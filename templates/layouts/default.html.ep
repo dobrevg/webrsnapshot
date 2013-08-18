@@ -28,7 +28,7 @@
   </head>
   <body>
     <div id="headcontainer">
-      <div id="logocontainer"></div>
+      <div id="logocontainer"><img src="<%= $custom_template %>/img/logo.png" /></div>
       <div id="logorightcontainer">Welcome to the Web-rsnapshot!</div>
       <div id="logout"><a href="/logout">Logout</a></div><br/>
       <div id="saved_yes" class="hidden <%= flash 'warning' %>" title="Configuration saved">
