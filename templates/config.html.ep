@@ -492,6 +492,11 @@
                   the backup configuration." />
               </h3>
               <div id="server_<%= $serverid %>_config">
+                <div>
+                  <span style="display:inline-block; width:72px;"></span>
+                  <span style="display:inline-block; width:306px;">Backup directory</span>
+                  <span class="configfield">Optional directory args</span>
+                </div>
                 <INPUT type="hidden" id="server_label_<%= $serverid %>"
                   name="server_label_<%= $serverid %>" value="<%= substr($server->[1], 0, -1)%>"/>
                 <div id="server_<%= $serverid %>_dirs">
