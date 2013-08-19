@@ -45,7 +45,7 @@ function addInclude(buttonid, count) {
     '<div class="configlabel" id="include_' + count + '_label"><LABEL>include</LABEL></div>' +
     '<div id="include_' + count + '">' +
       '<INPUT type="button" value="Delete" onclick="delExIn(\'include_' + count +'\');"> ' + 
-      '<INPUT type="text" name="include_' + count + '" value="" />' +
+      '<INPUT type="text" class="configfield" name="include_' + count + '" value="" />' +
     '</div>');
 }
 
@@ -63,7 +63,7 @@ function addExclude(buttonid, count) {
       '<div class="configlabel" id="exclude_' + count + '_label"><LABEL>exclude</LABEL></div>' +
       '<div id="exclude_'+ count + '">' +
         '<INPUT type="button" value="Delete" onclick="delExIn(\'exclude_' + count + '\');"/> ' +
-        '<INPUT type="text" name="exclude_' + count +'" value="" />' +
+        '<INPUT type="text" class="configfield" name="exclude_' + count +'" value="" />' +
       '</div>');
 }
 
@@ -89,9 +89,9 @@ function srvAddDir(buttonid, dir_id, serverid) {
   $("#server_" + serverid + "_dirs").append('<div id="server_' + serverid + '_dir_' + dir_id + '">' +
       '<INPUT type="button" value="Delete" id="server_' + serverid + '_dir_' + dir_id + '_del" ' +
               'onclick="srvDelDir(' + serverid + ', ' + dir_id + ')" /> ' + 
-      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_dir" ' +
+      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_dir" class="configfield"' +
               'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /> ' +
-      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_args" ' +
+      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_args" class="configfield"' +
               'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /><br/></div>');
 }
 

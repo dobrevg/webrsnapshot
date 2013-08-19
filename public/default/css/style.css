@@ -1,6 +1,6 @@
 /* Head Positivioning */
 #headcontainer      { border:0px solid black; height:90px;}
-#logocontainer      { border:0px solid black; height:100%; min-width:250px; float:left;}
+#logocontainer      { border:0px solid black; height:100%; min-width:15%; float:left;}
 #logorightcontainer { border:0px solid black; height:100%; float:left;}
 
 /* Content Positivioning */
@@ -17,6 +17,7 @@
 #add-server-form label, #add-server-form input  { display:block; }
 
 #logout             { float:right; }
+#copyright          { height:80%; }
 
 .hidden             { display:none; }
 #logtextarea        { width: 99.5%; height: 29em; background:#FFFF99;}
@@ -27,5 +28,6 @@
 #accordion h3 input[type="button"] { float:right; }
 .submit_btn         { float:right; margin-right:10px; margin-top:-34px; }
 
+#copyright          { float:right; vertical-align:bottom;}
 /* Footer Positivioning */
 #footer             { float:left; margin-top:10px; width:100%;}
