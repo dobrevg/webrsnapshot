@@ -24,7 +24,6 @@ Missing impementations
 
 * stop_on_stale_lockfile
 
-* backup (partial implemented)
 
 
 Feature Request
@@ -34,13 +33,12 @@ Feature Request
 **Proirity High**
 
 * Editing Crontab(s)
+* Implement SSL
 
 
 **Priority Normal**
 
 * Editing included files
-
-* Showing some server info like free space, load etc.
 
 
 **Priority Low**
