@@ -6,13 +6,13 @@ Webrsnapshot is web based graphical interface for editing the configuration file
 ## Warning
 ============
 
-This is still development version. Backuping servers supports at this time only root@my-target-server.com option. If you are using something like rsync://my-target-server.org or my-user@my-target-server.com you have to edit the server settings after adding a new server. "backup_script" is also still in development and not supported yet.
+This is still development version. Backuping servers supports at this time only root@my-target-server.com option. If you are using something like rsync://my-target-server.org or my-user@my-target-server.com you have to edit the server settings after adding a new server.
 
 
 ## Quick start
 ============ 
 
-* Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want
+* Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want `git clone https://github.com/dobrevg/webrsnapshot.git`
 * Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
 * Run `./bin/appStart.sh` to start the server (see the requirements below)
 * Run `./bin/appStop.sh` to stop the server
