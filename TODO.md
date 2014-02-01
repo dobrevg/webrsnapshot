@@ -32,12 +32,14 @@ Feature Request
 
 **Proirity High**
 
+* Restore function over the web
 * Editing Crontab(s)
 * Implement SSL
 
 
 **Priority Normal**
 
+* Add custom user and assign them to server (dirs ?!)
 * Editing included files
 
 
