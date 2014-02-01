@@ -198,7 +198,7 @@ post '/config' => sub {
           my $server_dir = $self->param('server_'.$c.'_dir_'.$i.'_dir');
           # If the directory String is empty, we don't have it anymore and
           # this line must not be recorded
-          if ($server_dir ne "")
+          if (defined $server_dir ne "")
           {
             my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
               "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : ""; 
@@ -298,8 +298,14 @@ post '/config' => sub {
       $self->flash(warning=>'ui-state-highlight');
       $self->flash(warning_message=>"@saveResult");
     }
-    # If returns 2, then we have errors
+    # If returns 2, then we have error in the rsnapshot.conf file
     elsif ( $saveResult[-1] eq "2")
+    {
+      $self->flash(saved=>'no');
+      $self->flash(error_message=>"@saveResult");
+    }
+    # If returns 3, then we have error while copying the rsnapshot file
+    elsif ( $saveResult[-1] eq "3")
     {
       $self->flash(saved=>'no');
       $self->flash(error_message=>"@saveResult");
