@@ -75,9 +75,6 @@ function serverDelete(id) {
 
 // And Delete specific directory from backuped server 
 function srvDelDir(serverid, dirid) {
-  $( "#server_"+serverid+"_dir_"+dirid+"_del" ).remove();
-  $( "#server_"+serverid+"_dir_"+dirid+"_dir" ).remove();
-  $( "#server_"+serverid+"_dir_"+dirid+"_args").remove();
   $( "#server_"+serverid+"_dir_"+dirid        ).remove();
 }
 

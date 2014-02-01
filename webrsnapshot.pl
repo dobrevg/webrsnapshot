@@ -195,10 +195,16 @@ post '/config' => sub {
         my $server_dir_count = $self->param('server_'.$c.'_dircount');
         for (my $i=0; $i<$server_dir_count; $i++)
         {
-          my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
-            "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : ""; 
-          $servers[$servers_line_count++] = 
-            $self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
+          my $server_dir = $self->param('server_'.$c.'_dir_'.$i.'_dir');
+          # If the directory String is empty, we don't have it anymore and
+          # this line must not be recorded
+          if ($server_dir ne "")
+          {
+            my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
+              "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : ""; 
+            $servers[$servers_line_count++] = 
+              $self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
+          }
         }
       }
     }
