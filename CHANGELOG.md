@@ -1,3 +1,15 @@
+Version 0.6
+-----------
+
+* [improvement] - Add new server switched to jQuery UI Dialog
+* [change]      - Change the jQuery UI theme to "start"
+* [change]      - Add SSL as optional Connection Protocol
+* [fix]         - Main menu entries.
+* [fix]         - Add new server
+* [fix]         - Fix bug while removing directory
+* [fix]         - Add notification if the file can not be copied after the configtest
+
+
 Version 0.5
 -----------
 

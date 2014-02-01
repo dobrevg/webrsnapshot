@@ -10,7 +10,7 @@
 * Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
 * Run `./bin/appStart.sh` to start the server (see the requirements below)
 * Run `./bin/appStop.sh` to stop the server
-* Access the application via http://myServerIP:8080
+* Access the application via https://myServerIP:8080
 
 
 ## Quick update
@@ -25,6 +25,7 @@
 ============ 
 
 * /etc/rsnapshot.conf and rsnapshot log file have to be readable and writable for the user running this web application
+* perl-IO-Socket-SSL 1.75 or better (optional) if you plan to use HTTPS
 
 
 ## Create your own template

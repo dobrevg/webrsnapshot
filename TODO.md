@@ -34,7 +34,6 @@ Feature Request
 
 * Restore function over the web
 * Editing Crontab(s)
-* Implement SSL
 
 
 **Priority Normal**

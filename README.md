@@ -1,4 +1,4 @@
-# [Webrsnapshot v0.5](https://github.com/dobrevg/webrsnapshot)
+# [Webrsnapshot v0.6](https://github.com/dobrevg/webrsnapshot)
 ============
 
 Webrsnapshot is web based graphical interface for editing the configuration file of rsnapshot via browser. This software is still in development. Please make a backup of your rnsapshot configuration file `/etc/rsnapshot.conf` before using Webrsnapshot. At this point not all features are implemented and only essential options are enabled. You can find a list with the missing options in the TODO file provided with this installation.
@@ -25,6 +25,7 @@ This is still development version. Backuping servers supports at this time only 
 
 * /etc/rsnapshot.conf have to be readable and writable for the user running this web application
 * rsnapshot log file have to be readabe for for the user running this web application
+* perl-IO-Socket-SSL 1.75 or better (optional) if you plan to use HTTPS
 
 
 ## Bug tracker
