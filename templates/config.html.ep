@@ -5,9 +5,14 @@
   <form method="post" action="/config" name="rsnapshotconfform">
   <div id="menucontainer">
     <ul id="menu">
-      <li><a href=<%= url_for->path('/') %> >Home</a></li>
-      <li><a href=<%= url_for->path('/config') %> class="active" >Rsnapshot Config</a></li>
-      <li><a href=<%= url_for->path('/log') %> >Rsnapshot Log</a></li>
+      <% my $menu_prt = 0; %>
+      <% while ( @$mainmenu > $menu_prt) { %>
+        <% my @menuitem = @$mainmenu[$menu_prt++]; %>
+        <li>
+          <a href=<%= $menuitem[0][1] %> <% if ($menuitem[0][0] eq "Rsnapshot Config" ) { %> class="active"<% } %> >
+          <%= $menuitem[0][0] %></a>
+        </li>
+      <% } %>
     </ul>
   </div>
   <div id="content">

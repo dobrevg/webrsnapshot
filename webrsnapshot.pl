@@ -19,7 +19,7 @@ use SystemInfo;
 my $config           = plugin 'Config';
 my $rs_config        = $config->{rs_config}? $config->{rs_config}: '/etc/rsnapshot.conf';
 my $default_template = $config->{template}? $config->{template}:'default';
-
+ 
 plugin 'authentication', {
   autoload_user => 0,
   load_user => sub 
@@ -45,6 +45,19 @@ plugin 'authentication', {
   },
 };
 
+# Build the Main Menu
+sub mainMenu
+{
+  my @menuLinks;
+  $menuLinks[0][0] = "Home";
+  $menuLinks[0][1] = "/";
+  $menuLinks[1][0] = "Rsnapshot Config";
+  $menuLinks[1][1] = "/config";
+  $menuLinks[2][0] = "Rsnapshot Log";
+  $menuLinks[2][1] = "/log";
+  return @menuLinks;
+};
+
 get '/' => sub {
   my $self = shift;
 
@@ -54,6 +67,9 @@ get '/' => sub {
   {
     eval
     {
+      # Use MainMenu
+      my @menu = &mainMenu();
+      $self->stash( mainmenu        => [ @menu ]);
       # User defined temaplate
       $self->stash( custom_template => $default_template );
       $self->stash( rs_configfile   => $rs_config);
@@ -124,6 +140,33 @@ any '/logout' => sub {
 };
 
 
+# Show Hosts Summary
+get '/hostssummary' => sub
+{
+  my $self = shift;
+  my $username = $self->session('username')?$self->session('username'):"";
+  my $password = $self->session('password')?$self->session('password'):"";
+  if ( $self->authenticate( $username, $password ) )
+  {
+    eval
+    {
+      # Use MainMenu
+      my @menu = &mainMenu();
+      $self->stash( mainmenu        => [ @menu ]);
+      # User defined temaplate
+      $self->stash( custom_template => $default_template );
+      $self->stash( log_content     => LogReader->getContent( 
+                                                      $config->{loglines},
+                                                      $config->{rs_config}) );
+      $self->render('log');
+    };
+  }
+  else
+  {
+    $self->redirect_to('/login');
+  }
+};
+
 # And write the log file here.
 get '/log' => sub 
 {
@@ -134,6 +177,9 @@ get '/log' => sub
   {
     eval
     {
+      # Use MainMenu
+      my @menu = &mainMenu();
+      $self->stash( mainmenu        => [ @menu ]);
       # User defined temaplate
       $self->stash( custom_template => $default_template );
       $self->stash( log_content     => LogReader->getContent( 
@@ -326,6 +372,9 @@ get '/config' => sub {
   my $password = $self->session('password')?$self->session('password'):"";
   if ( $self->authenticate( $username, $password ) )
   {
+    # Use MainMenu
+    my @menu = &mainMenu();
+    $self->stash( mainmenu        => [ @menu ]);
     # User defined temaplate
     $self->stash( custom_template => $default_template );
     # Create object from the Config File
