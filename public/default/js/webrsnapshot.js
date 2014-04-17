@@ -4,7 +4,7 @@ $(function() { $( "#tabs" ).tabs(); });
 // JS to get menu working
 $(function() { $( "#menu" ).menu(); }); 
 
-// JS to get accordion(Servers) working
+// JS to get accordion(Hosts) working
 $(function() { 
   $( "#accordion" ).accordion({
     collapsible: true,
@@ -67,18 +67,18 @@ function addExclude(buttonid, count) {
       '</div>');
 }
 
-// Delete Server Config
+// Delete Host Config
 function serverDelete(id) {
   $( "#server_"+id+"_name" ).remove();
   $( "#server_"+id+"_config" ).remove();
 }
 
-// And Delete specific directory from backuped server 
+// And Delete specific directory from backuped host
 function srvDelDir(serverid, dirid) {
   $( "#server_"+serverid+"_dir_"+dirid        ).remove();
 }
 
-//Add another directory for backup on specific server
+//Add another directory for backup on specific host
 function srvAddDir(buttonid, dir_id, serverid) {
   // alert("Servername: " + name + "\nServerid: " + serverid);
   var next = parseInt(dir_id)+1;
@@ -93,7 +93,7 @@ function srvAddDir(buttonid, dir_id, serverid) {
               'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /><br/></div>');
 }
 
-//Add new Server 
+//Add new Host
 $(function() {
   var newservername = $( "#newservername" ),
       newserverip   = $( "#fqdn" );
@@ -114,7 +114,7 @@ $(function() {
     modal: true,
     buttons: 
     {
-      "Append server": function()
+      "Append host": function()
       {
         var inputValid = true;
         inputValid     = inputValid && checkInput( newservername.val() );
@@ -142,7 +142,7 @@ $(function() {
         if ( inputValid )
         {
           $("#accordion").append(newserverstring);
-          // VERY IMPORTANT. Increate the Server count so the new server can be parsed
+          // VERY IMPORTANT. Increate the Host count so the new server can be parsed
           document.getElementById('servers_count').value = parseInt(newserverid) + 1;
           document.rsnapshotconfform.submit();
         }

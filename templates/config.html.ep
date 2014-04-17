@@ -23,7 +23,7 @@
         <li><a href="#tabs-3">Global Config</a></li>
         <li><a href="#tabs-4">Backup Interval</a></li>
         <li><a href="#tabs-5">Include/Exclude</a></li>
-        <li><a href="#tabs-6">Servers</a></li>
+        <li><a href="#tabs-6">Hosts</a></li>
         <li><a href="#tabs-7">Scripts</a></li>
       </ul>
       <INPUT type="submit" class="submit_btn" value="Save">
@@ -479,7 +479,7 @@
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 6: Servers to backup 
+      Tab 6: Hosts to backup 
       ##########################################################
       ##########################################################
 -->
@@ -491,9 +491,9 @@
               <% my $serverid = $bkp_srv_ptr; %>
               <% my $server = @$backup_servers[$bkp_srv_ptr]; %>
               <h3 id="server_<%= $serverid %>_name">
-                Server: <b><%= substr($server->[1], 0, -1) %></b>
+                Host: <b><%= substr($server->[1], 0, -1) %></b>
                 <INPUT type="button" value="Delete" onclick="serverDelete(<%= $serverid %>)" 
-                  title="Delete the server: <b><%= substr($server->[1], 0, -1) %></b> from 
+                  title="Delete the host: <b><%= substr($server->[1], 0, -1) %></b> from 
                   the backup configuration." />
               </h3>
               <div id="server_<%= $serverid %>_config">
@@ -533,26 +533,26 @@
                 onclick="srvAddDir(this.id,this.name,'<%= $serverid %>');" 
                 title="Add new directory for backup for: <b><%= substr($server->[1], 0, -1) %></b>"/>
             </div>
-<!-- End of Server -->
+<!-- End of Host -->
           <% } %>	
         <% } %>
 
-        </div> <!-- End of Servers Accordion -->
-<!-- Add new Server Button -->
+        </div> <!-- End of Hosts Accordion -->
+<!-- Add new Host Button -->
         <INPUT type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>" />
-        <INPUT type="button" value="Add new server" id="serverAdd" name="<%= $bkp_srv_ptr %>"
-          title="Add new server to backup configuration."/>
-<!-- Add new Server Form -->
-        <div id="add-server-form" title="Create new server">
+        <INPUT type="button" value="Add new host" id="serverAdd" name="<%= $bkp_srv_ptr %>"
+          title="Add new host to backup configuration."/>
+<!-- Add new Host Form -->
+        <div id="add-server-form" title="Create new host">
           <form>
             <fieldset>
               <label for="name">*Name</label>
               <input type="text" name="newservername" id="newservername" 
                 class="text ui-widget-content ui-corner-all" /><br/>
-              Example: myserver, john-server
+              Example: myhost, john-server
             </fieldset>
             <fieldset>
-              <label for="ip">*FQDN or server ip</label>
+              <label for="ip">*FQDN or host ip</label>
               <input type="text" name="fqdn" id="fqdn" value="" class="text ui-widget-content ui-corner-all" /><br/>
               Example: myserver.org, 10.1.1.24
             </fieldset>
