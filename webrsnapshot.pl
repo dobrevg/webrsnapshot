@@ -6,14 +6,14 @@ use warnings;
 use FindBin;                     # locate this script
 use lib "$FindBin::Bin/lib";     # use the lib directory
 
-use ConfigReader;
-use ConfigWriter;
-use LogReader;
+use Webrsnapshot::ConfigReader;
+use Webrsnapshot::ConfigWriter;
+use Webrsnapshot::LogReader;
 use Mojolicious::Lite;
 use Mojolicious::Plugin::Authentication;
 use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
-use SystemInfo;
+use Webrsnapshot::SystemInfo;
 
 
 my $config           = plugin 'Config';
@@ -51,10 +51,12 @@ sub mainMenu
   my @menuLinks;
   $menuLinks[0][0] = "Home";
   $menuLinks[0][1] = "/";
-  $menuLinks[1][0] = "Rsnapshot Config";
-  $menuLinks[1][1] = "/config";
-  $menuLinks[2][0] = "Rsnapshot Log";
-  $menuLinks[2][1] = "/log";
+  $menuLinks[1][0] = "Host Summary";
+  $menuLinks[1][1] = "/hostsummary";
+  $menuLinks[2][0] = "Rsnapshot Config";
+  $menuLinks[2][1] = "/config";
+  $menuLinks[3][0] = "Rsnapshot Log";
+  $menuLinks[3][1] = "/log";
   return @menuLinks;
 };
 
@@ -141,7 +143,7 @@ any '/logout' => sub {
 
 
 # Show Hosts Summary
-get '/hostssummary' => sub
+get '/hostsummary' => sub
 {
   my $self = shift;
   my $username = $self->session('username')?$self->session('username'):"";
@@ -155,10 +157,46 @@ get '/hostssummary' => sub
       $self->stash( mainmenu        => [ @menu ]);
       # User defined temaplate
       $self->stash( custom_template => $default_template );
-      $self->stash( log_content     => LogReader->getContent( 
-                                                      $config->{loglines},
-                                                      $config->{rs_config}) );
-      $self->render('log');
+      # Create object from the Config File
+      my $parser = new ConfigReader($rs_config);
+      # Get a server list from rsnapshot.conf
+      $self->stash(backup_servers => [ $parser->getServers() ]);
+      $parser->DESTROY();
+
+      $self->render('hostsummary');
+    };
+  }
+  else
+  {
+    $self->redirect_to('/login');
+  }
+};
+
+# Show Hosts Summary
+get '/host' => sub
+{
+  my $self = shift;
+  my $host = $self->param('h');
+  my $username = $self->session('username')?$self->session('username'):"";
+  my $password = $self->session('password')?$self->session('password'):"";
+  if ( $self->authenticate( $username, $password ) )
+  {
+    eval
+    {
+      # URL Param
+      $self->stash( host => $host );
+      # Use MainMenu
+      my @menu = &mainMenu();
+      $self->stash( mainmenu        => [ @menu ]);
+      # User defined temaplate
+      $self->stash( custom_template => $default_template );
+      # Create object from the Config File
+      my $parser = new ConfigReader($rs_config);
+      # Get a server list from rsnapshot.conf
+      $self->stash(backup_servers => [ $parser->getServers() ]);
+      $parser->DESTROY();
+
+      $self->render('host');
     };
   }
   else

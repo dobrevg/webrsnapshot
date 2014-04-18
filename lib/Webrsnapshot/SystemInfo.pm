@@ -2,7 +2,7 @@ package SystemInfo;
 use strict;
 use warnings;
 
-use ConfigReader;
+use Webrsnapshot::ConfigReader;
 
 # Gather Info about the partition allocation
 sub getPartitionInfo

@@ -2,7 +2,7 @@ package LogReader;
 use strict;
 use warnings;
 
-use ConfigReader;
+use Webrsnapshot::ConfigReader;
 use File::ReadBackwards;
 
 sub getContent
