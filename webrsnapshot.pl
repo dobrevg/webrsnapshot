@@ -306,59 +306,71 @@ post '/config' => sub {
         $scripts[$scripts_count++] = $scriptname."\t\t".$self->param('bkp_script_'.$c.'_target');
       }
     }
+    
+    # Retain loop to get all configured intervals from the post data
+    my @retain = ();
+    my $retain_count_postdata = $self->param('retain_count');
+    printf ("[%s] Retain post count: $retain_count_postdata\n",scalar localtime);
+    my $retain_count = 0;
+    for (my $r=0; $r<$retain_count_postdata; $r++)
+    {
+      my $retain_name = $self->param('retain_'.$r.'_name');
+      if ($retain_name)
+      {
+        $retain[$retain_count++] = $retain_name."\t\t".$self->param('retain_'.$r.'_count');
+      }
+    }
 
     my @saveResult = {};
   
     # And send everything to the ConfigWriter
     @saveResult = ConfigWriter::saveConfig(
       # Extra Parameter
-      scalar @include,
-      scalar @exclude,
-      $servers_line_count,
-      $scripts_count,
-      $rs_config,
+      scalar @include,     # 00
+      scalar @exclude,     # 01
+      $servers_line_count, # 02
+      $scripts_count,      # 03
+      $rs_config,          # 04
+      scalar @retain,      # 05
       # Tab 1 - Root	
-      $self->param('config_version'),
-      $self->param('snapshot_root' ),
-      $self->param('no_create_root')?     $self->param('no_create_root') : "off",
+      $self->param('config_version'), # 06
+      $self->param('snapshot_root' ), # 07
+      $self->param('no_create_root')?     $self->param('no_create_root') : "off",  # 08
       # Tab 2 - Commands
-      $self->param('cmd_cp')?             $self->param('cmd_cp') : "",
-      $self->param('cmd_rm')?             $self->param('cmd_rm') : "",
-      $self->param('cmd_rsync'),
-      $self->param('cmd_ssh')?            $self->param('cmd_ssh')            : "",
-      $self->param('cmd_logger')?         $self->param('cmd_logger')         : "",
-      $self->param('cmd_du')?             $self->param('cmd_du')             : "",
-      $self->param('cmd_rsnapshot_diff')? $self->param('cmd_rsnapshot_diff') : "",
-      $self->param('cmd_preexec')?        $self->param('cmd_preexec')        : "",
-      $self->param('cmd_postexec')?       $self->param('cmd_postexec')       : "",
-      # Tab 4 - Backup Intervals
-      $self->param('retain_hourly')?      $self->param('retain_hourly')  : "",
-      $self->param('retain_daily')?       $self->param('retain_daily')   : "",
-      $self->param('retain_weekly')?      $self->param('retain_weekly')  : "",
-      $self->param('retain_monthly')?     $self->param('retain_monthly') : "",
+      $self->param('cmd_cp')?             $self->param('cmd_cp') : "",             # 09
+      $self->param('cmd_rm')?             $self->param('cmd_rm') : "",             # 10
+      $self->param('cmd_rsync'),                                                   # 11
+      $self->param('cmd_ssh')?            $self->param('cmd_ssh')            : "", # 12
+      $self->param('cmd_logger')?         $self->param('cmd_logger')         : "", # 13
+      $self->param('cmd_du')?             $self->param('cmd_du')             : "", # 14
+      $self->param('cmd_rsnapshot_diff')? $self->param('cmd_rsnapshot_diff') : "", # 15
+      $self->param('cmd_preexec')?        $self->param('cmd_preexec')        : "", # 16
+      $self->param('cmd_postexec')?       $self->param('cmd_postexec')       : "", # 17
       # Tab 3 - Global Config
-      $self->param('verbose')?          $self->param('verbose')          : "",
-      $self->param('loglevel')?         $self->param('loglevel')         : "",
-      $self->param('logfile')?          $self->param('logfile')          : "",
-      $self->param('lockfile')?         $self->param('lockfile')         : "",
-      $self->param('rsync_short_args')? $self->param('rsync_short_args') : "",
-      $self->param('rsync_long_args')?  $self->param('rsync_long_args')  : "",
-      $self->param('ssh_args')?         $self->param('ssh_args')         : "",
-      $self->param('du_args')?          $self->param('du_args')          : "",
-      $self->param('one_fs')?           $self->param('one_fs')           : "off",
-      $self->param('link_dest')?        $self->param('link_dest')        : "off",
-      $self->param('sync_first')?       $self->param('sync_first')       : "off",
-      $self->param('use_lazy_deletes')? $self->param('use_lazy_deletes') : "off",
-      $self->param('rsync_numtries')?   $self->param('rsync_numtries')   : "",
+      $self->param('verbose')?          $self->param('verbose')          : "",     # 18
+      $self->param('loglevel')?         $self->param('loglevel')         : "",     # 19
+      $self->param('logfile')?          $self->param('logfile')          : "",     # 20
+      $self->param('lockfile')?         $self->param('lockfile')         : "",     # 21
+      $self->param('rsync_short_args')? $self->param('rsync_short_args') : "",     # 22
+      $self->param('rsync_long_args')?  $self->param('rsync_long_args')  : "",     # 23
+      $self->param('ssh_args')?         $self->param('ssh_args')         : "",     # 24
+      $self->param('du_args')?          $self->param('du_args')          : "",     # 25
+      $self->param('one_fs')?           $self->param('one_fs')           : "off",  # 26
+      $self->param('link_dest')?        $self->param('link_dest')        : "off",  # 27
+      $self->param('sync_first')?       $self->param('sync_first')       : "off",  # 28
+      $self->param('use_lazy_deletes')? $self->param('use_lazy_deletes') : "off",  # 29
+      $self->param('rsync_numtries')?   $self->param('rsync_numtries')   : "",     # 30
+      # Tab 4 - Backup Intervals
+      @retain? @retain : (""),                                         # 31
       # Tab 5 - Include/Exclude
-      $self->param('include_file')? $self->param('include_file') : "",
-      $self->param('exclude_file')? $self->param('exclude_file') : "",
-      @include? @include : (""),
-      @exclude? @exclude : (""),
+      $self->param('include_file')? $self->param('include_file') : "", # 32
+      $self->param('exclude_file')? $self->param('exclude_file') : "", # 33
+      @include? @include : (""), # 34
+      @exclude? @exclude : (""), # 35
       # Tab 6 - Servers
-      @servers? @servers : (""),
+      @servers? @servers : (""), # 36
       # Tab 7 - Scripts
-      @scripts? @scripts : (""),
+      @scripts? @scripts : (""), # 37
     );
 
     # Shrink the message size to not get oversized Cookies
@@ -447,10 +459,7 @@ get '/config' => sub {
     $self->stash(use_lazy_deletes => $parser->getUseLazyDeletes() );
     $self->stash(rsync_numtries   => $parser->getRsyncNumtries()  );
     # Tab 4 - Backup Intervals
-    $self->stash(interval_hourly  => $parser->getIntervalHourly()  );
-    $self->stash(interval_daily   => $parser->getIntervalDaily()   );
-    $self->stash(interval_weekly  => $parser->getIntervalWeekly()  );
-    $self->stash(interval_monthly => $parser->getIntervalMonthly() );
+    $self->stash(retain           => [ $parser->getRetains()      ]);
     # Tab 5 - Include/Exclude
     $self->stash(include_file => $parser->getIncludeFile() );
     $self->stash(exclude_file => $parser->getExcludeFile() );

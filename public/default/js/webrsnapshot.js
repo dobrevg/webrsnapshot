@@ -193,3 +193,25 @@ function addBkpScript(buttonid,count) {
       '<INPUT type="text" class="configfieldsmall" value="" name="bkp_script_' + count + '_target"/> ' +
     '</div>');
 }
+
+// Delete line from retain
+function delRetain(id) {
+	$("#retainNumber_"+id).remove();
+}
+
+// Add line to retain
+function addRetain(buttonid, current_number) {
+  var next = parseInt(current_number)+1;
+  document.getElementById(buttonid).name        = next;
+  document.getElementById("retain_count").value = next;
+  $("#retains").append('<div id="retainNumber_' + current_number + '">' +
+      '<div class="infoicon">' +
+        '<img src="default/img/info.png" title="The number of snapshots that will be retained for new backups." />' +
+      '</div>' +
+      '<div class="configlabel">Retain ' +
+        '<INPUT type="text" name="retain_' + current_number + '_name" class="configfieldtiny" value="" />' +
+      '</div>' +
+      '<div>' +
+        '<INPUT type="text" name="retain_' + current_number + '_count" class="configfieldtiny" value="" /> ' +
+        '<INPUT type="button" value="Delete" onclick="delRetain(' + current_number + ');"></div><br/></div>');
+}

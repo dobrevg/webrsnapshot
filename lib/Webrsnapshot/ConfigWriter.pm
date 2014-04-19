@@ -6,61 +6,59 @@ use warnings;
 my @config_parameters =
 (
   # Extra Parameter for multiply Lines below
-  "include_count",         # 0
-  "exclude_count",         # 1
-  "server_count",          # 2
-  "scrips_count",          # 3
-  "rs_config_file",        # 4
+  "include_count",         # 00
+  "exclude_count",         # 01
+  "server_count",          # 02
+  "scrips_count",          # 03
+  "rs_config_file",        # 04
+  "retain_count",          # 05
   # Tab 1: Root config
-  "config_version\t",      # 5
-  "snapshot_root\t",       # 6
-  "no_create_root\t",      # 7
+  "config_version\t",      # 06    5
+  "snapshot_root\t",       # 07    6
+  "no_create_root\t",      # 08    7
   # Tab 2: Optional programs and scripts used
-  "cmd_cp\t\t\t",          # 8
-  "cmd_rm\t\t\t",          # 9
-  "cmd_rsync\t\t",         # 10
-  "cmd_ssh\t\t\t",         # 11
-  "cmd_logger\t\t",        # 12
-  "cmd_du\t\t\t",          # 13
-  "cmd_rsnapshot_diff",    # 14
-  "cmd_preexec",           # 15
-  "cmd_postexec",          # 16
-  # Tab 4: Backup Intervals
-  "retain\t\t\t\thourly",  # 17
-  "retain\t\t\t\tdaily",   # 18
-  "retain\t\t\t\tweekly",  # 19
-  "retain\t\t\t\tmonthly", # 20
+  "cmd_cp\t\t\t",          # 09    8
+  "cmd_rm\t\t\t",          # 10   9
+  "cmd_rsync\t\t",         # 11  10
+  "cmd_ssh\t\t\t",         # 12  11
+  "cmd_logger\t\t",        # 13  12
+  "cmd_du\t\t\t",          # 14  13
+  "cmd_rsnapshot_diff",    # 15  14
+  "cmd_preexec",           # 16  15
+  "cmd_postexec",          # 17  16
   # Tab 3: Global Options
-  "verbose\t\t\t",         # 21
-  "loglevel\t\t",          # 22
-  "logfile\t\t\t",         # 23
-  "lockfile\t\t",          # 24
-  "rsync_short_args",      # 25
-  "rsync_long_args\t",     # 26
-  "ssh_args\t",            # 27
-  "du_args\t\t",           # 28
-  "one_fs\t\t",            # 29
-  "link_dest\t\t",         # 30
-  "sync_first",            # 31
-  "use_lazy_deletes",      # 32
-  "rsync_numtries\t",      # 33
+  "verbose\t\t\t",         # 18  21
+  "loglevel\t\t",          # 19  22
+  "logfile\t\t\t",         # 20  23
+  "lockfile\t\t",          # 21  24
+  "rsync_short_args",      # 22  25
+  "rsync_long_args\t",     # 23  26
+  "ssh_args\t",            # 24  27
+  "du_args\t\t",           # 25  28
+  "one_fs\t\t",            # 26  29
+  "link_dest\t\t",         # 27  30
+  "sync_first",            # 28  31
+  "use_lazy_deletes",      # 29  32
+  "rsync_numtries\t",      # 30  33
+  # Tab 4: Backup Intervals
+  "retain\t\t",             # 31
   # Tab 5: Includes/Excludes
-  "include_file\t",        # 34
-  "exclude_file\t",        # 35
-  "include\t\t\t",         # 36
-  "exclude\t\t\t",         # 37
+  "include_file\t",        # 32  34
+  "exclude_file\t",        # 33  35
+  "include\t\t\t",         # 34  36
+  "exclude\t\t\t",         # 35  37
   # Tab 6: Servers
-  "backup\t\t\t\t",        # 38
+  "backup\t\t\t\t",        # 36  38
   # Tab 7: Scripts
-  "backup_script\t",       # 39
+  "backup_script\t",       # 37  39
 );
 
 # and save the config File
 # Parameters is all post data from config
 sub saveConfig
 {
-  my $counter       = 0;
-  my $include_start = 36;
+  my $counter       = 0;    # Just a counter
+  my $retain_start  = 31;   # The number where retain starts
   my @arguments     = @_;
 
   my $include_count   = $arguments[0];
@@ -77,13 +75,16 @@ sub saveConfig
   # Create random config file under /tmp for configtest later
   my $configfile      = $arguments[4];
   my $config_to_test  = "/tmp/rsnapshot_".(int(rand(8999))+1000);
+  
+  my $retain_count    = $arguments[5];
+  my $retain_counter  = 0;
 
   # Open the config file for writing
   open (CONFIG, ">$config_to_test") || die $!;
   foreach my $arg (@arguments)
   {
-    if ( $counter > 4 )
-    {
+    if ( $counter > 5 )   # The last numer from extra parameter from the beginning
+     {
       # If not defined, we brake off
       if (!defined $arg || $arg eq "" || $arg eq "off") {}
 
@@ -92,9 +93,19 @@ sub saveConfig
       {
         printf CONFIG ($config_parameters[$counter]."\t1\n"); 
       }
-      # Include Patterns
-      elsif ($counter == $include_start)
+      # Retain Patterns
+      elsif ($counter == $retain_start)
       {
+        if ( ($retain_count != 0) && ($retain_counter++ < $retain_count) )
+        {
+          printf CONFIG ($config_parameters[$counter]."\t".$arg."\n");
+          # Don't switch back if we reached the last member
+          $retain_counter == $retain_count || $counter --;
+        }
+      }
+      # Include Patterns
+      elsif ($counter == $retain_start + 3)  # 1 + 2 while we have two schripts to include.
+       {
         if ( ($include_count != 0) && ($incl_counter++ < $include_count) )
         {
           printf CONFIG ($config_parameters[$counter]."\t".$arg."\n");
@@ -103,7 +114,7 @@ sub saveConfig
         }
       }
       # Exclude Patterns
-      elsif ($counter == ($include_start + 1))
+      elsif ($counter == ($retain_start + 4))
       {
         if ($excl_counter++ < $exclude_count)
         {
@@ -113,7 +124,7 @@ sub saveConfig
         }
       }
       # Servers
-      elsif ($counter == ($include_start + 2))
+      elsif ($counter == ($retain_start + 5))
       {
 
         if ($servers_counter++ < $servers_count)
@@ -125,7 +136,7 @@ sub saveConfig
       }
       # Scripts
       #elsif ($counter == $include_start + $exclude_count + $servers_count + $scripts_count)
-      elsif ($counter == $include_start + 3)
+      elsif ($counter == $retain_start + 6)
       {
         if ($scripts_counter++ < $scripts_count)
         {
