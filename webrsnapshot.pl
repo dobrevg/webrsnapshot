@@ -6,13 +6,14 @@ use warnings;
 use FindBin;                     # locate this script
 use lib "$FindBin::Bin/lib";     # use the lib directory
 
-use Webrsnapshot::ConfigReader;
-use Webrsnapshot::ConfigWriter;
-use Webrsnapshot::LogReader;
 use Mojolicious::Lite;
 use Mojolicious::Plugin::Authentication;
 use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
+use Webrsnapshot::ConfigReader;
+use Webrsnapshot::ConfigWriter;
+use Webrsnapshot::HostSummary;
+use Webrsnapshot::LogReader;
 use Webrsnapshot::SystemInfo;
 
 
