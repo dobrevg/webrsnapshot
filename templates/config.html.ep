@@ -335,47 +335,36 @@
       ##########################################################
 -->
       <div id="tabs-4">
-        <div class="infoicon">
-          <img src="default/img/info.png"
-            title="The number of snapshots that will be retained for hourly backups." />
-        </div>
-        <div class="configlabel"><LABEL>retain hourly</LABEL></div>
+        <% my $retain_ptr = 0; %>
+        <% if (@$retain[$retain_ptr] ne "") { %>
+          <% while ( @$retain > $retain_ptr) { %>
+            <% my $retainNumber = $retain_ptr; %>
+            <% my $retainArray  = @$retain[$retain_ptr]; %>
+            <div id="retainNumber_<%= $retainNumber %>">
+              <div class="infoicon">
+                <img src="default/img/info.png"
+                  title="The number of snapshots that will be retained for <%= $retainArray->[0] %> backups." />
+              </div>
+              <div class="configlabel">Retain
+                <INPUT type="text" name="retain_<%= $retainNumber %>_name"
+                  class="configfieldtiny" value="<%= $retainArray->[0] %>" />
+              </div>
+              <div>
+                <INPUT type="text" name="retain_<%= $retainNumber %>_count" 
+                  class="configfieldtiny" value="<%= $retainArray->[1] %>" />
+                <INPUT type="button" value="Delete" onclick="delRetain('<%= $retainNumber %>');">
+              </div>
+              <br/>
+            </div>
+            <% $retain_ptr++; %>
+          <% } %> 
+        <% } %>
         <div>
-          <INPUT type="text" name="retain_hourly" class="configfield" value="<%= $interval_hourly %>" />
+          <INPUT type="hidden" id="retain_count" name="retain_count" value="<%= $retain_ptr %>" />
+          <INPUT type="button" value="Add" id="retain_add" name="<%= $retain_ptr %>"
+            onclick="addRetain(this.id, this.name)" />
         </div>
-        <br/>
-
-        <div class="infoicon">
-          <img src="default/img/info.png"
-            title="The number of snapshots that will be retained for daily backups." />
-        </div>
-        <div class="configlabel"><LABEL>retain daily</LABEL></div>
-        <div>
-          <INPUT type="text" name="retain_daily" class="configfield" value="<%= $interval_daily %>" />
-        </div>
-        <br/>
-
-        <div class="infoicon">
-          <img src="default/img/info.png"
-            title="The number of snapshots that will be retained for weekly backups." />
-        </div>
-        <div class="configlabel"><LABEL>retain weekly</LABEL></div>
-        <div>
-          <INPUT type="text" name="retain_weekly" class="configfield" value="<%= $interval_weekly %>" />
-        </div>
-        <br/>
-
-        <div class="infoicon">
-        <img src="default/img/info.png"
-          title="The number of snapshots that will be retained for monthly backups." />
-        </div>
-        <div class="configlabel"><LABEL>retain monthly</LABEL></div>
-        <div>
-          <INPUT type="text" name="retain_monthly" class="configfield" value="<%= $interval_monthly %>" />
-        </div>
-        <br/>
       </div>
-
 <!-- 
       ##########################################################
       ##########################################################

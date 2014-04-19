@@ -32,6 +32,8 @@ my $sync_first         = "";
 my $use_lazy_deletes   = "";
 my $rsync_numtries     = "";
 # Backup Intervals
+my @retain             = "";
+my $retain_ptr         = 0 ;
 my $interval_hourly    = "";
 my $interval_daily     = "";
 my $interval_weekly    = "";
@@ -95,14 +97,20 @@ sub new
     elsif ("$_" =~ /^rsync_numtries\t+(.*)/)     { $rsync_numtries     = $1; }
     # Tab 4: Backup intervals, OpenSuSE still uses interval
     # Let us support the old "interval" and the new "retain"
-    elsif ("$_" =~ /^interval\t+hourly\t+(.*)/ ||
-        "$_" =~ /^retain\t+hourly\t+(.*)/)   { $interval_hourly    = $1; }
-    elsif ("$_" =~ /^interval\t+daily\t+(.*)/  ||
-        "$_" =~ /^retain\t+daily\t+(.*)/)    { $interval_daily     = $1; }
-    elsif ("$_" =~ /^interval\t+weekly\t+(.*)/ ||
-        "$_" =~ /^retain\t+weekly\t+(.*)/)   { $interval_weekly    = $1; }
-    elsif ("$_" =~ /^interval\t+monthly\t+(.*)/||
-        "$_" =~ /^retain\t+monthly\t+(.*)/)  { $interval_monthly   = $1; }
+    elsif ("$_" =~ /^interval\t+(.*?[^\t+])\t+(.*)/ ||
+           "$_" =~ /^retain\t+(.*?[^\t+])\t+(.*)/)
+      {
+        my @retain_tmp = ($1, $2);
+        $retain[$retain_ptr++] = (\@retain_tmp)
+      }
+#    elsif ("$_" =~ /^interval\t+hourly\t+(.*)/ ||
+#        "$_" =~ /^retain\t+hourly\t+(.*)/)   { $interval_hourly    = $1; }
+#    elsif ("$_" =~ /^interval\t+daily\t+(.*)/  ||
+#        "$_" =~ /^retain\t+daily\t+(.*)/)    { $interval_daily     = $1; }
+#    elsif ("$_" =~ /^interval\t+weekly\t+(.*)/ ||
+#        "$_" =~ /^retain\t+weekly\t+(.*)/)   { $interval_weekly    = $1; }
+#    elsif ("$_" =~ /^interval\t+monthly\t+(.*)/||
+#        "$_" =~ /^retain\t+monthly\t+(.*)/)  { $interval_monthly   = $1; }
     # Tab 5: Include und Exclude
     elsif ("$_" =~ /^include\t+(.*)/)            { $include[$include_ptr++] = $1; }
     elsif ("$_" =~ /^exclude\t+(.*)/)            { $exclude[$exclude_ptr++] = $1; }
@@ -168,6 +176,7 @@ sub getSyncFirst      { return ($sync_first ne 1)       ? " ":"checked"; }
 sub getUseLazyDeletes { return ($use_lazy_deletes ne 1) ? " ":"checked"; }
 sub getRsyncNumtries  { return $rsync_numtries;    }
 # Tab 4
+sub getRetains        { return @retain; }
 sub getIntervalHourly  { return $interval_hourly;  }
 sub getIntervalDaily   { return $interval_daily;   }
 sub getIntervalWeekly  { return $interval_weekly;  }
@@ -186,7 +195,7 @@ sub getScripts        { return @backup_scripts; }
 sub DESTROY {
   my $self = shift;
 
-  # Reset all values   
+  # Reset all values
   # Root
   $config_version     = "";
   $snapshot_root      = "";
@@ -216,6 +225,8 @@ sub DESTROY {
   $use_lazy_deletes   = "";
   $rsync_numtries     = "";
   # Backup Intervals
+  @retain             = "";
+  $retain_ptr         = 0 ;
   $interval_hourly    = "";
   $interval_daily     = "";
   $interval_weekly    = "";
@@ -233,7 +244,7 @@ sub DESTROY {
   @backup_scripts     = "";    # Array
   $backup_scripts_ptr = 0 ;
 
-  # check for an overridden destructor...
+  # check for an overridden destructor
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
   # now do your own thing before or after
 }
