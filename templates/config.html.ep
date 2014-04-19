@@ -340,26 +340,32 @@
           <% while ( @$retain > $retain_ptr) { %>
             <% my $retainNumber = $retain_ptr; %>
             <% my $retainArray  = @$retain[$retain_ptr]; %>
-            <div id="retainNumber_<%= $retainNumber %>">
-              <div class="infoicon">
-                <img src="default/img/info.png"
-                  title="The number of snapshots that will be retained for <%= $retainArray->[0] %> backups." />
+              <div id="retainNumber_<%= $retainNumber %>">
+                <div class="infoicon">
+                  <img src="default/img/info.png"
+                    title="The number of snapshots that will be retained for <%= $retainArray->[0] %> backups." />
+                </div>
+                <div class="configlabel">Retain
+                  <INPUT type="text" name="retain_<%= $retainNumber %>_name"
+                    class="configfieldtiny" value="<%= $retainArray->[0] %>" />
+                </div>
+                <div>
+                  <INPUT type="text" name="retain_<%= $retainNumber %>_count" 
+                    class="configfieldtiny" value="<%= $retainArray->[1] %>" />
+                  <INPUT type="button" value="Delete" onclick="delRetain('<%= $retainNumber %>');">
+                </div>
+                <br/>
               </div>
-              <div class="configlabel">Retain
-                <INPUT type="text" name="retain_<%= $retainNumber %>_name"
-                  class="configfieldtiny" value="<%= $retainArray->[0] %>" />
-              </div>
-              <div>
-                <INPUT type="text" name="retain_<%= $retainNumber %>_count" 
-                  class="configfieldtiny" value="<%= $retainArray->[1] %>" />
-                <INPUT type="button" value="Delete" onclick="delRetain('<%= $retainNumber %>');">
-              </div>
-              <br/>
-            </div>
+            
             <% $retain_ptr++; %>
           <% } %> 
         <% } %>
-        <div>
+        <div id="retains">
+        </div>
+        <div class="infoicon">
+          <img src="default/img/info.png" title="The number of snapshots that will be retained for custom backups."/>
+        </div>
+        <div class="configlabel">Retain
           <INPUT type="hidden" id="retain_count" name="retain_count" value="<%= $retain_ptr %>" />
           <INPUT type="button" value="Add" id="retain_add" name="<%= $retain_ptr %>"
             onclick="addRetain(this.id, this.name)" />
