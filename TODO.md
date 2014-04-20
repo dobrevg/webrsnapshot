@@ -29,7 +29,6 @@ Missing impementations
 Feature Request
 ---------------------------------------------------------------------------------------------------
 
-
 **Proirity High**
 
 * Restore function over the web
