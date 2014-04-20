@@ -1,3 +1,11 @@
+Version 0.Next
+-----------
+
+* [improvement] - Add simple Host Summary
+* [feature]     - Add user defined backup intervals
+* [change]      - Move libs to libs/Webrsnapshot
+
+
 Version 0.6
 -----------
 
