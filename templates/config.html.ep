@@ -369,7 +369,7 @@
           <INPUT type="hidden" id="retain_count" name="retain_count" value="<%= $retain_ptr %>" />
           <INPUT type="button" value="Add" id="retain_add" name="<%= $retain_ptr %>"
             onclick="addRetain(this.id, this.name)" />
-        </div>
+        </div><br/>
       </div>
 <!-- 
       ##########################################################
