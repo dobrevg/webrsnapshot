@@ -158,11 +158,8 @@ get '/hostsummary' => sub
       $self->stash( mainmenu        => [ @menu ]);
       # User defined temaplate
       $self->stash( custom_template => $default_template );
-      # Create object from the Config File
-      my $parser = new ConfigReader($rs_config);
-      # Get a server list from rsnapshot.conf
-      $self->stash(backup_servers => [ $parser->getServers() ]);
-      $parser->DESTROY();
+      $self->stash( hosts           => [ Webrsnapshot::getHostNames($rs_config) ]);
+      $self->stash( last_bkp        => [ HostSummary::getLastBackupTime($rs_config) ]);
 
       $self->render('hostsummary');
     };
@@ -194,8 +191,10 @@ get '/host' => sub
       # Create object from the Config File
       my $parser = new ConfigReader($rs_config);
       # Get a server list from rsnapshot.conf
-      $self->stash(backup_servers => [ $parser->getServers() ]);
+      $self->stash(rootdir          => [ $parser->getSnapshotRoot() ]);
       $parser->DESTROY();
+      # Host Summary
+      $self->stash(retain_dirs      => [ HostSummary::getBackupDirectories($rs_config, $host) ]);
 
       $self->render('host');
     };
