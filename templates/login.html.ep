@@ -5,8 +5,15 @@
     <title>Webrsnapshot</title>
     <link rel="shortcut icon" href="<%= $custom_template %>/img/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="<%= $custom_template %>/css/login.css" />
-    <script src="<%= $custom_template %>/js/login.js"></script>
   </head>
 <body>
+  <div id='loginform' class='center'>
+    <form method='post' action='/login'>
+    <h1>Login</h1>
+    <LABEL>Username:</LABEL><INPUT type='text' name='username' /> <br/>
+    <LABEL>Password:</LABEL><INPUT type='password' name='password' /> <br/>
+    <INPUT type='submit' value='Login' />
+    </form>
+  </div>
 </body>
 </html>

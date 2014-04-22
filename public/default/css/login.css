@@ -1,2 +1,41 @@
-.center             { margin-left:auto; margin-right:auto;}
-#loginform          { width:20%;}
+/* body                { background-color:#77d5f7;} */
+.center      { margin-left:auto; margin-right:auto;}
+
+#loginform {
+  background-color: #77d5f7;
+  width:300px;
+  border: 1px solid #77d5f7;
+  border-radius: 5px;
+  margin-top:100px;
+  height: 200px;
+}
+
+h1 {
+  margin-left: 4%;
+}
+
+label {
+  margin-left: 4%;
+}
+
+input[type=text],input[type=password] {
+  width: 90%;
+  margin-left:4%;
+/*  background-color: #d8e7f3; */
+  border: 1px solid black;
+  border-radius: 3px;
+  height: 25px;
+}
+
+input[type=text]:focus,input[type=password]:focus {
+  background-color: #E6F0F2;
+}
+
+input[type=submit] {
+  margin-left: 65%;
+  margin-top: 5px;
+  border: 1px solid black;
+  border-radius: 3px;
+  height: 28px;
+  width: 75px;
+}
