@@ -6,7 +6,7 @@
     <link rel="shortcut icon" href="<%= $custom_template %>/img/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="<%= $custom_template %>/css/jquery-ui-1.10.3.custom.min.css" />
     <link rel="stylesheet" type="text/css" href="<%= $custom_template %>/css/style.css" />
-    <script src="<%= $custom_template %>/js/jquery-2.0.3.min.js"></script>
+    <script src="<%= $custom_template %>/js/jquery-2.1.0.min.js"></script>
     <script src="<%= $custom_template %>/js/jquery-ui-1.10.3.min.js"></script>
     <script src="<%= $custom_template %>/js/webrsnapshot.js"></script>
     <script>
