@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Webrsnapshot::Webrsnapshot;
 
-# $_[0] = conf file
+# $_[0] = config file
 # $_[1] = host looked for
 sub getBackupDirectories
 {
@@ -29,9 +29,10 @@ sub getBackupDirectories
   return @retain_dirs;
 }
 
-# Get the last backup Time in days for specific host
+# Get the last backup Time in days for all hosts
 # If no backup found unlimited is shown
-sub getLastBackupTime
+# $_[0] = config file
+sub getAllLastBackupTimes
 {
   my $conffile   = $_[0];
   my $rootdir    = Webrsnapshot::getBackupRootDir($conffile);

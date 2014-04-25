@@ -25,6 +25,7 @@ sub getRetainings
 }
 
 # Get the names of backuped hosts
+# $_[0] - config file
 sub getHostNames
 {
   my $parser = new ConfigReader($_[0]);
