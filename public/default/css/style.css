@@ -8,6 +8,12 @@ table {
   padding: 2px;
 }
 
+/* Exceptions handling */
+.exceperror {
+  border: 1px solid red;
+  background-color: #FF9999;
+}
+
 /* Head Positivioning */
 #headcontainer      { border:0px solid black; height:90px;}
 #logocontainer      { border:0px solid black; height:100%; min-width:15%; float:left;}

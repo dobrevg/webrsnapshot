@@ -88,6 +88,12 @@ get '/' => sub {
       $self->stash( partitionInfoMP   => $partition[5]);
       $self->render('index');
     };
+    # Error handling
+    if ( $@ ) 
+    {
+      $self->stash(error_message=>"$@");
+      $self->render('exception');
+    }
   }
   else
   {
@@ -159,7 +165,7 @@ get '/hostsummary' => sub
       # User defined temaplate
       $self->stash( custom_template => $default_template );
       $self->stash( hosts           => [ Webrsnapshot::getHostNames($rs_config) ]);
-      $self->stash( last_bkp        => [ HostSummary::getLastBackupTime($rs_config) ]);
+      $self->stash( last_bkp        => [ HostSummary::getAllLastBackupTimes($rs_config) ]);
 
       $self->render('hostsummary');
     };

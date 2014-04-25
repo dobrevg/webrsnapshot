@@ -54,6 +54,11 @@ sub new
   bless   $this;             # Connect the hash to the package
   $configfile = $_[1]?$_[1]:"/etc/rsnapshot.conf";
 
+  # Check if rsync and rsnapshot are installed
+  system ("which", "rsync")     == 0 or die "Rsync not found on this server!";
+  system ("which", "rsnapshot") == 0 or die "Rsnapshot not found on this server!";
+  die "$configfile is missing.\n" unless (-e $configfile);
+  
   printf ("[%s] Start reading config file: $configfile\n",scalar localtime);
   open (CONFIG, $configfile) || die $!;
   while (<CONFIG>)
