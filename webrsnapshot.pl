@@ -135,7 +135,8 @@ post '/login' => sub {
     $self->redirect_to('/');
   }
   else
-  { # TODO: Show message for wrong pass
+  { 
+    $self->flash( login_failed => "Incorrect username or password.");
     $self->redirect_to('/login');
   }
 };
