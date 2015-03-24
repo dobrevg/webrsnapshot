@@ -233,3 +233,88 @@ function addRetain(buttonid, current_number) {
         '<INPUT type="text" name="retain_' + current_number + '_count" class="configfieldtiny" value="" /> ' +
         '<INPUT type="button" value="Delete" onclick="delRetain(' + current_number + ');"></div><br/></div>');
 }
+
+// Add Crontab
+$(function() {
+  var newcronid = $( "#newcronid" ).val();
+
+  $( "#add-cronjob-form" ).dialog({
+    autoOpen: false,
+    height: 400,
+    width: 640,
+    modal: true,
+    buttons:
+    {
+      "Append cronjob": function(){
+        var cron  = document.getElementById('cron_minute_text').value;
+            cron += " " + document.getElementById('cron_hour_text').value;
+            cron += " " + document.getElementById('cron_day_text').value;
+            cron += " " + document.getElementById('cron_month_text').value;
+            cron += " " + document.getElementById('cron_week_text').value;
+            cron += " " + document.getElementById('cron_user').value;
+            cron += " " + document.getElementById('cron_command_text').value;
+        var newcronstring = '<div id="cron_' + newcronid + '">' +
+	    '<INPUT type="text" name="cronjob_' + newcronid + '" id="cronjob_' + 
+            newcronid + '" class="configfieldbig"' + 'value="' + cron + '" readonly />' +
+	    ' <INPUT type="button" id="cron_edit_' + newcronid + '" value="Edit" />' +
+	    ' <INPUT type="button" value="Delete" onclick="deleteCronjob(' + newcronid + ')" />' +
+	    ' <INPUT type="checkbox" id="cronCheck_' + newcronid + 
+            '"  onclick="disbaleCronjob(this.id,' + newcronid + ')" />Disabled<br/></div>';
+        $("#cronjobs").append(newcronstring);
+	// VERY IMPORTANT. Increate the count so the new cronjob can be parsed
+        document.getElementById('newcronid').value = parseInt(newcronid) + 1;
+        document.cronform.submit();
+      },
+      Cancel: function() {
+        $( this ).dialog( "close" );
+      }
+
+    },
+    close: function()
+    {
+      allFields.val( "" ).removeClass( "ui-state-error" );
+    }
+  });
+
+  $( "#add_cron" ).button().click(function()
+  {
+    $( "#add-cronjob-form" ).dialog( "open" );
+  });
+});
+
+// Add Crontab, select funktionality
+function changeCronSelect(id)
+{
+  document.getElementById(id+'_text').value = document.getElementById(id).value;
+}
+
+
+// Delete Crontab
+function deleteCronjob(id)
+{
+  $("#cron_"+id).remove();
+}
+
+// Enable/Disable Crontab
+function disbaleCronjob(btnid,id)
+{
+  var cronvalue = document.getElementById('cronjob_'+id).value;
+  if (document.getElementById(btnid).checked)
+  {
+    document.getElementById('cronjob_'+id).value = "#"+cronvalue;
+  }else{
+    document.getElementById('cronjob_'+id).value = cronvalue.slice(1);
+  }
+}
+
+// Enable/Disable Crontab email
+function disableCronEmail(btnid) 
+{
+  if (document.getElementById(btnid).checked)
+  {
+    document.getElementById('cron_email').readOnly = true;
+  }else{
+    document.getElementById('cron_email').readOnly = false;
+  }  
+}
+

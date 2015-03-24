@@ -1,0 +1,180 @@
+% layout $custom_template;
+% title 'Webrsnapshot';
+
+<div id="bodycontainer">
+  <form method="post" action="/cron" name="cronform">
+  <div id="menucontainer">
+    <ul id="menu">
+      <% my $menu_prt = 0; %>
+      <% while ( @$mainmenu > $menu_prt) { %>
+        <% my @menuitem = @$mainmenu[$menu_prt++]; %>
+        <li>
+          <a href=<%= $menuitem[0][1] %> 
+            <% if ($menuitem[0][0] eq "Cronjobs" ) { %> class="active"<% } %> >
+            <%= $menuitem[0][0] %>
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  </div>
+  <div id="content">
+    <div id="tabs">
+      <ul>
+        <li><a>Cronjobs</a></li>
+      </ul>
+      <INPUT type="submit" class="submit_btn" value="Save">
+
+	<% my $mailchecked  = ""; %>
+	<% my $mailreadonly = ""; %>
+	<br/>
+	<% if ( @$retains[0] =~ m/^#/ ) { %> 
+	   <% $mailchecked  = "checked"; %> 
+	   <% $mailreadonly = "readonly"; %> 
+	<% } %>
+	<% @$retains[0] =~ /"(.*)"/; %>
+        <LABEL>Email to (optional):</LABEL><br/>
+        <INPUT type="text" name="cron_email" id="cron_email" class="configfield" 
+             value="<%= $1 %>" <%= $mailreadonly %> />
+	<INPUT type="checkbox" name="cron_disabled" id="cron_email_checkbox" 
+             onclick="disableCronEmail(this.id)" <%= $mailchecked %> />Disabled<br />
+
+
+        <br/><br/><br/>
+        <div id="cronjobs">
+	  <% my $retain_ptr = 1; %>
+	  <% while ( @$retains > $retain_ptr) { %>
+	    <% my $cron = @$retains[$retain_ptr]; %>
+            <div id="cron_<%= $retain_ptr %>">
+	      <INPUT type="text" name="cronjob_<%= $retain_ptr %>" 
+                   id="cronjob_<%= $retain_ptr %>" class="configfieldbig" 
+                   value="<%= $cron %>" />
+	      <INPUT type="button" value="Delete" onclick="deleteCronjob(<%= $retain_ptr %>)" />
+	      <% my $checked; %>
+	      <% if ( $cron =~ m/^#/ ) { $checked = "checked"; } %>
+	      <INPUT type="checkbox" id="cronCheck_<%= $retain_ptr %>" 
+                   <%= $checked %> onclick="disbaleCronjob(this.id,<%= $retain_ptr %>)" />
+                   Disabled<br/>
+	      <% $retain_ptr++; %>
+            </div>
+	  <% } %>
+        </dev>
+
+<!-- Add new cronjob Button -->
+	<INPUT type="hidden" id="newcronid" name="newcron" value="<%= $retain_ptr; %>">
+	<INPUT type="button" id="add_cron" value="Add cron">
+
+<!-- Add new cronjob Form -->
+        <div id="add-cronjob-form" title="Create new cronjob">
+          <form>
+            <fieldset>
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="command">Command</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" 
+                   title="Just select the retain from the drop-down-menu 
+                   and the full command will be filled in the text field" />
+              </div>
+              <input type="text" name="cron_command" id="cron_command_text" 
+                   class="text ui-widget-content ui-corner-all configfieldbig1" />
+              <% my $program = `which rsnapshot`; %>
+              <% my $command = $program . " -c " . $rs_config; %>
+              <select id="cron_command" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <% $retain_ptr = 0; %>
+                <% while ( @$retainnames > $retain_ptr) { %>
+                  <option value="<%= $command . ' ' . @$retainnames[$retain_ptr]->[0] %>">
+                    <%= @$retainnames[$retain_ptr++]->[0] %>
+                  </option>
+                <% } %>
+              </select>
+            </fieldset>
+
+
+            <fieldset>
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Username</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Usually you can put here <b>root</b>" />
+              </div>
+              <input type="text" name="cron_user" id="cron_user" value="root" 
+                   class="text ui-widget-content ui-corner-all" /><br/>
+            </fieldset>
+
+
+            <fieldset>
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Minute</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Write some Info here" />
+              </div>
+              <input type="text" name="cron_minute" id="cron_minute_text" 
+                   value="" class="text ui-widget-content ui-corner-all" />
+              <select id="cron_minute" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <option value="*">every minute(*)</option>
+                <option value="*/5">every 5 minutes(*/5)</option>
+                <option value="0,15,30,45">every 15 minutes(0,15,30,45)</option>
+              </select><br/>
+
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Hour</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Write some Info here" />
+              </div>
+              <input type="text" name="cron_hour" id="cron_hour_text" 
+                   value="" class="text ui-widget-content ui-corner-all" />
+              <select id="cron_hour" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <option value="*">every hour(*)</option>
+                <option value="*/2">every 2 hours(*/2)</option>
+              </select><br/>
+
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Day</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Write some Info here" />
+              </div>
+              <input type="text" name="cron_day" id="cron_day_text" 
+                   value="" class="text ui-widget-content ui-corner-all" />
+              <select  id="cron_day" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <option value="*">every day(*)</option>
+                <option value="*/2">every 2 days(*/2)</option>
+              </select><br/>
+
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Month</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Write some Info here" />
+              </div>
+              <input type="text" name="cron_month" id="cron_month_text" 
+                   value="" class="text ui-widget-content ui-corner-all" />
+              <select id="cron_month" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <option value="*">every month(*)</option>
+                <option value="1">only in Januar(1)</option>
+              </select><br/>
+
+              <span style="display:inline-block; width:22px;"></span>
+              <label for="user">Weekday</label><br/>
+              <div class="infoicon">
+                <img src="default/img/info.png" title="Write some Info here" />
+              </div>
+              <input type="text" name="cron_week" id="cron_week_text" 
+                   value="" class="text ui-widget-content ui-corner-all" />
+              <select id="cron_week" onchange="changeCronSelect(this.id)">
+                <option value="">select</option>
+                <option value="*">every weekday(*)</option>
+                <option value="1">every Monday(1)</option>
+                <option value="1-5">Monday bis Friday(1-5)</option>
+              </select><br/>
+            </fieldset>
+          </form>
+        </div>
+<!-- Add new cronjob Form End -->
+
+
+    </div> <!-- End of Tabs -->
+  </div> <!-- End of Content -->
+  </form>
+</div> <!-- End of "bodycontainer" -->

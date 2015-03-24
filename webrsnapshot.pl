@@ -29,6 +29,7 @@ use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
 use Webrsnapshot::ConfigReader;
 use Webrsnapshot::ConfigWriter;
+use Webrsnapshot::CronHandler;
 use Webrsnapshot::HostSummary;
 use Webrsnapshot::LogReader;
 use Webrsnapshot::SystemInfo;
@@ -75,6 +76,8 @@ sub mainMenu
   $menuLinks[2][1] = "/config";
   $menuLinks[3][0] = "Rsnapshot Log";
   $menuLinks[3][1] = "/log";
+  $menuLinks[4][0] = "Cronjobs";
+  $menuLinks[4][1] = "/cron";
   return @menuLinks;
 };
 
@@ -253,6 +256,87 @@ get '/log' => sub
   else
   {
     $self->redirect_to('/login');
+  }
+};
+
+# Get crontab content for rsnapshot
+get '/cron' => sub 
+{
+  my $self = shift;
+  my $username = $self->session('username')?$self->session('username'):"";
+  my $password = $self->session('password')?$self->session('password'):"";
+  if ( $self->authenticate( $username, $password ) )
+  {
+    eval
+    {
+      # Use MainMenu
+      my @menu = &mainMenu();
+      $self->stash( mainmenu        => [ @menu ]);
+      # User defined temaplate
+      $self->stash( custom_template => $default_template );
+      $self->stash( retains         => [ CronHandler::getCronContent($rs_config)  ]);
+      $self->stash( retainnames     => [ Webrsnapshot::getRetainings($rs_config) ]);
+      $self->stash( rs_config       => $rs_config );
+
+      $self->render('cron');
+    };
+  }
+  else
+  {
+    $self->redirect_to('/login');
+  }
+};
+
+# Write Crontab file
+post '/cron' => sub {
+  my $self = shift;
+
+  my $username = $self->session('username')?$self->session('username'):"";
+  my $password = $self->session('password')?$self->session('password'):"";
+
+  if ( $self->authenticate( $username, $password ) )
+  {
+  
+    my @cronjobs   = ();
+    my $cron_count = $self->param('newcron');
+    my $cron_email = $self->param('cron_email');
+    my $email_dsbl = $self->param('cron_disabled')?$self->param('cron_disabled'):"off";
+
+    if ( $email_dsbl eq "on" ) { $cronjobs[0] = "#MAILTO=\"".$cron_email."\""; }
+    else { $cronjobs[0] = "MAILTO=\"".$cron_email."\""; }
+
+    for (my $k=1; $k<$cron_count; $k++)
+    {
+       $cronjobs[$k] = $self->param('cronjob_'.$k);
+    }
+
+    my $saveResult = "";
+
+    # And send everything to the CronHandler to save
+    $saveResult = CronHandler::writeCronContent( 
+      scalar @cronjobs,
+      @cronjobs? @cronjobs : (""),
+    );
+    
+    # 0 - Ok
+    # -1 - Error
+    # If returns diferent then 1, then we have a problem
+    if ($saveResult != 0)
+    {
+      $self->flash(saved=>'no');
+      $self->flash(error_message=>"$!");
+    }
+    # If returns 1, then we have successfull save
+    else
+    {
+      $self->flash(saved=>'yes');
+    }
+
+    $self->redirect_to('/cron');
+  }
+  else
+  {
+    $self->render('/login');
   }
 };
 

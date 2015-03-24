@@ -55,6 +55,8 @@ table {
 .hidden             { display:none; }
 #logtextarea        { width: 99.5%; height: 29em; background:#FFFF99;}
 
+.configfieldbig     { width:500px; }
+.configfieldbig1    { width:450px; }
 .configfield        { width:300px; }
 .configfieldsmall   { width:230px; }
 .configfieldtiny    { width:100px; }
