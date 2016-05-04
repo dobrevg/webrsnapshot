@@ -18,6 +18,7 @@ package ConfigReader;
 #######################################################################
 use strict;
 use warnings;
+use open ':locale';
 
 my $configfile         = "";
 # Root
