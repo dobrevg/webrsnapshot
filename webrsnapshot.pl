@@ -93,7 +93,7 @@ get '/' => sub {
       # Use MainMenu
       my @menu = &mainMenu();
       $self->stash( mainmenu        => [ @menu ]);
-      # User defined temaplate
+      # User defined template
       $self->stash( custom_template => $default_template );
       $self->stash( rs_configfile   => $rs_config);
       my $parser = new ConfigReader($rs_config);
@@ -133,7 +133,7 @@ get '/login' => sub
   }
   else
   {
-    # User defined temaplate
+    # User defined template
     $self->stash( custom_template => $default_template);
     $self->render('login');
   }
@@ -147,7 +147,7 @@ post '/login' => sub {
   my $password = $self->req->param('password');
   if ( $self->authenticate( $username, $password ) )
   {
-    # User defined temaplate
+    # User defined template
     $self->stash( custom_template => $default_template );
     # And save as session data
     $self->session(username => $username);
@@ -183,7 +183,7 @@ get '/hostsummary' => sub
       # Use MainMenu
       my @menu = &mainMenu();
       $self->stash( mainmenu        => [ @menu ]);
-      # User defined temaplate
+      # User defined template
       $self->stash( custom_template => $default_template );
       $self->stash( hosts           => [ Webrsnapshot::getHostNames($rs_config) ]);
       $self->stash( last_bkp        => [ HostSummary::getAllLastBackupTimes($rs_config) ]);
@@ -213,7 +213,7 @@ get '/host' => sub
       # Use MainMenu
       my @menu = &mainMenu();
       $self->stash( mainmenu        => [ @menu ]);
-      # User defined temaplate
+      # User defined template
       $self->stash( custom_template => $default_template );
       # Create object from the Config File
       my $parser = new ConfigReader($rs_config);
@@ -245,7 +245,7 @@ get '/log' => sub
       # Use MainMenu
       my @menu = &mainMenu();
       $self->stash( mainmenu        => [ @menu ]);
-      # User defined temaplate
+      # User defined template
       $self->stash( custom_template => $default_template );
       $self->stash( log_content     => LogReader->getContent( 
                                                       $config->{loglines},
@@ -272,7 +272,7 @@ get '/cron' => sub
       # Use MainMenu
       my @menu = &mainMenu();
       $self->stash( mainmenu        => [ @menu ]);
-      # User defined temaplate
+      # User defined template
       $self->stash( custom_template => $default_template );
       $self->stash( retains         => [ CronHandler::getCronContent($rs_config)  ]);
       $self->stash( retainnames     => [ Webrsnapshot::getRetainings($rs_config) ]);
@@ -533,7 +533,7 @@ get '/config' => sub {
     # Use MainMenu
     my @menu = &mainMenu();
     $self->stash( mainmenu        => [ @menu ]);
-    # User defined temaplate
+    # User defined template
     $self->stash( custom_template => $default_template );
     # Create object from the Config File
     my $parser = new ConfigReader($rs_config);

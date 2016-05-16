@@ -21,6 +21,7 @@ use warnings;
 
 use Webrsnapshot::ConfigReader;
 use File::ReadBackwards;
+use Encode;
 
 sub getContent
 {
@@ -33,7 +34,7 @@ sub getContent
   until ( $bwlogfile->eof ) {
     if ($linecounter-- > 0)
     {
-      $result .= $bwlogfile->readline;
+      $result .= decode_utf8($bwlogfile->readline);
     }
     else
     {
