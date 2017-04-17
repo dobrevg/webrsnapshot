@@ -3,7 +3,9 @@ Version 0.Next
 
 * [improvement] - Add simple Host Summary
 * [feature]     - Add user defined backup intervals
+* [feature]     - Add LVM support
 * [change]      - Move libs to libs/Webrsnapshot
+
 
 
 Version 0.6
