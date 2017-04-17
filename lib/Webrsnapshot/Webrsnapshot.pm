@@ -1,7 +1,7 @@
 package Webrsnapshot;
 #######################################################################
 # This file is part of Webrsnapshot - The web interface for rsnapshot
-# Copyright© (2013-2014) Georgi Dobrev (dobrev.g at gmail dot com)
+# Copyright© (2013-2017) Georgi Dobrev (dobrev.g at gmail dot com)
 #
 # Webrsnapshot is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@ package Webrsnapshot;
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with Webrsnapshot. If not, see <http://www.gnu.org/licenses/>.
 #######################################################################
 use strict;
 use warnings;
