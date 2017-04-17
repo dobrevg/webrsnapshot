@@ -39,17 +39,18 @@
       <ul>
         <li><a href="#tabs-1">Root</a></li>
         <li><a href="#tabs-2">Commands</a></li>
-        <li><a href="#tabs-3">Global Config</a></li>
-        <li><a href="#tabs-4">Backup Interval</a></li>
-        <li><a href="#tabs-5">Include/Exclude</a></li>
-        <li><a href="#tabs-6">Hosts</a></li>
-        <li><a href="#tabs-7">Scripts</a></li>
+        <li><a href="#tabs-3">LVM Config</a></li>
+        <li><a href="#tabs-4">Global Config</a></li>
+        <li><a href="#tabs-5">Backup Interval</a></li>
+        <li><a href="#tabs-6">Include/Exclude</a></li>
+        <li><a href="#tabs-7">Hosts</a></li>
+        <li><a href="#tabs-8">Scripts</a></li>
       </ul>
       <INPUT type="submit" class="submit_btn" value="Save">
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 1: Root config
+      Tab: Root config
       ##########################################################
       ##########################################################
 -->
@@ -102,7 +103,7 @@
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 2: Optional programs and scripts used
+      Tab: Optional programs and scripts used
       ##########################################################
       ##########################################################
 -->
@@ -186,11 +187,90 @@
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 3: Global Options 
+      Tab: LVM Options 
       ##########################################################
       ##########################################################
 -->
-      <div id="tabs-3">
+	<div id="tabs-3">
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Path to lvcreate for use with Linux LVMs. The lvcreate command is required for 
+			managing snapshots of LVM volumes and are otherwise optional." />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_cmd_lvcreate</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_cmd_lvcreate" class="configfield" value="<%= $linux_lvm_cmd_lvcreate %>" /></div>
+		<br/>
+
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Path to lvremove for use with Linux LVMs. The lvremove command is required for 
+			managing snapshots of LVM volumes and are otherwise optional." />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_cmd_lvremove</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_cmd_lvremove" class="configfield" value="<%= $linux_lvm_cmd_lvremove %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Path to mount command for use with Linux LVMs. The mount command is required for 
+			managing snapshots of LVM volumes and are otherwise optional." />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_cmd_mount</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_cmd_mount" class="configfield" value="<%= $linux_lvm_cmd_mount %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Path to umont command for use with Linux LVMs. The umount command is required for 
+			managing snapshots of LVM volumes and are otherwise optional." />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_cmd_umount</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_cmd_umount" class="configfield" value="<%= $linux_lvm_cmd_umount %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="<b>Example: 2G</b><br/><br/>LVM snapshot(s) size (lvcreate --size option). 
+			This size depends also on the free space in your Volume Group. A size suffix of B for bytes, S for sectors as
+            512 bytes, K for kilobytes, M for megabytes, G for gigabytes, T for terabytes, P for  petabytes  or  E for 
+            exabytes is optional. <b>Default unit is megabytes</b>" />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_snapshotsize</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_snapshotsize" class="configfield" value="<%= $linux_lvm_snapshotsize %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Name to be used when creating the LVM logical volume snapshot(s) (lvcreate --name option)" />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_snapshotname</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_snapshotname" class="configfield" value="<%= $linux_lvm_snapshotname %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="<b>Default: /dev</b><br/><br/>Path to the LVM Volume Groups." />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_vgpath</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_vgpath" class="configfield" value="<%= $linux_lvm_vgpath %>" /></div>
+		<br/>
+		
+		<div class="infoicon">
+			<img src="default/img/info.png"
+			title="Mount point to use to temporarily mount the snapshot(s).<br/><br/><b>Example: /mnt/lvm-snapshot</b>" />
+		</div>
+		<div class="configlabel"><LABEL>linux_lvm_mountpath</LABEL></div>
+		<div><INPUT type="text" name="linux_lvm_mountpath" class="configfield" value="<%= $linux_lvm_mountpath %>" /></div>
+		<br/>	
+	</div>
+<!-- 
+      ##########################################################
+      ##########################################################
+      Tab: Global Options 
+      ##########################################################
+      ##########################################################
+-->
+      <div id="tabs-4">
         <div class="infoicon">
           <img src="default/img/info.png"
             title="Verbose level, 1 through 5.<br/><br/><b>1 Quiet</b> - Print fatal errors only<br/>
@@ -349,11 +429,11 @@
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 4: Backup Intervals
+      Tab: Backup Intervals
       ##########################################################
       ##########################################################
 -->
-      <div id="tabs-4">
+      <div id="tabs-5">
         <% my $retain_ptr = 0; %>
         <% if (@$retain[$retain_ptr] ne "") { %>
           <% while ( @$retain > $retain_ptr) { %>
@@ -393,13 +473,13 @@
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 5: Includes/Excludes 
+      Tab: Includes/Excludes 
       ##########################################################
       ##########################################################
 -->
 
 <!-- ##### INCLUDE/EXLUDE FILES ##### -->
-      <div id="tabs-5">
+      <div id="tabs-6">
       <div class="infoicon">
         <img src="default/img/info.png"
           title="This gets passed directly to rsync using the <b>--include-from</b> directive.<br/><br/>
@@ -488,16 +568,16 @@
           <INPUT type="button" id="exclude_add" name="<%= $exclude_ptr %>"
             onclick="addExclude(this.id, this.name)" value="Add"/>
         </div> <!-- End of Exclude Patterns -->
-      </div> <!-- End of Tab 5 -->
+      </div> <!-- End of Tab 6 -->
 
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 6: Hosts to backup 
+      Tab: Hosts to backup 
       ##########################################################
       ##########################################################
 -->
-      <div id="tabs-6">
+      <div id="tabs-7">
         <div id="accordion">
           <% my $bkp_srv_ptr = 0; %>
           <% if (@$backup_servers[$bkp_srv_ptr] ne "") { %>
@@ -572,16 +652,16 @@
             </fieldset>
           </form>
         </div>
-      </div> <!-- End of Tab 6 -->
+      </div> <!-- End of Tab 7 -->
 
 <!-- 
       ##########################################################
       ##########################################################
-      Tab 7: Scripts executed while backuping 
+      Tab: Scripts executed while backuping 
       ##########################################################
       ##########################################################
 -->
-      <div id="tabs-7">
+      <div id="tabs-8">
         <div id="bkp_scripts">
         <br/><br/>
         <% my $bkp_script_ptr = 0; %>

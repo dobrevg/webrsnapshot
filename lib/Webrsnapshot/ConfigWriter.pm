@@ -29,45 +29,54 @@ my @config_parameters =
   "scrips_count",          # 03
   "rs_config_file",        # 04
   "retain_count",          # 05
-  # Tab 1: Root config
-  "config_version\t",      # 06    5
-  "snapshot_root\t",       # 07    6
-  "no_create_root\t",      # 08    7
-  # Tab 2: Optional programs and scripts used
-  "cmd_cp\t\t\t",          # 09    8
-  "cmd_rm\t\t\t",          # 10   9
-  "cmd_rsync\t\t",         # 11  10
-  "cmd_ssh\t\t\t",         # 12  11
-  "cmd_logger\t\t",        # 13  12
-  "cmd_du\t\t\t",          # 14  13
-  "cmd_rsnapshot_diff",    # 15  14
-  "cmd_preexec",           # 16  15
-  "cmd_postexec",          # 17  16
-  # Tab 3: Global Options
-  "verbose\t\t\t",         # 18  21
-  "loglevel\t\t",          # 19  22
-  "logfile\t\t\t",         # 20  23
-  "lockfile\t\t",          # 21  24
-  "rsync_short_args",      # 22  25
-  "rsync_long_args\t",     # 23  26
-  "ssh_args\t",            # 24  27
-  "du_args\t\t",           # 25  28
-  "one_fs\t\t",            # 26  29
-  "link_dest\t\t",         # 27  30
-  "sync_first",            # 28  31
-  "use_lazy_deletes",      # 29  32
-  "rsync_numtries\t",      # 30  33
-  # Tab 4: Backup Intervals
-  "retain\t\t",             # 31
-  # Tab 5: Includes/Excludes
-  "include_file\t",        # 32  34
-  "exclude_file\t",        # 33  35
-  "include\t\t\t",         # 34  36
-  "exclude\t\t\t",         # 35  37
-  # Tab 6: Servers
-  "backup\t\t\t\t",        # 36  38
-  # Tab 7: Scripts
-  "backup_script\t",       # 37  39
+  # Tab: Root config
+  "config_version\t",      # 06
+  "snapshot_root\t",       # 07
+  "no_create_root\t",      # 08
+  # Tab: Optional programs and scripts used
+  "cmd_cp\t\t\t",          # 09
+  "cmd_rm\t\t\t",          # 10
+  "cmd_rsync\t\t",         # 11
+  "cmd_ssh\t\t\t",         # 12
+  "cmd_logger\t\t",        # 13
+  "cmd_du\t\t\t",          # 14
+  "cmd_rsnapshot_diff",    # 15
+  "cmd_preexec",           # 16
+  "cmd_postexec",          # 17
+    # Tab: LVM Options
+    "linux_lvm_cmd_lvcreate\t", # 18
+    "linux_lvm_cmd_lvremove\t", # 19
+    "linux_lvm_cmd_mount\t",    # 20
+    "linux_lvm_cmd_umount\t",   # 21
+    "linux_lvm_snapshotsize\t", # 22
+    "linux_lvm_snapshotname\t", # 23
+    "linux_lvm_vgpath\t",       # 24
+    "linux_lvm_mountpath\t",    # 25  
+  # Tab: Global Options
+  "verbose\t\t\t",         # 26
+  "loglevel\t\t",          # 27
+  "logfile\t\t\t",         # 28
+  "lockfile\t\t",          # 29
+  "rsync_short_args",      # 30
+  "rsync_long_args\t",     # 31
+  "ssh_args\t",            # 32
+  "du_args\t\t",           # 33
+  "one_fs\t\t",            # 34
+  "link_dest\t\t",         # 35
+  "sync_first",            # 36
+  "use_lazy_deletes",      # 37
+  "rsync_numtries\t",      # 38
+  # Tab: Backup Intervals
+  "retain\t\t",             # 39
+  # Tab: Includes/Excludes
+  "include_file\t",        # 40
+  "exclude_file\t",        # 41
+  "include\t\t\t",         # 42
+  "exclude\t\t\t",         # 43
+  # Tab: Servers
+  "backup\t\t\t\t",        # 44
+  # Tab: Scripts
+  "backup_script\t",       # 45
 );
 
 # and save the config File
@@ -75,7 +84,7 @@ my @config_parameters =
 sub saveConfig
 {
   my $counter       = 0;    # Just a counter
-  my $retain_start  = 31;   # The number where retain starts
+  my $retain_start  = 39;   # The number where retain starts
   my @arguments     = @_;
 
   my $include_count   = $arguments[0];

@@ -35,6 +35,15 @@ my $cmd_du             = "";
 my $cmd_rsnapshot_diff = "";
 my $cmd_preexec        = "";
 my $cmd_postexec       = "";
+# LVM Config
+my $linux_lvm_cmd_lvcreate = "";
+my $linux_lvm_cmd_lvremove = "";
+my $linux_lvm_cmd_mount    = "";
+my $linux_lvm_cmd_umount   = "";
+my $linux_lvm_snapshotsize = "";
+my $linux_lvm_snapshotname = "";
+my $linux_lvm_vgpath       = "";
+my $linux_lvm_mountpath    = "";
 # Global Options
 my $verbose            = "";    # 1 - 5, def = 2
 my $loglevel           = "";    # 1 - 5, def = 3 
@@ -86,11 +95,11 @@ sub new
     next if /^#/;                   # Ignore every comment 
     chop;                           # Remove the new line character
     # and start parsing the config file
-    # Tab 1: Root config
+    # Tab Root config
     if    ("$_" =~ /^config_version\t+(.*)/)     { $config_version     = $1; }
     elsif ("$_" =~ /^snapshot_root\t+(.*)/ )     { $snapshot_root      = $1; }
     elsif ("$_" =~ /^no_create_root\t+(.*)/)     { $no_create_root     = $1; }
-    # Tab 2: Optional programs and scripts used
+    # Tab Optional programs and scripts used
     elsif ("$_" =~ /^cmd_cp\t+(.*)/)             { $cmd_cp             = $1; }
     elsif ("$_" =~ /^cmd_rm\t+(.*)/)             { $cmd_rm             = $1; }
     elsif ("$_" =~ /^cmd_rsync\t+(.*)/)          { $cmd_rsync          = $1; }
@@ -100,7 +109,16 @@ sub new
     elsif ("$_" =~ /^cmd_rsnapshot_diff\t+(.*)/) { $cmd_rsnapshot_diff = $1; }
     elsif ("$_" =~ /^cmd_preexec\t+(.*)/)        { $cmd_preexec        = $1; }
     elsif ("$_" =~ /^cmd_postexec\t+(.*)/)       { $cmd_postexec       = $1; }
-    # Tab 3: Global configuration
+    # Tab LVM Configuration
+    elsif ("$_" =~ /^linux_lvm_cmd_lvcreate\t+(.*)/) { $linux_lvm_cmd_lvcreate = $1; }
+    elsif ("$_" =~ /^linux_lvm_cmd_lvremove\t+(.*)/) { $linux_lvm_cmd_lvremove = $1; }
+    elsif ("$_" =~ /^linux_lvm_cmd_mount\t+(.*)/)    { $linux_lvm_cmd_mount    = $1; }
+    elsif ("$_" =~ /^linux_lvm_cmd_umount\t+(.*)/)   { $linux_lvm_cmd_umount   = $1; }
+    elsif ("$_" =~ /^linux_lvm_snapshotsize\t+(.*)/) { $linux_lvm_snapshotsize = $1; }
+    elsif ("$_" =~ /^linux_lvm_snapshotname\t+(.*)/) { $linux_lvm_snapshotname = $1; }
+    elsif ("$_" =~ /^linux_lvm_vgpath\t+(.*)/)       { $linux_lvm_vgpath       = $1; }
+    elsif ("$_" =~ /^linux_lvm_mountpath\t+(.*)/)    { $linux_lvm_mountpath    = $1; }
+    # Tab Global configuration
     elsif ("$_" =~ /^verbose\t+(.*)/)            { $verbose            = $1; }
     elsif ("$_" =~ /^loglevel\t+(.*)/)           { $loglevel           = $1; }
     elsif ("$_" =~ /^logfile\t+(.*)/)            { $logfile            = $1; }
@@ -166,11 +184,11 @@ sub new
   return  $this;             # Return the reference to the hash
 }
 
-# Tab1
+# Tab Root
 sub getConfigVersion  { return $config_version; }
 sub getSnapshotRoot   { return $snapshot_root;  }
 sub getNoCreateRoot   { return ($no_create_root ne 1) ? " ":"checked"; }
-# Tab2
+# Tab Commands
 sub getCmCp           { return $cmd_cp;     }
 sub getCmRm           { return $cmd_rm;     }
 sub getCmRsync        { return $cmd_rsync;  }
@@ -180,7 +198,16 @@ sub getCmDu           { return $cmd_du;     }
 sub getCmDiff         { return $cmd_rsnapshot_diff; }
 sub getPreExec        { return $cmd_preexec;        }
 sub getPostExec       { return $cmd_postexec;       }
-#Tab 3
+#Tab LVM Config
+sub getLinuxLvmCmdLvcreate  { return $linux_lvm_cmd_lvcreate; }
+sub getLinuxLvmCmdLvremove  { return $linux_lvm_cmd_lvremove; }
+sub getLinuxLvmCmdMount     { return $linux_lvm_cmd_mount;    }
+sub getLinuxLvmCmdUmount    { return $linux_lvm_cmd_umount;   }
+sub getLinuxLvmSnapshotsize { return $linux_lvm_snapshotsize; }
+sub getLinuxLvmSnapshotname { return $linux_lvm_snapshotname; }
+sub getLinuxLvmVgpath       { return $linux_lvm_vgpath;       }
+sub getLinuxLvmMountpath    { return $linux_lvm_mountpath;    }
+#Tab Global Config
 sub getVerbose        { return $verbose;  }
 sub getLogLevel       { return $loglevel; }
 sub getLogFile        { return $logfile;  }
@@ -194,16 +221,16 @@ sub getLinkDest       { return ($link_dest ne 1)        ? " ":"checked"; }
 sub getSyncFirst      { return ($sync_first ne 1)       ? " ":"checked"; }
 sub getUseLazyDeletes { return ($use_lazy_deletes ne 1) ? " ":"checked"; }
 sub getRsyncNumtries  { return $rsync_numtries;    }
-# Tab 4
+# Tab Backup Intervals
 sub getRetains        { return @retain; }
-# Tab 5
+# Tab Include/Exclude
 sub getIncludeFile    { return $include_file; }
 sub getExcludeFile    { return $exclude_file; }
 sub getInclude        { return @include;      }
 sub getExclude        { return @exclude;      }
-# Tab 6
+# Tab Servers
 sub getServers        { return @backup_servers; }
-# Tab 7 
+# Tab Scripts
 sub getScripts        { return @backup_scripts; }
 
 # And the Destructor
@@ -217,7 +244,7 @@ sub DESTROY {
   $no_create_root     = "";
   # Optional programs and scripts used
   $cmd_cp             = "";
-  $cmd_rm	            = "";
+  $cmd_rm	          = "";
   $cmd_rsync          = "";
   $cmd_ssh            = "";
   $cmd_logger         = "";
@@ -225,6 +252,15 @@ sub DESTROY {
   $cmd_rsnapshot_diff = "";
   $cmd_preexec        = "";
   $cmd_postexec       = "";
+  # LVM Config
+  $linux_lvm_cmd_lvcreate = "";
+  $linux_lvm_cmd_lvremove = "";
+  $linux_lvm_cmd_mount    = "";
+  $linux_lvm_cmd_umount   = "";
+  $linux_lvm_snapshotsize = "";
+  $linux_lvm_snapshotname = "";
+  $linux_lvm_vgpath       = "";
+  $linux_lvm_mountpath    = "";
   # Global Options
   $verbose            = "";    # 1 - 5, def = 2
   $loglevel           = "";    # 1 - 5, def = 3

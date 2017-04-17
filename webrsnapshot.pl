@@ -439,11 +439,11 @@ post '/config' => sub {
       $scripts_count,      # 03
       $rs_config,          # 04
       scalar @retain,      # 05
-      # Tab 1 - Root	
+      # Tab - Root	
       $self->param('config_version'), # 06
       $self->param('snapshot_root' ), # 07
       $self->param('no_create_root')?     $self->param('no_create_root') : "off",  # 08
-      # Tab 2 - Commands
+      # Tab - Commands
       $self->param('cmd_cp')?             $self->param('cmd_cp') : "",             # 09
       $self->param('cmd_rm')?             $self->param('cmd_rm') : "",             # 10
       $self->param('cmd_rsync'),                                                   # 11
@@ -453,31 +453,40 @@ post '/config' => sub {
       $self->param('cmd_rsnapshot_diff')? $self->param('cmd_rsnapshot_diff') : "", # 15
       $self->param('cmd_preexec')?        $self->param('cmd_preexec')        : "", # 16
       $self->param('cmd_postexec')?       $self->param('cmd_postexec')       : "", # 17
-      # Tab 3 - Global Config
-      $self->param('verbose')?          $self->param('verbose')          : "",     # 18
-      $self->param('loglevel')?         $self->param('loglevel')         : "",     # 19
-      $self->param('logfile')?          $self->param('logfile')          : "",     # 20
-      $self->param('lockfile')?         $self->param('lockfile')         : "",     # 21
-      $self->param('rsync_short_args')? $self->param('rsync_short_args') : "",     # 22
-      $self->param('rsync_long_args')?  $self->param('rsync_long_args')  : "",     # 23
-      $self->param('ssh_args')?         $self->param('ssh_args')         : "",     # 24
-      $self->param('du_args')?          $self->param('du_args')          : "",     # 25
-      $self->param('one_fs')?           $self->param('one_fs')           : "off",  # 26
-      $self->param('link_dest')?        $self->param('link_dest')        : "off",  # 27
-      $self->param('sync_first')?       $self->param('sync_first')       : "off",  # 28
-      $self->param('use_lazy_deletes')? $self->param('use_lazy_deletes') : "off",  # 29
-      $self->param('rsync_numtries')?   $self->param('rsync_numtries')   : "",     # 30
-      # Tab 4 - Backup Intervals
-      @retain? @retain : (""),                                         # 31
-      # Tab 5 - Include/Exclude
-      $self->param('include_file')? $self->param('include_file') : "", # 32
-      $self->param('exclude_file')? $self->param('exclude_file') : "", # 33
-      @include? @include : (""), # 34
-      @exclude? @exclude : (""), # 35
-      # Tab 6 - Servers
-      @servers? @servers : (""), # 36
-      # Tab 7 - Scripts
-      @scripts? @scripts : (""), # 37
+      # Tab - LVM Config
+      $self->param('linux_lvm_cmd_lvcreate')? $self->param('linux_lvm_cmd_lvcreate') : "", # 18
+      $self->param('linux_lvm_cmd_lvremove')? $self->param('linux_lvm_cmd_lvremove') : "", # 19
+      $self->param('linux_lvm_cmd_mount')?    $self->param('linux_lvm_cmd_mount')    : "", # 20
+      $self->param('linux_lvm_cmd_umount')?   $self->param('linux_lvm_cmd_umount')   : "", # 21
+      $self->param('linux_lvm_snapshotsize')? $self->param('linux_lvm_snapshotsize') : "", # 22
+      $self->param('linux_lvm_snapshotname')? $self->param('linux_lvm_snapshotname') : "", # 23
+      $self->param('linux_lvm_vgpath')?       $self->param('linux_lvm_vgpath')       : "", # 24
+      $self->param('linux_lvm_mountpath')?    $self->param('linux_lvm_mountpath')    : "", # 25
+      # Tab - Global Config
+      $self->param('verbose')?          $self->param('verbose')          : "",     # 26
+      $self->param('loglevel')?         $self->param('loglevel')         : "",     # 27
+      $self->param('logfile')?          $self->param('logfile')          : "",     # 28
+      $self->param('lockfile')?         $self->param('lockfile')         : "",     # 29
+      $self->param('rsync_short_args')? $self->param('rsync_short_args') : "",     # 30
+      $self->param('rsync_long_args')?  $self->param('rsync_long_args')  : "",     # 31
+      $self->param('ssh_args')?         $self->param('ssh_args')         : "",     # 32
+      $self->param('du_args')?          $self->param('du_args')          : "",     # 33
+      $self->param('one_fs')?           $self->param('one_fs')           : "off",  # 34
+      $self->param('link_dest')?        $self->param('link_dest')        : "off",  # 35
+      $self->param('sync_first')?       $self->param('sync_first')       : "off",  # 36
+      $self->param('use_lazy_deletes')? $self->param('use_lazy_deletes') : "off",  # 37
+      $self->param('rsync_numtries')?   $self->param('rsync_numtries')   : "",     # 38
+      # Tab - Backup Intervals
+      @retain? @retain : (""),                                         # 39
+      # Tab - Include/Exclude
+      $self->param('include_file')? $self->param('include_file') : "", # 40
+      $self->param('exclude_file')? $self->param('exclude_file') : "", # 41
+      @include? @include : (""), # 42
+      @exclude? @exclude : (""), # 43
+      # Tab - Servers
+      @servers? @servers : (""), # 44
+      # Tab - Scripts
+      @scripts? @scripts : (""), # 45
     );
 
     # Shrink the message size to not get oversized Cookies
@@ -537,11 +546,11 @@ get '/config' => sub {
     $self->stash( custom_template => $default_template );
     # Create object from the Config File
     my $parser = new ConfigReader($rs_config);
-    # Tab 1 - Root
+    # Tab - Root
     $self->stash(config_version => $parser->getConfigVersion() );
     $self->stash(snapshot_root  => $parser->getSnapshotRoot()  );
     $self->stash(no_create_root => $parser->getNoCreateRoot()  );
-    # Tab 2 - Commands
+    # Tab - Commands
     $self->stash(cmd_cp             => $parser->getCmCp()     );
     $self->stash(cmd_rm             => $parser->getCmRm()     );
     $self->stash(cmd_rsync          => $parser->getCmRsync()  );
@@ -551,7 +560,16 @@ get '/config' => sub {
     $self->stash(cmd_rsnapshot_diff => $parser->getCmDiff()   );
     $self->stash(cmd_preexec        => $parser->getPreExec()  );
     $self->stash(cmd_postexec       => $parser->getPostExec() );
-    # Tab 3 - Global Config
+    # Tab - LVM Config
+    $self->stash(linux_lvm_cmd_lvcreate => $parser->getLinuxLvmCmdLvcreate() );
+    $self->stash(linux_lvm_cmd_lvremove => $parser->getLinuxLvmCmdLvremove() );
+    $self->stash(linux_lvm_cmd_mount    => $parser->getLinuxLvmCmdMount()    );
+    $self->stash(linux_lvm_cmd_umount   => $parser->getLinuxLvmCmdUmount()   );
+    $self->stash(linux_lvm_snapshotsize => $parser->getLinuxLvmSnapshotsize());
+    $self->stash(linux_lvm_snapshotname => $parser->getLinuxLvmSnapshotname());
+    $self->stash(linux_lvm_vgpath       => $parser->getLinuxLvmVgpath()      );
+    $self->stash(linux_lvm_mountpath    => $parser->getLinuxLvmMountpath()   );
+    # Tab - Global Config
     $self->stash(verbose          => $parser->getVerbose()        );
     $self->stash(loglevel         => $parser->getLogLevel()       );
     $self->stash(logfile          => $parser->getLogFile()        );
@@ -565,16 +583,16 @@ get '/config' => sub {
     $self->stash(sync_first       => $parser->getSyncFirst()      );
     $self->stash(use_lazy_deletes => $parser->getUseLazyDeletes() );
     $self->stash(rsync_numtries   => $parser->getRsyncNumtries()  );
-    # Tab 4 - Backup Intervals
+    # Tab - Backup Intervals
     $self->stash(retain           => [ $parser->getRetains()      ]);
-    # Tab 5 - Include/Exclude
+    # Tab - Include/Exclude
     $self->stash(include_file => $parser->getIncludeFile() );
     $self->stash(exclude_file => $parser->getExcludeFile() );
     $self->stash(include      => [ $parser->getInclude()  ]);
     $self->stash(exclude      => [ $parser->getExclude()  ]);
-    # Tab 6 - Servers
+    # Tab - Servers
     $self->stash(backup_servers => [ $parser->getServers() ]);
-    # Tab 7 - Scripts
+    # Tab - Scripts
     $self->stash(backup_scripts => [ $parser->getScripts() ]);
 
     # Object have to be destroyed, to not show the config from the first read
