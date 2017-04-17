@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #######################################################################
 # This file is part of Webrsnapshot - The web interface for rsnapshot
-# Copyright© (2013-2014) Georgi Dobrev (dobrev.g at gmail dot com)
+# Copyright© (2013-2017) Georgi Dobrev (dobrev.g at gmail dot com)
 #
 # Webrsnapshot is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with Webrsnapshot. If not, see <http://www.gnu.org/licenses/>.
 #######################################################################
 use strict;
 use warnings;
@@ -38,13 +38,13 @@ use Webrsnapshot::SystemInfo;
 my $config           = plugin 'Config';
 my $rs_config        = $config->{rs_config}? $config->{rs_config}: '/etc/rsnapshot.conf';
 my $default_template = $config->{template}? $config->{template}:'default';
- 
+
 plugin 'authentication', {
   autoload_user => 0,
-  load_user => sub 
+  load_user => sub
   {
     my ($app, $uid) = @_;
-    return 
+    return
     {
       'username' => $config->{rootuser},
       'password' => $config->{rootpass},
@@ -109,7 +109,7 @@ get '/' => sub {
       $self->render('index');
     };
     # Error handling
-    if ( $@ ) 
+    if ( $@ )
     {
       $self->stash(error_message=>"$@");
       $self->render('exception');
@@ -121,7 +121,7 @@ get '/' => sub {
   }
 };
 
-get '/login' => sub 
+get '/login' => sub
 {
   my $self = shift;
 
@@ -139,7 +139,7 @@ get '/login' => sub
   }
 };
 
-post '/login' => sub { 
+post '/login' => sub {
   my $self = shift;
 
   # Filter Post data
@@ -155,14 +155,14 @@ post '/login' => sub {
     $self->redirect_to('/');
   }
   else
-  { 
+  {
     $self->flash( login_failed => "Incorrect username or password.");
     $self->redirect_to('/login');
   }
 };
 
 # Handle any logout request
-any '/logout' => sub { 
+any '/logout' => sub {
   my $self = shift;
   $self->session(username => "");
   $self->session(password => "");
@@ -233,7 +233,7 @@ get '/host' => sub
 };
 
 # And write the log file here.
-get '/log' => sub 
+get '/log' => sub
 {
   my $self = shift;
   my $username = $self->session('username')?$self->session('username'):"";
@@ -247,7 +247,7 @@ get '/log' => sub
       $self->stash( mainmenu        => [ @menu ]);
       # User defined template
       $self->stash( custom_template => $default_template );
-      $self->stash( log_content     => LogReader->getContent( 
+      $self->stash( log_content     => LogReader->getContent(
                                                       $config->{loglines},
                                                       $config->{rs_config}) );
       $self->render('log');
@@ -260,7 +260,7 @@ get '/log' => sub
 };
 
 # Get crontab content for rsnapshot
-get '/cron' => sub 
+get '/cron' => sub
 {
   my $self = shift;
   my $username = $self->session('username')?$self->session('username'):"";
@@ -296,7 +296,7 @@ post '/cron' => sub {
 
   if ( $self->authenticate( $username, $password ) )
   {
-  
+
     my @cronjobs   = ();
     my $cron_count = $self->param('newcron');
     my $cron_email = $self->param('cron_email');
@@ -313,11 +313,11 @@ post '/cron' => sub {
     my $saveResult = "";
 
     # And send everything to the CronHandler to save
-    $saveResult = CronHandler::writeCronContent( 
+    $saveResult = CronHandler::writeCronContent(
       scalar @cronjobs,
       @cronjobs? @cronjobs : (""),
     );
-    
+
     # 0 - Ok
     # -1 - Error
     # If returns diferent then 1, then we have a problem
@@ -340,7 +340,7 @@ post '/cron' => sub {
   }
 };
 
-# Write confguration file
+# Write configuration file
 post '/config' => sub {
   my $self = shift;
 
@@ -356,7 +356,7 @@ post '/config' => sub {
     {
       my $i=0;
       while ( $self->param('include_'.$c) )
-      {	
+      {
         $include[$i++] = $self->param('include_'.$c++);
       }
     }
@@ -368,7 +368,7 @@ post '/config' => sub {
     {
       my $i=0;
       while ( $self->param('exclude_'.$c) )
-      {	
+      {
         $exclude[$i++] = $self->param('exclude_'.$c++);
       }
     }
@@ -393,8 +393,8 @@ post '/config' => sub {
           if (defined $server_dir ne "")
           {
             my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
-              "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : ""; 
-            $servers[$servers_line_count++] = 
+              "\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : "";
+            $servers[$servers_line_count++] =
               $self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
           }
         }
@@ -413,7 +413,7 @@ post '/config' => sub {
         $scripts[$scripts_count++] = $scriptname."\t\t".$self->param('bkp_script_'.$c.'_target');
       }
     }
-    
+
     # Retain loop to get all configured intervals from the post data
     my @retain = ();
     my $retain_count_postdata = $self->param('retain_count');
@@ -429,7 +429,7 @@ post '/config' => sub {
     }
 
     my @saveResult = {};
-  
+
     # And send everything to the ConfigWriter
     @saveResult = ConfigWriter::saveConfig(
       # Extra Parameter
@@ -439,7 +439,7 @@ post '/config' => sub {
       $scripts_count,      # 03
       $rs_config,          # 04
       scalar @retain,      # 05
-      # Tab - Root	
+      # Tab - Root
       $self->param('config_version'), # 06
       $self->param('snapshot_root' ), # 07
       $self->param('no_create_root')?     $self->param('no_create_root') : "off",  # 08

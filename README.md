@@ -10,7 +10,7 @@ Backuping servers supports at this time only root@my-target-server.com option. I
 
 
 ## Quick start
-============ 
+============
 
 * Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want `git clone https://github.com/dobrevg/webrsnapshot.git`
 * Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
@@ -21,10 +21,10 @@ Backuping servers supports at this time only root@my-target-server.com option. I
 
 
 ## Requirements
-============ 
+============
 
 * /etc/rsnapshot.conf have to be readable and writable for the user running this web application
-* rsnapshot log file have to be readabe for for the user running this web application
+* rsnapshot log file have to be readable for the user running this web application
 * perl-IO-Socket-SSL 1.75 or better (optional) if you plan to use HTTPS
 
 
@@ -50,6 +50,5 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
