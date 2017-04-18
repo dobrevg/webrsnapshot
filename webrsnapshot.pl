@@ -442,6 +442,7 @@ post '/config' => sub {
       # Tab - Root
       $self->param('config_version'), # 06
       $self->param('snapshot_root' ), # 07
+      $self->param('include_conf' ),
       $self->param('no_create_root')?     $self->param('no_create_root') : "off",  # 08
       # Tab - Commands
       $self->param('cmd_cp')?             $self->param('cmd_cp') : "",             # 09
@@ -549,6 +550,7 @@ get '/config' => sub {
     # Tab - Root
     $self->stash(config_version => $parser->getConfigVersion() );
     $self->stash(snapshot_root  => $parser->getSnapshotRoot()  );
+    $self->stash(include_conf   => $parser->getIncludeConf()   );
     $self->stash(no_create_root => $parser->getNoCreateRoot()  );
     # Tab - Commands
     $self->stash(cmd_cp             => $parser->getCmCp()     );

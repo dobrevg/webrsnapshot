@@ -77,6 +77,21 @@
         <br/>
 
         <div class="infoicon">
+          <img src="default/img/info.png" title="Include another file in the configuration at this point.
+          <br/><br/>
+          This is recursive, but you may need to be careful about paths when specifying which file 
+          to include. We check to see if the file you have specified is readable, and will yell an error 
+          if it isn't. We recommend using a full path. As a special case, include_conf's value may be 
+          enclosed in 'backticks' in which case it will be executed and whatever it spits to STDOUT 
+          will be included in the configuration. Note that shell meta-characters may be interpreted. " />
+        </div>
+        <div class="configlabel"><LABEL>include_conf</LABEL></div>
+        <div>
+          <INPUT type="text" name="include_conf" class="configfield" value="<%= $include_conf %>" />
+        </div>
+        <br/>
+
+        <div class="infoicon">
           <img src="default/img/info.png" 
             title="If no_create_root is enabled (checked), rsnapshot will not automatically create the
             <b>snapshot_root</b> directory. This is particularly useful if you are backing up to removable

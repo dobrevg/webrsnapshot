@@ -32,6 +32,7 @@ my @config_parameters =
   # Tab: Root config
   "config_version\t",      # 06
   "snapshot_root\t",       # 07
+  "include_conf\t",
   "no_create_root\t",      # 08
   # Tab: Optional programs and scripts used
   "cmd_cp\t\t\t",          # 09
@@ -84,7 +85,7 @@ my @config_parameters =
 sub saveConfig
 {
   my $counter       = 0;    # Just a counter
-  my $retain_start  = 39;   # The number where retain starts
+  my $retain_start  = 40;   # The number where retain starts
   my @arguments     = @_;
 
   my $include_count   = $arguments[0];

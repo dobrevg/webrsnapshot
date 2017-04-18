@@ -24,6 +24,7 @@ my $configfile         = "";
 # Root
 my $config_version     = "";
 my $snapshot_root      = "";
+my $include_conf       = "";
 my $no_create_root     = "";
 # Optional programs and scripts used
 my $cmd_cp             = "";
@@ -98,6 +99,7 @@ sub new
     # Tab Root config
     if    ("$_" =~ /^config_version\t+(.*)/)     { $config_version     = $1; }
     elsif ("$_" =~ /^snapshot_root\t+(.*)/ )     { $snapshot_root      = $1; }
+    elsif ("$_" =~ /^include_conf\t+(.*)/ )      { $include_conf       = $1; }
     elsif ("$_" =~ /^no_create_root\t+(.*)/)     { $no_create_root     = $1; }
     # Tab Optional programs and scripts used
     elsif ("$_" =~ /^cmd_cp\t+(.*)/)             { $cmd_cp             = $1; }
@@ -187,6 +189,7 @@ sub new
 # Tab Root
 sub getConfigVersion  { return $config_version; }
 sub getSnapshotRoot   { return $snapshot_root;  }
+sub getIncludeConf    { return $include_conf;   }
 sub getNoCreateRoot   { return ($no_create_root ne 1) ? " ":"checked"; }
 # Tab Commands
 sub getCmCp           { return $cmd_cp;     }
@@ -241,6 +244,7 @@ sub DESTROY {
   # Root
   $config_version     = "";
   $snapshot_root      = "";
+  $include_conf       = "";
   $no_create_root     = "";
   # Optional programs and scripts used
   $cmd_cp             = "";
