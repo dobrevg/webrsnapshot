@@ -39,10 +39,14 @@ table {
 /* Content Positivioning */
 #bodycontainer      { border:0px solid black; }
 #menucontainer      { border:0px solid black; min-width:15%; float:left; }
+
 /* #menu               { min-height:500px; } */
+.ui-menu .ui-menu-item-wrapper { display: inline-block; width: 100%; }
 #menu a.active      { margin:-1px; border:1px solid #999999; font-weight:normal; color:#212121; background: #fbf9ee url(images/ui-bg_glass_55_f8da4e_1x400.png) 50% 50% repeat-x;}
 #content            { border:0px solid black; width:85%; float:left; }
+
 /*#tabs               { min-height:498px; }*/
+.ui-widget-header   { height: 25px; }
 .infoicon           { width:25px; float:left; }
 .configlabel        { width:170px; float:left; }
 .tooltip            { max-width:500px; }
@@ -62,7 +66,7 @@ table {
 .configfieldtiny    { width:100px; }
 .servernotespace    { width:100px; }
 #accordion h3 input[type="button"] { float:right; }
-.submit_btn         { float:right; margin-right:10px; margin-top:-34px; }
+.submit_btn         { float:right; margin-right:10px; margin-top:-28px; }
 
 #copyright          { float:right; vertical-align:bottom;}
 
