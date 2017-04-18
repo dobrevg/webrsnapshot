@@ -468,6 +468,7 @@ post '/config' => sub {
       $self->param('loglevel')?         $self->param('loglevel')         : "",     # 27
       $self->param('logfile')?          $self->param('logfile')          : "",     # 28
       $self->param('lockfile')?         $self->param('lockfile')         : "",     # 29
+      $self->param('stop_on_stale_lockfile')? $self->param('stop_on_stale_lockfile'): "off",
       $self->param('rsync_short_args')? $self->param('rsync_short_args') : "",     # 30
       $self->param('rsync_long_args')?  $self->param('rsync_long_args')  : "",     # 31
       $self->param('ssh_args')?         $self->param('ssh_args')         : "",     # 32
@@ -576,6 +577,7 @@ get '/config' => sub {
     $self->stash(loglevel         => $parser->getLogLevel()       );
     $self->stash(logfile          => $parser->getLogFile()        );
     $self->stash(lockfile         => $parser->getLockFile()       );
+    $self->stash(stop_on_stale_lockfile => $parser->getStopOnStaleLockfile());
     $self->stash(rsync_short_args => $parser->getRsyncShortArgs() );
     $self->stash(rsync_long_args  => $parser->getRsyncLongArgs()  );
     $self->stash(ssh_args         => $parser->getSshArgs()        );

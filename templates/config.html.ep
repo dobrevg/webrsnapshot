@@ -329,6 +329,18 @@
       <br/>
 
       <div class="infoicon">
+        <img src="default/img/info.png" title="<b>Default is 0 (not selected)</b><br/><br/>
+        If a lockfile exists when rsnapshot starts, it will try to read the file and stop with an error 
+        if it can't. If it *can* read the file, it sees if a process exists with the PID noted in the 
+        file. If it does, rsnapshot stops with an error message. If there is no process with that PID, 
+        then we assume that the lockfile is stale and ignore it *unless* stop_on_stale_lockfile is set 
+        to 1 in which case we stop." />
+      </div>
+      <div class="configlabel"><LABEL>stop_on_stale_lockfile</LABEL></div>
+      <div><INPUT type="checkbox" name="stop_on_stale_lockfile" <%= $stop_on_stale_lockfile %> /></div>
+      <br/>
+
+      <div class="infoicon">
         <img src="default/img/info.png" title="List of short arguments to pass to rsync.
           If not specified, <b>'-a'</b> is the default. Please note that these must be all next to each
           other. For example, <b>'-az'</b> is valid, while <b>'-a -z'</b> is not.<br/><br/>

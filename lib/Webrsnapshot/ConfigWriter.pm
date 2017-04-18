@@ -58,6 +58,7 @@ my @config_parameters =
   "loglevel\t\t",          # 27
   "logfile\t\t\t",         # 28
   "lockfile\t\t",          # 29
+  "stop_on_stale_lockfile\t",
   "rsync_short_args",      # 30
   "rsync_long_args\t",     # 31
   "ssh_args\t",            # 32
@@ -85,7 +86,7 @@ my @config_parameters =
 sub saveConfig
 {
   my $counter       = 0;    # Just a counter
-  my $retain_start  = 40;   # The number where retain starts
+  my $retain_start  = 41;   # The number where retain starts
   my @arguments     = @_;
 
   my $include_count   = $arguments[0];

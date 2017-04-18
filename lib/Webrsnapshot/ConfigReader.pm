@@ -50,6 +50,7 @@ my $verbose            = "";    # 1 - 5, def = 2
 my $loglevel           = "";    # 1 - 5, def = 3 
 my $logfile            = "";
 my $lockfile           = "";
+my $stop_on_stale_lockfile = "";
 my $rsync_short_args   = "";
 my $rsync_long_args    = "";
 my $ssh_args           = "";
@@ -125,6 +126,7 @@ sub new
     elsif ("$_" =~ /^loglevel\t+(.*)/)           { $loglevel           = $1; }
     elsif ("$_" =~ /^logfile\t+(.*)/)            { $logfile            = $1; }
     elsif ("$_" =~ /^lockfile\t+(.*)/)           { $lockfile           = $1; }
+    elsif ("$_" =~ /^stop_on_stale_lockfile\t+(.*)/) { $stop_on_stale_lockfile = $1; }
     elsif ("$_" =~ /^rsync_short_args\t+(.*)/)   { $rsync_short_args   = $1; }
     elsif ("$_" =~ /^rsync_long_args\t+(.*)/)    { $rsync_long_args    = $1; }
     elsif ("$_" =~ /^ssh_args\t+(.*)/)           { $ssh_args           = $1; }
@@ -215,6 +217,7 @@ sub getVerbose        { return $verbose;  }
 sub getLogLevel       { return $loglevel; }
 sub getLogFile        { return $logfile;  }
 sub getLockFile       { return $lockfile; }
+sub getStopOnStaleLockfile { return ($stop_on_stale_lockfile ne 1) ? " ":"checked"; }
 sub getRsyncShortArgs { return $rsync_short_args; }
 sub getRsyncLongArgs  { return $rsync_long_args;  }
 sub getSshArgs        { return $ssh_args;         }
@@ -270,6 +273,7 @@ sub DESTROY {
   $loglevel           = "";    # 1 - 5, def = 3
   $logfile            = "";
   $lockfile           = "";
+  $stop_on_stale_lockfile = "";
   $rsync_short_args   = "";
   $rsync_long_args    = "";
   $ssh_args           = "";
