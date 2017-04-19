@@ -47,6 +47,7 @@ table {
 
 /*#tabs               { min-height:498px; }*/
 .ui-widget-header   { height: 25px; }
+.ui-tabs .ui-tabs-nav { padding: 0 .2em .3em .2em}
 .infoicon           { width:25px; float:left; }
 .configlabel        { width:170px; float:left; }
 .tooltip            { max-width:500px; }
