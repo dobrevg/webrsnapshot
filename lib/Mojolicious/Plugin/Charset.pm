@@ -13,6 +13,8 @@ sub register {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojolicious::Plugin::Charset - Charset plugin
@@ -32,6 +34,9 @@ and encoding on all layers of L<Mojolicious>.
 
 The code of this plugin is a good example for learning to build new plugins,
 you're welcome to fork it.
+
+See L<Mojolicious::Plugins/"PLUGINS"> for a list of plugins that are available
+by default.
 
 =head1 OPTIONS
 
@@ -53,8 +58,8 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
   $plugin->register(Mojolicious->new, {charset => 'Shift_JIS'});
 
-Register C<before_dispatch> hook in L<Mojolicious> application and change a
-few defaults.
+Register hook L<Mojolicious/"before_dispatch"> in application and change a few
+defaults.
 
 =head1 SEE ALSO
 
