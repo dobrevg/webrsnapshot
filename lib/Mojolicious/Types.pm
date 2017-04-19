@@ -1,7 +1,7 @@
 package Mojolicious::Types;
 use Mojo::Base -base;
 
-has types => sub {
+has mapping => sub {
   {
     appcache => ['text/cache-manifest'],
     atom     => ['application/atom+xml'],
@@ -15,7 +15,7 @@ has types => sub {
     jpeg     => ['image/jpeg'],
     jpg      => ['image/jpeg'],
     js       => ['application/javascript'],
-    json     => ['application/json'],
+    json     => ['application/json;charset=UTF-8'],
     mp3      => ['audio/mpeg'],
     mp4      => ['video/mp4'],
     ogg      => ['audio/ogg'],
@@ -24,7 +24,7 @@ has types => sub {
     png      => ['image/png'],
     rss      => ['application/rss+xml'],
     svg      => ['image/svg+xml'],
-    txt      => ['text/plain'],
+    txt      => ['text/plain;charset=UTF-8'],
     webm     => ['video/webm'],
     woff     => ['application/font-woff'],
     xml      => ['application/xml', 'text/xml'],
@@ -39,15 +39,15 @@ sub detect {
   my %types;
   /^\s*([^,; ]+)(?:\s*\;\s*q\s*=\s*(\d+(?:\.\d+)?))?\s*$/i
     and $types{lc $1} = $2 // 1
-    for split /,/, $accept // '';
+    for split ',', $accept // '';
   my @detected = sort { $types{$b} <=> $types{$a} } sort keys %types;
   return [] if !$prioritize && @detected > 1;
 
   # Detect extensions from MIME types
   my %reverse;
-  my $types = $self->types;
-  for my $ext (sort keys %$types) {
-    my @types = @{$types->{$ext}};
+  my $mapping = $self->mapping;
+  for my $ext (sort keys %$mapping) {
+    my @types = @{$mapping->{$ext}};
     push @{$reverse{$_}}, $ext for map { s/\;.*$//; lc $_ } @types;
   }
   return [map { @{$reverse{$_} // []} } @detected];
@@ -55,12 +55,14 @@ sub detect {
 
 sub type {
   my ($self, $ext, $type) = @_;
-  return $self->types->{$ext}[0] unless $type;
-  $self->types->{$ext} = ref $type ? $type : [$type];
+  return $self->mapping->{lc $ext}[0] unless $type;
+  $self->mapping->{lc $ext} = ref $type ? $type : [$type];
   return $self;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -90,7 +92,7 @@ L<Mojolicious::Types> manages MIME types for L<Mojolicious>.
   jpeg     -> image/jpeg
   jpg      -> image/jpeg
   js       -> application/javascript
-  json     -> application/json
+  json     -> application/json;charset=UTF-8
   mp3      -> audio/mpeg
   mp4      -> video/mp4
   ogg      -> audio/ogg
@@ -99,7 +101,7 @@ L<Mojolicious::Types> manages MIME types for L<Mojolicious>.
   png      -> image/png
   rss      -> application/rss+xml
   svg      -> image/svg+xml
-  txt      -> text/plain
+  txt      -> text/plain;charset=UTF-8
   webm     -> video/webm
   woff     -> application/font-woff
   xml      -> application/xml,text/xml
@@ -111,12 +113,12 @@ The most common ones are already defined.
 
 L<Mojolicious::Types> implements the following attributes.
 
-=head2 types
+=head2 mapping
 
-  my $map = $types->types;
-  $types  = $types->types({png => ['image/png']});
+  my $mapping = $types->mapping;
+  $types      = $types->mapping({png => ['image/png']});
 
-List of MIME types.
+MIME type mapping.
 
 =head1 METHODS
 
@@ -138,13 +140,13 @@ unspecific values that contain more than one MIME type is disabled by default.
 
   my $type = $types->type('png');
   $types   = $types->type(png => 'image/png');
-  $types   = $types->type(json => [qw(application/json text/x-json)]);
+  $types   = $types->type(json => ['application/json', 'text/x-json']);
 
 Get or set MIME types for file extension, alternatives are only used for
 detection.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

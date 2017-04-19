@@ -7,6 +7,8 @@ any '/*whatever' => {whatever => '', text => 'Your Mojo is working!'};
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::HelloWorld - Hello World!
@@ -20,11 +22,11 @@ Mojo::HelloWorld - Hello World!
 
 =head1 DESCRIPTION
 
-L<Mojo::HelloWorld> is the default L<Mojolicious> application, used mostly
-for testing.
+L<Mojo::HelloWorld> is the default L<Mojolicious> application, used mostly for
+testing.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

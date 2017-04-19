@@ -7,9 +7,8 @@ sub parse {
   my ($self, $str) = @_;
 
   my @cookies;
-  my @pairs = map {@$_} @{split_header($str // '')};
-  while (@pairs) {
-    my ($name, $value) = (shift @pairs, shift @pairs);
+  my @pairs = map {@$_} @{split_header $str // ''};
+  while (my ($name, $value) = splice @pairs, 0, 2) {
     next if $name =~ /^\$/;
     push @cookies, $self->new(name => $name, value => $value // '');
   }
@@ -19,13 +18,14 @@ sub parse {
 
 sub to_string {
   my $self = shift;
-  return '' unless my $name = $self->name;
+  return '' unless length(my $name = $self->name // '');
   my $value = $self->value // '';
-  $value = $value =~ /[,;" ]/ ? quote($value) : $value;
-  return "$name=$value";
+  return join '=', $name, $value =~ /[,;" ]/ ? quote $value : $value;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -42,8 +42,8 @@ Mojo::Cookie::Request - HTTP request cookie
 
 =head1 DESCRIPTION
 
-L<Mojo::Cookie::Request> is a container for HTTP request cookies as described
-in RFC 6265.
+L<Mojo::Cookie::Request> is a container for HTTP request cookies, based on
+L<RFC 6265|http://tools.ietf.org/html/rfc6265>.
 
 =head1 ATTRIBUTES
 
@@ -68,6 +68,6 @@ Render cookie.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

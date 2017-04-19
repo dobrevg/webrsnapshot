@@ -3,11 +3,12 @@ use Mojo::Base 'Mojo::Message';
 
 use Mojo::Cookie::Response;
 use Mojo::Date;
-use Mojo::Util 'get_line';
+use Mojo::Util 'deprecated';
 
 has [qw(code message)];
+has max_message_size => sub { $ENV{MOJO_MAX_MESSAGE_SIZE} // 2147483648 };
 
-# Umarked codes are from RFC 2616
+# Umarked codes are from RFC 7231
 my %MESSAGES = (
   100 => 'Continue',
   101 => 'Switching Protocols',
@@ -29,7 +30,7 @@ my %MESSAGES = (
   304 => 'Not Modified',
   305 => 'Use Proxy',
   307 => 'Temporary Redirect',
-  308 => 'Permanent Redirect',                 # Draft
+  308 => 'Permanent Redirect',                 # RFC 7538
   400 => 'Bad Request',
   401 => 'Unauthorized',
   402 => 'Payment Required',
@@ -48,7 +49,7 @@ my %MESSAGES = (
   415 => 'Unsupported Media Type',
   416 => 'Request Range Not Satisfiable',
   417 => 'Expectation Failed',
-  418 => "I'm a teapot",                       # :)
+  418 => "I'm a teapot",                       # RFC 2324 :)
   422 => 'Unprocessable Entity',               # RFC 2518 (WebDAV)
   423 => 'Locked',                             # RFC 2518 (WebDAV)
   424 => 'Failed Dependency',                  # RFC 2518 (WebDAV)
@@ -57,7 +58,7 @@ my %MESSAGES = (
   428 => 'Precondition Required',              # RFC 6585
   429 => 'Too Many Requests',                  # RFC 6585
   431 => 'Request Header Fields Too Large',    # RFC 6585
-  451 => 'Unavailable For Legal Reasons',      # Draft
+  451 => 'Unavailable For Legal Reasons',      # RFC 7725
   500 => 'Internal Server Error',
   501 => 'Not Implemented',
   502 => 'Bad Gateway',
@@ -77,29 +78,30 @@ sub cookies {
 
   # Parse cookies
   my $headers = $self->headers;
-  return [map { @{Mojo::Cookie::Response->parse($_)} } $headers->set_cookie]
-    unless @_;
+  return [@{Mojo::Cookie::Response->parse($headers->set_cookie)}] unless @_;
 
   # Add cookies
-  for my $cookie (@_) {
-    $cookie = Mojo::Cookie::Response->new($cookie) if ref $cookie eq 'HASH';
-    $headers->add('Set-Cookie' => "$cookie");
-  }
+  $headers->add('Set-Cookie' => "$_")
+    for map { ref $_ eq 'HASH' ? Mojo::Cookie::Response->new($_) : $_ } @_;
 
   return $self;
 }
 
-sub default_message { $MESSAGES{$_[1] || $_[0]->code || 404} || '' }
+sub default_message { $MESSAGES{$_[1] || $_[0]->code // 404} || '' }
 
 sub extract_start_line {
   my ($self, $bufref) = @_;
 
   # We have a full response line
-  return undef unless defined(my $line = get_line $bufref);
-  $self->error('Bad response start line') and return undef
-    unless $line =~ m!^\s*HTTP/(\d\.\d)\s+(\d\d\d)\s*(.+)?$!;
-  $self->content->skip_body(1) if $self->code($2)->is_empty;
-  return !!$self->version($1)->message($3)->content->auto_relax(1);
+  return undef unless $$bufref =~ s/^(.*?)\x0d?\x0a//;
+  return !$self->error({message => 'Bad response start-line'})
+    unless $1 =~ m!^\s*HTTP/(\d\.\d)\s+(\d\d\d)\s*(.+)?$!;
+
+  my $content = $self->content;
+  $content->skip_body(1) if $self->code($2)->is_empty;
+  defined $content->$_ or $content->$_(1) for qw(auto_decompress auto_relax);
+  $content->expect_close(1) if $1 eq '1.0';
+  return !!$self->version($1)->message($3);
 }
 
 sub fix_headers {
@@ -115,30 +117,54 @@ sub fix_headers {
 
 sub get_start_line_chunk {
   my ($self, $offset) = @_;
-
-  unless (defined $self->{start_buffer}) {
-    my $code = $self->code    || 404;
-    my $msg  = $self->message || $self->default_message;
-    $self->{start_buffer} = "HTTP/@{[$self->version]} $code $msg\x0d\x0a";
-  }
-
-  $self->emit(progress => 'start_line', $offset);
+  $self->_start_line->emit(progress => 'start_line', $offset);
   return substr $self->{start_buffer}, $offset, 131072;
 }
+
+sub is_client_error { shift->_status_class(400) }
 
 sub is_empty {
   my $self = shift;
   return undef unless my $code = $self->code;
-  return $self->is_status_class(100) || $code eq 204 || $code eq 304;
+  return $self->is_info || $code == 204 || $code == 304;
 }
 
+sub is_error { shift->_status_class(400, 500) }
+sub is_info { shift->_status_class(100) }
+sub is_redirect     { shift->_status_class(300) }
+sub is_server_error { shift->_status_class(500) }
+
+# DEPRECATED!
 sub is_status_class {
-  my ($self, $class) = @_;
+  deprecated 'Mojo::Message::Response::is_status_class is DEPRECATED'
+    . ' in favor of new is_* methods';
+  shift->_status_class(@_);
+}
+
+sub is_success { shift->_status_class(200) }
+
+sub start_line_size { length shift->_start_line->{start_buffer} }
+
+sub _start_line {
+  my $self = shift;
+
+  return $self if defined $self->{start_buffer};
+  my $code = $self->code    || 404;
+  my $msg  = $self->message || $self->default_message;
+  $self->{start_buffer} = "HTTP/@{[$self->version]} $code $msg\x0d\x0a";
+
+  return $self;
+}
+
+sub _status_class {
+  my ($self, @classes) = @_;
   return undef unless my $code = $self->code;
-  return $code >= $class && $code < ($class + 100);
+  return !!grep { $code >= $_ && $code < ($_ + 100) } @classes;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -149,10 +175,10 @@ Mojo::Message::Response - HTTP response
   use Mojo::Message::Response;
 
   # Parse
-  my $res = Mojo::Message::Reponse->new;
-  $res->parse("HTTP/1.0 200 OK\x0a\x0d");
-  $res->parse("Content-Length: 12\x0a\x0d\x0a\x0d");
-  $res->parse("Content-Type: text/plain\x0a\x0d\x0a\x0d");
+  my $res = Mojo::Message::Response->new;
+  $res->parse("HTTP/1.0 200 OK\x0d\x0a");
+  $res->parse("Content-Length: 12\x0d\x0a");
+  $res->parse("Content-Type: text/plain\x0d\x0a\x0d\x0a");
   $res->parse('Hello World!');
   say $res->code;
   say $res->headers->content_type;
@@ -167,8 +193,9 @@ Mojo::Message::Response - HTTP response
 
 =head1 DESCRIPTION
 
-L<Mojo::Message::Response> is a container for HTTP responses as described in
-RFC 2616.
+L<Mojo::Message::Response> is a container for HTTP responses, based on
+L<RFC 7230|http://tools.ietf.org/html/rfc7230> and
+L<RFC 7231|http://tools.ietf.org/html/rfc7231>.
 
 =head1 EVENTS
 
@@ -184,14 +211,23 @@ implements the following new ones.
   my $code = $res->code;
   $res     = $res->code(200);
 
-HTTP response code.
+HTTP response status code.
+
+=head2 max_message_size
+
+  my $size = $res->max_message_size;
+  $res     = $res->max_message_size(1024);
+
+Maximum message size in bytes, defaults to the value of the
+C<MOJO_MAX_MESSAGE_SIZE> environment variable or C<2147483648> (2GB). Setting
+the value to C<0> will allow messages of indefinite size.
 
 =head2 message
 
   my $msg = $res->message;
   $res    = $res->message('OK');
 
-HTTP response message.
+HTTP response status message.
 
 =head1 METHODS
 
@@ -206,17 +242,22 @@ implements the following new ones.
 
 Access response cookies, usually L<Mojo::Cookie::Response> objects.
 
+  # Names of all cookies
+  say $_->name for @{$res->cookies};
+
 =head2 default_message
 
   my $msg = $res->default_message;
+  my $msg = $res->default_message(418);
 
-Generate default response message for code.
+Generate default response message for status code, defaults to using
+L</"code">.
 
 =head2 extract_start_line
 
-  my $success = $res->extract_start_line(\$str);
+  my $bool = $res->extract_start_line(\$str);
 
-Extract status line from string.
+Extract status-line from string.
 
 =head2 fix_headers
 
@@ -228,22 +269,59 @@ Make sure response has all required headers.
 
   my $bytes = $res->get_start_line_chunk($offset);
 
-Get a chunk of status line data starting from a specific position.
+Get a chunk of status-line data starting from a specific position. Note that
+this method finalizes the response.
+
+=head2 is_client_error
+
+  my $bool = $res->is_client_error;
+
+Check if this response has a C<4xx> status L</"code">.
 
 =head2 is_empty
 
-  my $success = $res->is_empty;
+  my $bool = $res->is_empty;
 
-Check if this is a C<1xx>, C<204> or C<304> response.
+Check if this response has a C<1xx>, C<204> or C<304> status L</"code">.
 
-=head2 is_status_class
+=head2 is_error
 
-  my $success = $res->is_status_class(200);
+  my $bool = $res->is_error;
 
-Check response status class.
+Check if this response has a C<4xx> or C<5xx> status L</"code">.
+
+=head2 is_info
+
+  my $bool = $res->is_info;
+
+Check if this response has a C<1xx> status L</"code">.
+
+=head2 is_redirect
+
+  my $bool = $res->is_redirect;
+
+Check if this response has a C<3xx> status L</"code">.
+
+=head2 is_server_error
+
+  my $bool = $res->is_server_error;
+
+Check if this response has a C<5xx> status L</"code">.
+
+=head2 is_success
+
+  my $bool = $res->is_success;
+
+Check if this response has a C<2xx> status L</"code">.
+
+=head2 start_line_size
+
+  my $size = $req->start_line_size;
+
+Size of the status-line in bytes. Note that this method finalizes the response.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

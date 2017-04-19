@@ -5,53 +5,26 @@ use Scalar::Util qw(blessed weaken);
 
 use constant DEBUG => $ENV{MOJO_EVENTEMITTER_DEBUG} || 0;
 
+sub catch { $_[0]->on(error => $_[1]) and return $_[0] }
+
 sub emit {
   my ($self, $name) = (shift, shift);
 
   if (my $s = $self->{events}{$name}) {
-    warn "-- Emit $name in @{[blessed($self)]} (@{[scalar(@$s)]})\n" if DEBUG;
+    warn "-- Emit $name in @{[blessed $self]} (@{[scalar @$s]})\n" if DEBUG;
     for my $cb (@$s) { $self->$cb(@_) }
   }
   else {
-    warn "-- Emit $name in @{[blessed($self)]} (0)\n" if DEBUG;
-    warn $_[0] if $name eq 'error';
+    warn "-- Emit $name in @{[blessed $self]} (0)\n" if DEBUG;
+    die "@{[blessed $self]}: $_[0]" if $name eq 'error';
   }
 
   return $self;
 }
 
-sub emit_safe {
-  my ($self, $name) = (shift, shift);
+sub has_subscribers { !!shift->{events}{shift()} }
 
-  if (my $s = $self->{events}{$name}) {
-    warn "-- Emit $name in @{[blessed($self)]} safely (@{[scalar(@$s)]})\n"
-      if DEBUG;
-    for my $cb (@$s) {
-      unless (eval { $self->$cb(@_); 1 }) {
-
-        # Error event failed
-        if ($name eq 'error') { warn qq{Event "error" failed: $@} }
-
-        # Normal event failed
-        else { $self->emit_safe('error', qq{Event "$name" failed: $@}) }
-      }
-    }
-  }
-  else {
-    warn "-- Emit $name in @{[blessed($self)]} safely (0)\n" if DEBUG;
-    warn $_[0] if $name eq 'error';
-  }
-
-  return $self;
-}
-
-sub has_subscribers { !!@{shift->subscribers(shift)} }
-
-sub on {
-  my ($self, $name, $cb) = @_;
-  push @{$self->{events}{$name} ||= []}, $cb;
-  return $cb;
-}
+sub on { push @{$_[0]{events}{$_[1]}}, $_[2] and return $_[2] }
 
 sub once {
   my ($self, $name, $cb) = @_;
@@ -68,7 +41,7 @@ sub once {
   return $wrapper;
 }
 
-sub subscribers { shift->{events}{shift()} || [] }
+sub subscribers { shift->{events}{shift()} ||= [] }
 
 sub unsubscribe {
   my ($self, $name, $cb) = @_;
@@ -76,6 +49,7 @@ sub unsubscribe {
   # One
   if ($cb) {
     $self->{events}{$name} = [grep { $cb ne $_ } @{$self->{events}{$name}}];
+    delete $self->{events}{$name} unless @{$self->{events}{$name}};
   }
 
   # All
@@ -85,6 +59,8 @@ sub unsubscribe {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -126,7 +102,9 @@ L<Mojo::EventEmitter> can emit the following events.
     ...
   });
 
-Emitted safely for event errors.
+This is a special event for errors, it will not be emitted directly by this
+class, but is fatal if unhandled. Subclasses may choose to emit it, but are not
+required to do so.
 
   $e->on(error => sub {
     my ($e, $err) = @_;
@@ -135,8 +113,17 @@ Emitted safely for event errors.
 
 =head1 METHODS
 
-L<Mojo::EventEmitter> inherits all methods from L<Mojo::Base> and
-implements the following new ones.
+L<Mojo::EventEmitter> inherits all methods from L<Mojo::Base> and implements
+the following new ones.
+
+=head2 catch
+
+  $e = $e->catch(sub {...});
+
+Subscribe to L</"error"> event.
+
+  # Longer version
+  $e->on(error => sub {...});
 
 =head2 emit
 
@@ -145,16 +132,9 @@ implements the following new ones.
 
 Emit event.
 
-=head2 emit_safe
-
-  $e = $e->emit_safe('foo');
-  $e = $e->emit_safe('foo', 123);
-
-Emit event safely and emit C<error> event on failure.
-
 =head2 has_subscribers
 
-  my $success = $e->has_subscribers('foo');
+  my $bool = $e->has_subscribers('foo');
 
 Check if event has subscribers.
 
@@ -189,6 +169,9 @@ All subscribers for event.
   # Unsubscribe last subscriber
   $e->unsubscribe(foo => $e->subscribers('foo')->[-1]);
 
+  # Change order of subscribers
+  @{$e->subscribers('foo')} = reverse @{$e->subscribers('foo')};
+
 =head2 unsubscribe
 
   $e = $e->unsubscribe('foo');
@@ -198,13 +181,13 @@ Unsubscribe from event.
 
 =head1 DEBUGGING
 
-You can set the MOJO_EVENTEMITTER_DEBUG environment variable to get some
+You can set the C<MOJO_EVENTEMITTER_DEBUG> environment variable to get some
 advanced diagnostics information printed to C<STDERR>.
 
   MOJO_EVENTEMITTER_DEBUG=1
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

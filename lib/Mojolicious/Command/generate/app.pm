@@ -3,38 +3,38 @@ use Mojo::Base 'Mojolicious::Command';
 
 use Mojo::Util qw(class_to_file class_to_path);
 
-has description => "Generate Mojolicious application directory structure.\n";
-has usage       => "usage: $0 generate app [NAME]\n";
+has description => 'Generate Mojolicious application directory structure';
+has usage => sub { shift->extract_usage };
 
 sub run {
   my ($self, $class) = @_;
-  $class ||= 'MyMojoliciousApp';
+  $class ||= 'MyApp';
 
   # Prevent bad applications
   die <<EOF unless $class =~ /^[A-Z](?:\w|::)+$/;
-Your application name has to be a well formed (camel case) Perl module name
+Your application name has to be a well formed (CamelCase) Perl module name
 like "MyApp".
 EOF
 
   # Script
   my $name = class_to_file $class;
   $self->render_to_rel_file('mojo', "$name/script/$name", $class);
-  $self->chmod_file("$name/script/$name", 0744);
+  $self->chmod_rel_file("$name/script/$name", 0744);
 
   # Application class
   my $app = class_to_path $class;
   $self->render_to_rel_file('appclass', "$name/lib/$app", $class);
 
+  # Config file
+  $self->render_to_rel_file('config', "$name/$name.conf");
+
   # Controller
-  my $controller = "${class}::Example";
+  my $controller = "${class}::Controller::Example";
   my $path       = class_to_path $controller;
   $self->render_to_rel_file('controller', "$name/lib/$path", $controller);
 
   # Test
   $self->render_to_rel_file('test', "$name/t/basic.t", $class);
-
-  # Log directory
-  $self->create_rel_dir("$name/log");
 
   # Static file
   $self->render_to_rel_file('static', "$name/public/index.html");
@@ -47,6 +47,70 @@ EOF
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Mojolicious::Command::generate::app - App generator command
+
+=head1 SYNOPSIS
+
+  Usage: APPLICATION generate app [OPTIONS] [NAME]
+
+    mojo generate app
+    mojo generate app TestApp
+
+  Options:
+    -h, --help   Show this summary of available options
+
+=head1 DESCRIPTION
+
+L<Mojolicious::Command::generate::app> generates application directory
+structures for fully functional L<Mojolicious> applications.
+
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
+See L<Mojolicious::Commands/"COMMANDS"> for a list of commands that are
+available by default.
+
+=head1 ATTRIBUTES
+
+L<Mojolicious::Command::generate::app> inherits all attributes from
+L<Mojolicious::Command> and implements the following new ones.
+
+=head2 description
+
+  my $description = $app->description;
+  $app            = $app->description('Foo');
+
+Short description of this command, used for the command list.
+
+=head2 usage
+
+  my $usage = $app->usage;
+  $app      = $app->usage('Foo');
+
+Usage information for this command, used for the help screen.
+
+=head1 METHODS
+
+L<Mojolicious::Command::generate::app> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
+
+=head2 run
+
+  $app->run(@ARGV);
+
+Run this command.
+
+=head1 SEE ALSO
+
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
+
+=cut
+
 __DATA__
 
 @@ mojo
@@ -58,9 +122,9 @@ use warnings;
 
 use FindBin;
 BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
+use Mojolicious::Commands;
 
 # Start command line interface for application
-require Mojolicious::Commands;
 Mojolicious::Commands->start_app('<%= $class %>');
 
 @@ appclass
@@ -72,8 +136,11 @@ use Mojo::Base 'Mojolicious';
 sub startup {
   my $self = shift;
 
+  # Load configuration from hash returned by "my_app.conf"
+  my $config = $self->plugin('Config');
+
   # Documentation browser under "/perldoc"
-  $self->plugin('PODRenderer');
+  $self->plugin('PODRenderer') if $config->{perldoc};
 
   # Router
   my $r = $self->routes;
@@ -94,8 +161,7 @@ sub welcome {
   my $self = shift;
 
   # Render template "example/welcome.html.ep" with message
-  $self->render(
-    message => 'Welcome to the Mojolicious real-time web framework!');
+  $self->render(msg => 'Welcome to the Mojolicious real-time web framework!');
 }
 
 1;
@@ -135,64 +201,21 @@ done_testing();
 @@ welcome
 %% layout 'default';
 %% title 'Welcome';
-<h2><%%= $message %></h2>
-This page was generated from the template "templates/example/welcome.html.ep"
-and the layout "templates/layouts/default.html.ep",
-<a href="<%%== url_for %>">click here</a> to reload the page or
-<a href="/index.html">here</a> to move forward to a static page.
+<h2><%%= $msg %></h2>
+<p>
+  This page was generated from the template "templates/example/welcome.html.ep"
+  and the layout "templates/layouts/default.html.ep",
+  <%%= link_to 'click here' => url_for %> to reload the page or
+  <%%= link_to 'here' => '/index.html' %> to move forward to a static page.
+  %% if (config 'perldoc') {
+    To learn more, you can also browse through the documentation
+    <%%= link_to 'here' => '/perldoc' %>.
+  %% }
+</p>
 
-__END__
-=head1 NAME
-
-Mojolicious::Command::generate::app - App generator command
-
-=head1 SYNOPSIS
-
-  use Mojolicious::Command::generate::app;
-
-  my $app = Mojolicious::Command::generate::app->new;
-  $app->run(@ARGV);
-
-=head1 DESCRIPTION
-
-L<Mojolicious::Command::generate::app> generates application directory
-structures for fully functional L<Mojolicious> applications.
-
-This is a core command, that means it is always enabled and its code a good
-example for learning to build new commands, you're welcome to fork it.
-
-=head1 ATTRIBUTES
-
-L<Mojolicious::Command::generate::app> inherits all attributes from
-L<Mojolicious::Command> and implements the following new ones.
-
-=head2 description
-
-  my $description = $app->description;
-  $app            = $app->description('Foo!');
-
-Short description of this command, used for the command list.
-
-=head2 usage
-
-  my $usage = $app->usage;
-  $app      = $app->usage('Foo!');
-
-Usage information for this command, used for the help screen.
-
-=head1 METHODS
-
-L<Mojolicious::Command::generate::app> inherits all methods from
-L<Mojolicious::Command> and implements the following new ones.
-
-=head2 run
-
-  $app->run(@ARGV);
-
-Run this command.
-
-=head1 SEE ALSO
-
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
-
-=cut
+@@ config
+% use Mojo::Util qw(sha1_sum steady_time);
+{
+  perldoc => 1,
+  secrets => ['<%= sha1_sum $$ . steady_time . rand  %>']
+}

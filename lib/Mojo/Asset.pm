@@ -15,10 +15,13 @@ sub is_file {undef}
 sub is_range { !!($_[0]->end_range || $_[0]->start_range) }
 
 sub move_to { croak 'Method "move_to" not implemented by subclass' }
+sub mtime   { croak 'Method "mtime" not implemented by subclass' }
 sub size    { croak 'Method "size" not implemented by subclass' }
 sub slurp   { croak 'Method "slurp" not implemented by subclass' }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -33,12 +36,14 @@ Mojo::Asset - HTTP content storage base class
   sub contains  {...}
   sub get_chunk {...}
   sub move_to   {...}
+  sub mtime     {...}
   sub size      {...}
   sub slurp     {...}
 
 =head1 DESCRIPTION
 
-L<Mojo::Asset> is an abstract base class for HTTP content storage.
+L<Mojo::Asset> is an abstract base class for HTTP content storage backends,
+like L<Mojo::Asset::File> and L<Mojo::Asset::Memory>.
 
 =head1 EVENTS
 
@@ -58,7 +63,7 @@ Pretend file ends earlier.
 =head2 start_range
 
   my $start = $asset->start_range;
-  $asset    = $asset->start_range(0);
+  $asset    = $asset->start_range(3);
 
 Pretend file starts later.
 
@@ -86,25 +91,31 @@ subclass.
   my $bytes = $asset->get_chunk($offset, $max);
 
 Get chunk of data starting from a specific position, defaults to a maximum
-chunk size of C<131072> bytes. Meant to be overloaded in a subclass.
+chunk size of C<131072> bytes (128KB). Meant to be overloaded in a subclass.
 
 =head2 is_file
 
-  my $false = $asset->is_file;
+  my $bool = $asset->is_file;
 
-False.
+False, this is not a L<Mojo::Asset::File> object.
 
 =head2 is_range
 
-  my $success = $asset->is_range;
+  my $bool = $asset->is_range;
 
-Check if asset has a C<start_range> or C<end_range>.
+Check if asset has a L</"start_range"> or L</"end_range">.
 
 =head2 move_to
 
   $asset = $asset->move_to('/home/sri/foo.txt');
 
 Move asset data into a specific file. Meant to be overloaded in a subclass.
+
+=head2 mtime
+
+  my $mtime = $asset->mtime;
+
+Modification time of asset. Meant to be overloaded in a subclass.
 
 =head2 size
 
@@ -120,6 +131,6 @@ Read all asset data at once. Meant to be overloaded in a subclass.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

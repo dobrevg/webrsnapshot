@@ -2,63 +2,51 @@ package Mojolicious::Command;
 use Mojo::Base -base;
 
 use Carp 'croak';
-use Cwd 'getcwd';
-use File::Basename 'dirname';
-use File::Path 'mkpath';
-use File::Spec::Functions qw(catdir catfile);
-use Mojo::Loader;
+use Mojo::File 'path';
+use Mojo::Loader 'data_section';
 use Mojo::Server;
 use Mojo::Template;
-use Mojo::Util 'spurt';
+use Mojo::Util 'deprecated';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
-has description => 'No description.';
-has quiet       => 0;
-has usage       => "usage: $0\n";
+has description => 'No description';
+has 'quiet';
+has usage => "Usage: APPLICATION\n";
 
 sub chmod_file {
   my ($self, $path, $mod) = @_;
   chmod $mod, $path or croak qq{Can't chmod file "$path": $!};
-  $mod = sprintf '%lo', $mod;
-  say "  [chmod] $path $mod" unless $self->quiet;
-  return $self;
+  return $self->_loud("  [chmod] $path " . sprintf('%lo', $mod));
 }
 
-sub chmod_rel_file {
-  my ($self, $path, $mod) = @_;
-  $self->chmod_file($self->rel_file($path), $mod);
-}
+sub chmod_rel_file { $_[0]->chmod_file($_[0]->rel_file($_[1]), $_[2]) }
 
 sub create_dir {
   my ($self, $path) = @_;
-
-  if (-d $path) { say "  [exist] $path" unless $self->quiet }
-  else {
-    mkpath $path or croak qq{Can't make directory "$path": $!};
-    say "  [mkdir] $path" unless $self->quiet;
-  }
-
-  return $self;
+  return $self->_loud("  [exist] $path") if -d $path;
+  path($path)->make_path;
+  return $self->_loud("  [mkdir] $path");
 }
 
-sub create_rel_dir {
-  my ($self, $path) = @_;
-  $self->create_dir($self->rel_dir($path));
+sub create_rel_dir { $_[0]->create_dir($_[0]->rel_file($_[1])) }
+
+sub extract_usage { Mojo::Util::extract_usage((caller)[1]) }
+
+sub help { print shift->usage }
+
+# DEPRECATED!
+sub rel_dir {
+  deprecated 'Mojolicious::Command::rel_dir is DEPRECATED'
+    . ' in favor of Mojolicious::Command::rel_file';
+  path->child(split('/', pop))->to_string;
 }
 
-sub help {
-  print shift->usage;
-  exit 0;
-}
-
-sub rel_dir { catdir(getcwd(), split /\//, pop) }
-
-sub rel_file { catfile(getcwd(), split /\//, pop) }
+sub rel_file { path->child(split('/', pop)) }
 
 sub render_data {
   my ($self, $name) = (shift, shift);
   Mojo::Template->new->name("template $name from DATA section")
-    ->render(Mojo::Loader->new->data(ref $self, $name), @_);
+    ->render(data_section(ref $self, $name), @_);
 }
 
 sub render_to_file {
@@ -68,25 +56,30 @@ sub render_to_file {
 
 sub render_to_rel_file {
   my $self = shift;
-  $self->render_to_file(shift, $self->rel_dir(shift), @_);
+  $self->render_to_file(shift, $self->rel_file(shift), @_);
 }
 
 sub run { croak 'Method "run" not implemented by subclass' }
 
 sub write_file {
   my ($self, $path, $data) = @_;
-  $self->create_dir(dirname $path);
-  spurt $data, $path;
-  say "  [write] $path" unless $self->quiet;
+  return $self->_loud("  [exist] $path") if -f $path;
+  $self->create_dir(path($path)->dirname);
+  path($path)->spurt($data);
+  return $self->_loud("  [write] $path");
+}
+
+sub write_rel_file { $_[0]->write_file($_[0]->rel_file($_[1]), $_[2]) }
+
+sub _loud {
+  my ($self, $msg) = @_;
+  say $msg unless $self->quiet;
   return $self;
 }
 
-sub write_rel_file {
-  my ($self, $path, $data) = @_;
-  $self->write_file($self->rel_file($path), $data);
-}
-
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -94,20 +87,15 @@ Mojolicious::Command - Command base class
 
 =head1 SYNOPSIS
 
-  # Lower case command name
+  # Lowercase command name
   package Mojolicious::Command::mycommand;
   use Mojo::Base 'Mojolicious::Command';
 
   # Short description
-  has description => "My first Mojo command.\n";
+  has description => 'My first Mojo command';
 
-  # Short usage message
-  has usage => <<"EOF";
-  usage: $0 mycommand [OPTIONS]
-
-  These options are available:
-    -s, --something   Does something.
-  EOF
+  # Usage message from SYNOPSIS
+  has usage => sub { shift->extract_usage };
 
   sub run {
     my ($self, @args) = @_;
@@ -115,12 +103,23 @@ Mojolicious::Command - Command base class
     # Magic here! :)
   }
 
+  1;
+
+  =head1 SYNOPSIS
+
+    Usage: APPLICATION mycommand [OPTIONS]
+
+    Options:
+      -s, --something   Does something
+
+  =cut
+
 =head1 DESCRIPTION
 
 L<Mojolicious::Command> is an abstract base class for L<Mojolicious> commands.
 
-See L<Mojolicious::Commands> for a list of commands that are available by
-default.
+See L<Mojolicious::Commands/"COMMANDS"> for a list of commands that are
+available by default.
 
 =head1 ATTRIBUTES
 
@@ -129,7 +128,7 @@ L<Mojolicious::Command> implements the following attributes.
 =head2 app
 
   my $app  = $command->app;
-  $command = $command->app(MyApp->new);
+  $command = $command->app(Mojolicious->new);
 
 Application for command, defaults to a L<Mojo::HelloWorld> object.
 
@@ -139,21 +138,21 @@ Application for command, defaults to a L<Mojo::HelloWorld> object.
 =head2 description
 
   my $description = $command->description;
-  $command        = $command->description('Foo!');
+  $command        = $command->description('Foo');
 
 Short description of command, used for the command list.
 
 =head2 quiet
 
-  my $quiet = $command->quiet;
-  $command  = $command->quiet(1);
+  my $bool = $command->quiet;
+  $command = $command->quiet($bool);
 
 Limited command output.
 
 =head2 usage
 
   my $usage = $command->usage;
-  $command  = $command->usage('Foo!');
+  $command  = $command->usage('Foo');
 
 Usage information for command, used for the help screen.
 
@@ -186,34 +185,32 @@ Create a directory.
 
 Portably create a directory relative to the current working directory.
 
+=head2 extract_usage
+
+  my $usage = $command->extract_usage;
+
+Extract usage message from the SYNOPSIS section of the file this method was
+called from with L<Mojo::Util/"extract_usage">.
+
 =head2 help
 
   $command->help;
 
 Print usage information for command.
 
-=head2 rel_dir
-
-  my $path = $command->rel_dir('foo/bar');
-
-Portably generate an absolute path for a directory relative to the current
-working directory.
-
 =head2 rel_file
 
   my $path = $command->rel_file('foo/bar.txt');
 
-Portably generate an absolute path for a file relative to the current working
-directory.
+Return a L<Mojo::File> object relative to the current working directory.
 
 =head2 render_data
-
 
   my $data = $command->render_data('foo_bar');
   my $data = $command->render_data('foo_bar', @args);
 
 Render a template from the C<DATA> section of the command class with
-L<Mojo::Template>.
+L<Mojo::Loader> and L<Mojo::Template>.
 
 =head2 render_to_file
 
@@ -254,6 +251,6 @@ create directory if necessary.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

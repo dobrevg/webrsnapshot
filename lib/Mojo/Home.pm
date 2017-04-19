@@ -1,92 +1,78 @@
 package Mojo::Home;
-use Mojo::Base -base;
-use overload
-  'bool'   => sub {1},
-  '""'     => sub { shift->to_string },
-  fallback => 1;
+use Mojo::Base 'Mojo::File';
 
-use Cwd 'abs_path';
-use File::Basename 'dirname';
-use File::Find 'find';
-use File::Spec::Functions qw(abs2rel catdir catfile splitdir);
-use FindBin;
-use Mojo::Util qw(class_to_path slurp);
-
-sub new { shift->SUPER::new->parse(@_) }
+use Mojo::Util qw(class_to_path deprecated);
 
 sub detect {
-  my $self = shift;
+  my ($self, $class) = @_;
 
   # Environment variable
-  if ($ENV{MOJO_HOME}) {
-    $self->{parts} = [splitdir(abs_path $ENV{MOJO_HOME})];
-    return $self;
+  my $home;
+  if ($ENV{MOJO_HOME}) { $home = Mojo::File->new($ENV{MOJO_HOME})->to_array }
+
+  # Location of the application class (Windows mixes backslash and slash)
+  elsif ($class && (my $path = $INC{my $file = class_to_path $class})) {
+    $home = Mojo::File->new($path)->to_array;
+    splice @$home, (my @dummy = split('/', $file)) * -1;
+    pop @$home if @$home && $home->[-1] eq 'lib';
+    pop @$home if @$home && $home->[-1] eq 'blib';
   }
 
-  # Try to find home from lib directory
-  if (my $class = @_ ? shift : 'Mojo::HelloWorld') {
-    my $file = class_to_path $class;
-    if (my $path = $INC{$file}) {
-      $path =~ s/$file$//;
-      my @home = splitdir $path;
-
-      # Remove "lib" and "blib"
-      pop @home while @home && ($home[-1] =~ /^b?lib$/ || $home[-1] eq '');
-
-      # Turn into absolute path
-      $self->{parts} = [splitdir(abs_path(catdir(@home) || '.'))];
-    }
-  }
-
-  # FindBin fallback
-  $self->{parts} = [split /\//, $FindBin::Bin] unless $self->{parts};
-
+  $$self = Mojo::File->new(@$home)->to_abs->to_string if $home;
   return $self;
 }
 
+# DEPRECATED!
 sub lib_dir {
-  my $path = catdir @{shift->{parts} || []}, 'lib';
-  return -d $path ? $path : undef;
+  deprecated 'Mojo::Home::lib_dir is DEPRECATED';
+  shift->child('lib')->to_string;
 }
 
+# DEPRECATED!
 sub list_files {
-  my ($self, $dir) = @_;
-
-  # Files relative to directory
-  my $parts = $self->{parts} || [];
-  my $root = catdir @$parts;
-  $dir = catdir $root, split '/', ($dir || '');
-  return [] unless -d $dir;
-  my @files;
-  find {
-    wanted => sub {
-      my @parts = splitdir(abs2rel($File::Find::name, $dir));
-      push @files, join '/', @parts unless grep {/^\./} @parts;
-    },
-    no_chdir => 1
-  }, $dir;
-
-  return [sort @files];
+  deprecated
+    'Mojo::Home::list_files is DEPRECATED in favor of Mojo::Files::list_tree';
+  my ($self, $dir, $options) = (shift, shift // '', shift);
+  my $base = $self->child(split('/', $dir));
+  $base->list_tree($options)->map(sub { join '/', @{$_->to_rel($base)} })
+    ->to_array;
 }
 
-sub mojo_lib_dir { catdir(dirname(__FILE__), '..') }
+sub mojo_lib_dir { shift->new(__FILE__)->sibling('..') }
 
+# DEPRECATED!
 sub parse {
-  my ($self, $path) = @_;
-  $self->{parts} = [splitdir $path] if defined $path;
+  deprecated 'Mojo::Home::parse is DEPRECATED';
+  my $self = shift;
+  $$self = shift;
   return $self;
 }
 
-sub rel_dir { catdir(@{shift->{parts} || []}, split '/', shift) }
-sub rel_file { catfile(@{shift->{parts} || []}, split '/', shift) }
+# DEPRECATED!
+sub parts {
+  deprecated 'Mojo::Home::parts is DEPRECATED';
+  my $self = shift;
+  return $self->to_array unless @_;
+  $$self = Mojo::File->new(@{shift()})->to_string;
+  return $self;
+}
 
-sub to_string { catdir(@{shift->{parts} || []}) }
+# DEPRECATED!
+sub rel_dir {
+  deprecated
+    'Mojo::Home::rel_dir is DEPRECATED in favor of Mojo::Home::rel_file';
+  Mojo::File->new(@{shift->parts}, split('/', shift))->to_string;
+}
+
+sub rel_file { shift->child(split('/', shift)) }
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
-Mojo::Home - Home sweet home!
+Mojo::Home - Home sweet home
 
 =head1 SYNOPSIS
 
@@ -95,84 +81,45 @@ Mojo::Home - Home sweet home!
   # Find and manage the project root directory
   my $home = Mojo::Home->new;
   $home->detect;
-  say $home->lib_dir;
-  say $home->rel_file('templates/layouts/default.html.ep');
+  say $home->child('templates', 'layouts', 'default.html.ep');
   say "$home";
 
 =head1 DESCRIPTION
 
-L<Mojo::Home> is a container for home directories.
+L<Mojo::Home> is a container for home directories based on L<Mojo::File>.
 
 =head1 METHODS
 
-L<Mojo::Home> inherits all methods from L<Mojo::Base> and implements the
+L<Mojo::Home> inherits all methods from L<Mojo::File> and implements the
 following new ones.
-
-=head2 new
-
-  my $home = Mojo::Home->new;
-  my $home = Mojo::Home->new('/home/sri/myapp');
-
-Construct a new L<Mojo::Home> object and C<parse> home directory if necessary.
 
 =head2 detect
 
   $home = $home->detect;
   $home = $home->detect('My::App');
 
-Detect home directory from the value of the MOJO_HOME environment variable or
-application class.
-
-=head2 lib_dir
-
-  my $path = $home->lib_dir;
-
-Path to C<lib> directory of application.
-
-=head2 list_files
-
-  my $files = $home->list_files;
-  my $files = $home->list_files('foo/bar');
-
-Portably list all files recursively in directory relative to the home
-directory.
-
-  say $home->rel_file($home->list_files('templates/layouts')->[1]);
+Detect home directory from the value of the C<MOJO_HOME> environment variable or
+the location of the application class.
 
 =head2 mojo_lib_dir
 
   my $path = $home->mojo_lib_dir;
 
-Path to C<lib> directory in which L<Mojolicious> is installed.
-
-=head2 parse
-
-  $home = $home->parse('/home/sri/myapp');
-
-Parse home directory.
-
-=head2 rel_dir
-
-  my $path = $home->rel_dir('foo/bar');
-
-Portably generate an absolute path for a directory relative to the home
-directory.
+Path to C<lib> directory in which L<Mojolicious> is installed as a L<Mojo::Home>
+object.
 
 =head2 rel_file
 
   my $path = $home->rel_file('foo/bar.html');
 
-Portably generate an absolute path for a file relative to the home directory.
+Return a new L<Mojo::Home> object relative to the home directory.
 
-=head2 to_string
+=head1 OPERATORS
 
-  my $str = $home->to_string;
-  my $str = "$home";
-
-Home directory.
+L<Mojo::Home> inherits all overloaded operators from L<Mojo::File>.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

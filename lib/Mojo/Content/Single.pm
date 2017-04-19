@@ -7,13 +7,6 @@ use Mojo::Content::MultiPart;
 has asset => sub { Mojo::Asset::Memory->new(auto_upgrade => 1) };
 has auto_upgrade => 1;
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->{read}
-    = $self->on(read => sub { $_[0]->asset($_[0]->asset->add_chunk($_[1])) });
-  return $self;
-}
-
 sub body_contains { shift->asset->contains(shift) >= 0 }
 
 sub body_size {
@@ -34,6 +27,13 @@ sub get_body_chunk {
   return $self->asset->get_chunk($offset);
 }
 
+sub new {
+  my $self = shift->SUPER::new(@_);
+  $self->{read}
+    = $self->on(read => sub { $_[0]->asset($_[0]->asset->add_chunk($_[1])) });
+  return $self;
+}
+
 sub parse {
   my $self = shift;
 
@@ -46,12 +46,14 @@ sub parse {
 
   # Content needs to be upgraded to multipart
   $self->unsubscribe(read => $self->{read});
-  my $multi = Mojo::Content::MultiPart->new($self);
+  my $multi = Mojo::Content::MultiPart->new(%$self);
   $self->emit(upgrade => $multi);
   return $multi->parse;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -67,13 +69,14 @@ Mojo::Content::Single - HTTP content
 
 =head1 DESCRIPTION
 
-L<Mojo::Content::Single> is a container for HTTP content as described in RFC
-2616.
+L<Mojo::Content::Single> is a container for HTTP content, based on
+L<RFC 7230|http://tools.ietf.org/html/rfc7230> and
+L<RFC 7231|http://tools.ietf.org/html/rfc7231>.
 
 =head1 EVENTS
 
-L<Mojo::Content::Single> inherits all events from L<Mojo::Content> and can
-emit the following new ones.
+L<Mojo::Content::Single> inherits all events from L<Mojo::Content> and can emit
+the following new ones.
 
 =head2 upgrade
 
@@ -101,31 +104,24 @@ implements the following new ones.
   $single   = $single->asset(Mojo::Asset::Memory->new);
 
 The actual content, defaults to a L<Mojo::Asset::Memory> object with
-C<auto_upgrade> enabled.
+L<Mojo::Asset::Memory/"auto_upgrade"> enabled.
 
 =head2 auto_upgrade
 
-  my $upgrade = $single->auto_upgrade;
-  $single     = $single->auto_upgrade(0);
+  my $bool = $single->auto_upgrade;
+  $single  = $single->auto_upgrade($bool);
 
 Try to detect multipart content and automatically upgrade to a
-L<Mojo::Content::MultiPart> object, defaults to C<1>.
+L<Mojo::Content::MultiPart> object, defaults to a true value.
 
 =head1 METHODS
 
 L<Mojo::Content::Single> inherits all methods from L<Mojo::Content> and
 implements the following new ones.
 
-=head2 new
-
-  my $single = Mojo::Content::Single->new;
-
-Construct a new L<Mojo::Content::Single> object and subscribe to C<read> event
-with default content parser.
-
 =head2 body_contains
 
-  my $success = $single->body_contains('1234567');
+  my $bool = $single->body_contains('1234567');
 
 Check if content contains a specific string.
 
@@ -145,7 +141,18 @@ Clone content if possible, otherwise return C<undef>.
 
   my $bytes = $single->get_body_chunk(0);
 
-Get a chunk of content starting from a specific position.
+Get a chunk of content starting from a specific position. Note that it might
+not be possible to get the same chunk twice if content was generated
+dynamically.
+
+=head2 new
+
+  my $single = Mojo::Content::Single->new;
+  my $single = Mojo::Content::Single->new(asset => Mojo::Asset::File->new);
+  my $single = Mojo::Content::Single->new({asset => Mojo::Asset::File->new});
+
+Construct a new L<Mojo::Content::Single> object and subscribe to L</"read">
+event with default content parser.
 
 =head2 parse
 
@@ -158,6 +165,6 @@ necessary.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

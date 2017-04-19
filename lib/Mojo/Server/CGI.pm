@@ -10,34 +10,35 @@ sub run {
   my $req = $tx->req->parse(\%ENV);
   $tx->local_port($ENV{SERVER_PORT})->remote_address($ENV{REMOTE_ADDR});
 
-  # Request body
+  # Request body (may block if we try to read too much)
   binmode STDIN;
+  my $len = $req->headers->content_length;
   until ($req->is_finished) {
-    last unless my $read = STDIN->read(my $buffer, 131072, 0);
+    my $chunk = ($len && $len < 131072) ? $len : 131072;
+    last unless my $read = STDIN->read(my $buffer, $chunk, 0);
     $req->parse($buffer);
+    last if ($len -= $read) <= 0;
   }
 
-  # Handle request
   $self->emit(request => $tx);
 
-  # Response start line
+  # Response start-line
   STDOUT->autoflush(1);
   binmode STDOUT;
-  my $res = $tx->res;
+  my $res = $tx->res->fix_headers;
   return undef if $self->nph && !_write($res, 'get_start_line_chunk');
 
   # Response headers
-  $res->fix_headers;
   my $code = $res->code    || 404;
   my $msg  = $res->message || $res->default_message;
   $res->headers->status("$code $msg") unless $self->nph;
   return undef unless _write($res, 'get_header_chunk');
 
   # Response body
-  $tx->is_empty or _write($res, 'get_body_chunk') or return undef;
+  return undef unless $tx->is_empty || _write($res, 'get_body_chunk');
 
   # Finish transaction
-  $tx->server_close;
+  $tx->closed;
 
   return $res->code;
 }
@@ -65,6 +66,8 @@ sub _write {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Server::CGI - CGI server
@@ -74,8 +77,7 @@ Mojo::Server::CGI - CGI server
   use Mojo::Server::CGI;
 
   my $cgi = Mojo::Server::CGI->new;
-  $cgi->unsubscribe('request')
-  $cgi->on(request => sub {
+  $cgi->unsubscribe('request')->on(request => sub {
     my ($cgi, $tx) = @_;
 
     # Request
@@ -94,9 +96,10 @@ Mojo::Server::CGI - CGI server
 
 =head1 DESCRIPTION
 
-L<Mojo::Server::CGI> is a simple and portable implementation of RFC 3875.
+L<Mojo::Server::CGI> is a simple and portable implementation of
+L<RFC 3875|http://tools.ietf.org/html/rfc3875>.
 
-See L<Mojolicious::Guides::Cookbook> for more.
+See L<Mojolicious::Guides::Cookbook/"DEPLOYMENT"> for more.
 
 =head1 EVENTS
 
@@ -109,8 +112,8 @@ implements the following new ones.
 
 =head2 nph
 
-  my $nph = $cgi->nph;
-  $cgi    = $cgi->nph(1);
+  my $bool = $cgi->nph;
+  $cgi     = $cgi->nph($bool);
 
 Activate non-parsed header mode.
 
@@ -127,6 +130,6 @@ Run CGI.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

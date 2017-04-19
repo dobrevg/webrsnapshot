@@ -1,305 +1,285 @@
 package Mojo::DOM::CSS;
 use Mojo::Base -base;
 
+use Mojo::Util 'trim';
+
 has 'tree';
 
-my $ESCAPE_RE = qr/\\[^[:xdigit:]]|\\[[:xdigit:]]{1,6}/;
+my $ESCAPE_RE = qr/\\[^0-9a-fA-F]|\\[0-9a-fA-F]{1,6}/;
 my $ATTR_RE   = qr/
   \[
-  ((?:$ESCAPE_RE|[\w\-])+)        # Key
+  ((?:$ESCAPE_RE|[\w\-])+)                              # Key
   (?:
-    (\W)?                         # Operator
-    =
-    (?:"((?:\\"|[^"])+)"|(\S+))   # Value
+    (\W)?=                                              # Operator
+    (?:"((?:\\"|[^"])*)"|'((?:\\'|[^'])*)'|([^\]]+?))   # Value
+    (?:\s+(i))?                                         # Case-sensitivity
   )?
   \]
 /x;
-my $CLASS_ID_RE = qr/
-  (?:
-    (?:\.((?:\\\.|[^\#.])+))   # Class
-  |
-    (?:\#((?:\\\#|[^.\#])+))   # ID
-  )
-/x;
-my $PSEUDO_CLASS_RE = qr/(?::([\w\-]+)(?:\(((?:\([^)]+\)|[^)])+)\))?)/;
-my $TOKEN_RE        = qr/
-  (\s*,\s*)?                         # Separator
-  ((?:[^[\\:\s,]|$ESCAPE_RE\s?)+)?   # Element
-  ($PSEUDO_CLASS_RE*)?               # Pseudoclass
-  ((?:$ATTR_RE)*)?                   # Attributes
-  (?:
-    \s*
-    ([>+~])                          # Combinator
-  )?
-/x;
 
-sub select {
-  my $self = shift;
-
-  my @results;
-  my $pattern = $self->_compile(shift);
-  my $tree    = $self->tree;
-  my @queue   = ($tree);
-  while (my $current = shift @queue) {
-    my $type = $current->[0];
-
-    # Root
-    if ($type eq 'root') { unshift @queue, @$current[1 .. $#$current] }
-
-    # Tag
-    elsif ($type eq 'tag') {
-      unshift @queue, @$current[4 .. $#$current];
-
-      # Try all selectors with element
-      for my $part (@$pattern) {
-        push @results, $current and last
-          if $self->_combinator([reverse @$part], $current, $tree);
-      }
-    }
-  }
-
-  return \@results;
+sub matches {
+  my $tree = shift->tree;
+  return $tree->[0] ne 'tag' ? undef : _match(_compile(shift), $tree, $tree);
 }
 
+sub select     { _select(0, shift->tree, _compile(@_)) }
+sub select_one { _select(1, shift->tree, _compile(@_)) }
+
 sub _ancestor {
-  my ($self, $selectors, $current, $tree) = @_;
+  my ($selectors, $current, $tree, $one, $pos) = @_;
+
   while ($current = $current->[3]) {
     return undef if $current->[0] eq 'root' || $current eq $tree;
-    return 1 if $self->_combinator($selectors, $current, $tree);
+    return 1 if _combinator($selectors, $current, $tree, $pos);
+    last if $one;
   }
+
   return undef;
 }
 
 sub _attr {
-  my ($self, $key, $regex, $current) = @_;
+  my ($name_re, $value_re, $current) = @_;
 
-  # Ignore namespace prefix
   my $attrs = $current->[2];
   for my $name (keys %$attrs) {
-    next unless $name =~ /(?:^|:)$key$/;
-    return 1 unless defined $attrs->{$name} && defined $regex;
-    return 1 if $attrs->{$name} =~ $regex;
+    my $value = $attrs->{$name};
+    next if $name !~ $name_re || (!defined $value && defined $value_re);
+    return 1 if !(defined $value && defined $value_re) || $value =~ $value_re;
   }
 
   return undef;
 }
 
 sub _combinator {
-  my ($self, $selectors, $current, $tree) = @_;
+  my ($selectors, $current, $tree, $pos) = @_;
 
   # Selector
-  my @s = @$selectors;
-  return undef unless my $combinator = shift @s;
-  if ($combinator->[0] ne 'combinator') {
-    return undef unless $self->_selector($combinator, $current);
-    return 1 unless $combinator = shift @s;
+  return undef unless my $c = $selectors->[$pos];
+  if (ref $c) {
+    return undef unless _selector($c, $current);
+    return 1 unless $c = $selectors->[++$pos];
   }
-
-  # " " (ancestor)
-  my $c = $combinator->[1];
-  if ($c eq ' ') { return undef unless $self->_ancestor(\@s, $current, $tree) }
 
   # ">" (parent only)
-  elsif ($c eq '>') {
-    return undef unless $self->_parent(\@s, $current, $tree);
-  }
+  return _ancestor($selectors, $current, $tree, 1, ++$pos) if $c eq '>';
 
   # "~" (preceding siblings)
-  elsif ($c eq '~') {
-    return undef unless $self->_sibling(\@s, $current, $tree, 0);
-  }
+  return _sibling($selectors, $current, $tree, 0, ++$pos) if $c eq '~';
 
   # "+" (immediately preceding siblings)
-  elsif ($c eq '+') {
-    return undef unless $self->_sibling(\@s, $current, $tree, 1);
-  }
+  return _sibling($selectors, $current, $tree, 1, ++$pos) if $c eq '+';
 
-  return 1;
+  # " " (ancestor)
+  return _ancestor($selectors, $current, $tree, 0, ++$pos);
 }
 
 sub _compile {
-  my ($self, $css) = @_;
+  my $css = trim "$_[0]";
 
-  my $pattern = [[]];
-  while ($css =~ /$TOKEN_RE/g) {
-    my ($separator, $element, $pc, $attrs, $combinator)
-      = ($1, $2 // '', $3, $6, $11);
+  my $group = [[]];
+  while (my $selectors = $group->[-1]) {
+    push @$selectors, [] unless @$selectors && ref $selectors->[-1];
+    my $last = $selectors->[-1];
 
-    # Trash
-    next unless $separator || $element || $pc || $attrs || $combinator;
+    # Separator
+    if ($css =~ /\G\s*,\s*/gc) { push @$group, [] }
 
-    # New selector
-    push @$pattern, [] if $separator;
-    my $part = $pattern->[-1];
-
-    # Empty combinator
-    push @$part, [combinator => ' ']
-      if $part->[-1] && $part->[-1][0] ne 'combinator';
-
-    # Selector
-    push @$part, ['element'];
-    my $selector = $part->[-1];
-
-    # Element
-    my $tag = '*';
-    $element =~ s/^((?:\\\.|\\\#|[^.#])+)// and $tag = $self->_unescape($1);
-
-    # Tag
-    push @$selector, ['tag', $tag];
+    # Combinator
+    elsif ($css =~ /\G\s*([ >+~])\s*/gc) { push @$selectors, $1 }
 
     # Class or ID
-    while ($element =~ /$CLASS_ID_RE/g) {
-
-      # Class
-      push @$selector, ['attr', 'class', $self->_regex('~', $1)] if defined $1;
-
-      # ID
-      push @$selector, ['attr', 'id', $self->_regex('', $2)] if defined $2;
-    }
-
-    # Pseudo classes
-    while ($pc =~ /$PSEUDO_CLASS_RE/g) {
-
-      # "not"
-      if ($1 eq 'not') {
-        my $subpattern = $self->_compile($2)->[-1][-1];
-        push @$selector, ['pc', 'not', $subpattern];
-      }
-
-      # Everything else
-      else { push @$selector, ['pc', $1, $2] }
+    elsif ($css =~ /\G([.#])((?:$ESCAPE_RE\s|\\.|[^,.#:[ >~+])+)/gco) {
+      my ($name, $op) = $1 eq '.' ? ('class', '~') : ('id', '');
+      push @$last, ['attr', _name($name), _value($op, $2)];
     }
 
     # Attributes
-    while ($attrs =~ /$ATTR_RE/g) {
-      my ($key, $op, $value) = ($self->_unescape($1), $2 // '', $3 // $4);
-      push @$selector, ['attr', $key, $self->_regex($op, $value)];
+    elsif ($css =~ /\G$ATTR_RE/gco) {
+      push @$last, ['attr', _name($1), _value($2 // '', $3 // $4 // $5, $6)];
     }
 
-    # Combinator
-    push @$part, [combinator => $combinator] if $combinator;
+    # Pseudo-class
+    elsif ($css =~ /\G:([\w\-]+)(?:\(((?:\([^)]+\)|[^)])+)\))?/gcs) {
+      my ($name, $args) = (lc $1, $2);
+
+      # ":not" (contains more selectors)
+      $args = _compile($args) if $name eq 'not';
+
+      # ":nth-*" (with An+B notation)
+      $args = _equation($args) if $name =~ /^nth-/;
+
+      # ":first-*" (rewrite to ":nth-*")
+      ($name, $args) = ("nth-$1", [0, 1]) if $name =~ /^first-(.+)$/;
+
+      # ":last-*" (rewrite to ":nth-*")
+      ($name, $args) = ("nth-$name", [-1, 1]) if $name =~ /^last-/;
+
+      push @$last, ['pc', $name, $args];
+    }
+
+    # Tag
+    elsif ($css =~ /\G((?:$ESCAPE_RE\s|\\.|[^,.#:[ >~+])+)/gco) {
+      push @$last, ['tag', _name($1)] unless $1 eq '*';
+    }
+
+    else {last}
   }
 
-  return $pattern;
+  return $group;
 }
+
+sub _empty { $_[0][0] eq 'comment' || $_[0][0] eq 'pi' }
 
 sub _equation {
-  my ($self, $equation) = @_;
+  return [0, 0] unless my $equation = shift;
 
   # "even"
-  my $num = [1, 1];
-  if ($equation =~ /^even$/i) { $num = [2, 2] }
+  return [2, 2] if $equation =~ /^\s*even\s*$/i;
 
   # "odd"
-  elsif ($equation =~ /^odd$/i) { $num = [2, 1] }
+  return [2, 1] if $equation =~ /^\s*odd\s*$/i;
 
-  # Equation
-  elsif ($equation =~ /(?:(-?(?:\d+)?)?(n))?\s*\+?\s*(-?\s*\d+)?\s*$/i) {
-    $num->[0] = defined($1) && length($1) ? $1 : $2 ? 1 : 0;
-    $num->[0] = -1 if $num->[0] eq '-';
-    $num->[1] = $3 // 0;
-    $num->[1] =~ s/\s+//g;
-  }
+  # "4", "+4" or "-4"
+  return [0, $1] if $equation =~ /^\s*((?:\+|-)?\d+)\s*$/;
 
-  return $num;
+  # "n", "4n", "+4n", "-4n", "n+1", "4n-1", "+4n-1" (and other variations)
+  return [0, 0]
+    unless $equation =~ /^\s*((?:\+|-)?(?:\d+)?)?n\s*((?:\+|-)\s*\d+)?\s*$/i;
+  return [$1 eq '-' ? -1 : !length $1 ? 1 : $1, join('', split(' ', $2 // 0))];
 }
 
-sub _parent {
-  my ($self, $selectors, $current, $tree) = @_;
-  return undef unless my $parent = $current->[3];
-  return undef if $parent->[0] eq 'root';
-  return $self->_combinator($selectors, $parent, $tree) ? 1 : undef;
+sub _match {
+  my ($group, $current, $tree) = @_;
+  _combinator([reverse @$_], $current, $tree, 0) and return 1 for @$group;
+  return undef;
 }
+
+sub _name {qr/(?:^|:)\Q@{[_unescape(shift)]}\E$/}
 
 sub _pc {
-  my ($self, $class, $args, $current) = @_;
-
-  # ":first-*"
-  if ($class =~ /^first-(?:(child)|of-type)$/) {
-    $class = defined $1 ? 'nth-child' : 'nth-of-type';
-    $args = 1;
-  }
-
-  # ":last-*"
-  elsif ($class =~ /^last-(?:(child)|of-type)$/) {
-    $class = defined $1 ? 'nth-last-child' : 'nth-last-of-type';
-    $args = '-n+1';
-  }
+  my ($class, $args, $current) = @_;
 
   # ":checked"
-  if ($class eq 'checked') {
-    my $attrs = $current->[2];
-    return 1 if exists $attrs->{checked} || exists $attrs->{selected};
-  }
-
-  # ":empty"
-  elsif ($class eq 'empty') { return 1 unless defined $current->[4] }
-
-  # ":root"
-  elsif ($class eq 'root') {
-    if (my $parent = $current->[3]) { return 1 if $parent->[0] eq 'root' }
-  }
+  return exists $current->[2]{checked} || exists $current->[2]{selected}
+    if $class eq 'checked';
 
   # ":not"
-  elsif ($class eq 'not') { return 1 if !$self->_selector($args, $current) }
+  return !_match($args, $current, $current) if $class eq 'not';
 
-  # ":nth-*"
-  elsif ($class =~ /^nth-/) {
+  # ":empty"
+  return !grep { !_empty($_) } @$current[4 .. $#$current] if $class eq 'empty';
 
-    # Numbers
-    $args = $self->_equation($args) unless ref $args;
+  # ":root"
+  return $current->[3] && $current->[3][0] eq 'root' if $class eq 'root';
 
-    # Siblings
-    my $parent = $current->[3];
-    my $start = $parent->[0] eq 'root' ? 1 : 4;
-    my @siblings;
+  # ":nth-child", ":nth-last-child", ":nth-of-type" or ":nth-last-of-type"
+  if (ref $args) {
     my $type = $class =~ /of-type$/ ? $current->[1] : undef;
-    for my $i ($start .. $#$parent) {
-      my $sibling = $parent->[$i];
-      next unless $sibling->[0] eq 'tag';
-      next if defined $type && $type ne $sibling->[1];
-      push @siblings, $sibling;
-    }
-
-    # Reverse
+    my @siblings = @{_siblings($current, $type)};
     @siblings = reverse @siblings if $class =~ /^nth-last/;
 
-    # Find
     for my $i (0 .. $#siblings) {
-      my $result = $args->[0] * $i + $args->[1];
-      next if $result < 1;
+      next if (my $result = $args->[0] * $i + $args->[1]) < 1;
       last unless my $sibling = $siblings[$result - 1];
       return 1 if $sibling eq $current;
     }
   }
 
-  # ":only-*"
-  elsif ($class =~ /^only-(?:child|(of-type))$/) {
-    my $type = $1 ? $current->[1] : undef;
-
-    # Siblings
-    my $parent = $current->[3];
-    my $start = $parent->[0] eq 'root' ? 1 : 4;
-    for my $i ($start .. $#$parent) {
-      my $sibling = $parent->[$i];
-      next if $sibling->[0] ne 'tag' || $sibling eq $current;
-      return undef unless defined $type && $sibling->[1] ne $type;
-    }
-
-    # No siblings
+  # ":only-child" or ":only-of-type"
+  elsif ($class eq 'only-child' || $class eq 'only-of-type') {
+    my $type = $class eq 'only-of-type' ? $current->[1] : undef;
+    $_ ne $current and return undef for @{_siblings($current, $type)};
     return 1;
   }
 
   return undef;
 }
 
-sub _regex {
-  my ($self, $op, $value) = @_;
+sub _select {
+  my ($one, $tree, $group) = @_;
+
+  my @results;
+  my @queue = @$tree[($tree->[0] eq 'root' ? 1 : 4) .. $#$tree];
+  while (my $current = shift @queue) {
+    next unless $current->[0] eq 'tag';
+
+    unshift @queue, @$current[4 .. $#$current];
+    next unless _match($group, $current, $tree);
+    $one ? return $current : push @results, $current;
+  }
+
+  return $one ? undef : \@results;
+}
+
+sub _selector {
+  my ($selector, $current) = @_;
+
+  for my $s (@$selector) {
+    my $type = $s->[0];
+
+    # Tag
+    if ($type eq 'tag') { return undef unless $current->[1] =~ $s->[1] }
+
+    # Attribute
+    elsif ($type eq 'attr') { return undef unless _attr(@$s[1, 2], $current) }
+
+    # Pseudo-class
+    elsif ($type eq 'pc') { return undef unless _pc(@$s[1, 2], $current) }
+  }
+
+  return 1;
+}
+
+sub _sibling {
+  my ($selectors, $current, $tree, $immediate, $pos) = @_;
+
+  my $found;
+  for my $sibling (@{_siblings($current)}) {
+    return $found if $sibling eq $current;
+
+    # "+" (immediately preceding sibling)
+    if ($immediate) { $found = _combinator($selectors, $sibling, $tree, $pos) }
+
+    # "~" (preceding sibling)
+    else { return 1 if _combinator($selectors, $sibling, $tree, $pos) }
+  }
+
+  return undef;
+}
+
+sub _siblings {
+  my ($current, $type) = @_;
+
+  my $parent = $current->[3];
+  my @siblings = grep { $_->[0] eq 'tag' }
+    @$parent[($parent->[0] eq 'root' ? 1 : 4) .. $#$parent];
+  @siblings = grep { $type eq $_->[1] } @siblings if defined $type;
+
+  return \@siblings;
+}
+
+sub _unescape {
+  my $value = shift;
+
+  # Remove escaped newlines
+  $value =~ s/\\\n//g;
+
+  # Unescape Unicode characters
+  $value =~ s/\\([0-9a-fA-F]{1,6})\s?/pack 'U', hex $1/ge;
+
+  # Remove backslash
+  $value =~ s/\\//g;
+
+  return $value;
+}
+
+sub _value {
+  my ($op, $value, $insensitive) = @_;
   return undef unless defined $value;
-  $value = quotemeta $self->_unescape($value);
+  $value = ($insensitive ? '(?i)' : '') . quotemeta _unescape($value);
 
   # "~=" (word)
-  return qr/(?:^|.*\s+)$value(?:\s+.*|$)/ if $op eq '~';
+  return qr/(?:^|\s+)$value(?:\s+|$)/ if $op eq '~';
 
   # "*=" (contains)
   return qr/$value/ if $op eq '*';
@@ -314,68 +294,9 @@ sub _regex {
   return qr/^$value$/;
 }
 
-sub _selector {
-  my ($self, $selector, $current) = @_;
-
-  for my $s (@$selector[1 .. $#$selector]) {
-    my $type = $s->[0];
-
-    # Tag (ignore namespace prefix)
-    if ($type eq 'tag') {
-      my $tag = $s->[1];
-      return undef unless $tag eq '*' || $current->[1] =~ /(?:^|:)$tag$/;
-    }
-
-    # Attribute
-    elsif ($type eq 'attr') {
-      return undef unless $self->_attr(@$s[1, 2], $current);
-    }
-
-    # Pseudo class
-    elsif ($type eq 'pc') {
-      return undef unless $self->_pc(lc $s->[1], $s->[2], $current);
-    }
-  }
-
-  return 1;
-}
-
-sub _sibling {
-  my ($self, $selectors, $current, $tree, $immediate) = @_;
-
-  my $parent = $current->[3];
-  my $found;
-  my $start = $parent->[0] eq 'root' ? 1 : 4;
-  for my $e (@$parent[$start .. $#$parent]) {
-    return $found if $e eq $current;
-    next unless $e->[0] eq 'tag';
-
-    # "+" (immediately preceding sibling)
-    if ($immediate) { $found = $self->_combinator($selectors, $e, $tree) }
-
-    # "~" (preceding sibling)
-    else { return 1 if $self->_combinator($selectors, $e, $tree) }
-  }
-
-  return undef;
-}
-
-sub _unescape {
-  my ($self, $value) = @_;
-
-  # Remove escaped newlines
-  $value =~ s/\\\n//g;
-
-  # Unescape Unicode characters
-  $value =~ s/\\([[:xdigit:]]{1,6})\s?/pack('U', hex $1)/ge;
-
-  # Remove backslash
-  $value =~ s/\\//g;
-
-  return $value;
-}
-
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -391,7 +312,9 @@ Mojo::DOM::CSS - CSS selector engine
 
 =head1 DESCRIPTION
 
-L<Mojo::DOM::CSS> is the CSS selector engine used by L<Mojo::DOM>.
+L<Mojo::DOM::CSS> is the CSS selector engine used by L<Mojo::DOM>, based on the
+L<HTML Living Standard|https://html.spec.whatwg.org> and
+L<Selectors Level 3|http://www.w3.org/TR/css3-selectors/>.
 
 =head1 SELECTORS
 
@@ -419,53 +342,59 @@ An C<E> element with a C<foo> attribute.
 
 An C<E> element whose C<foo> attribute value is exactly equal to C<bar>.
 
-  my $fields = $css->select('input[name="foo"]');
+  my $case_sensitive = $css->select('input[type="hidden"]');
+  my $case_sensitive = $css->select('input[type=hidden]');
+
+=head2 E[foo="bar" i]
+
+An C<E> element whose C<foo> attribute value is exactly equal to any
+(ASCII-range) case-permutation of C<bar>. Note that this selector is
+EXPERIMENTAL and might change without warning!
+
+  my $case_insensitive = $css->select('input[type="hidden" i]');
+  my $case_insensitive = $css->select('input[type=hidden i]');
+  my $case_insensitive = $css->select('input[class~="foo" i]');
+
+This selector is part of
+L<Selectors Level 4|http://dev.w3.org/csswg/selectors-4>, which is still a work
+in progress.
 
 =head2 E[foo~="bar"]
 
-An C<E> element whose C<foo> attribute value is a list of
-whitespace-separated values, one of which is exactly equal to C<bar>.
+An C<E> element whose C<foo> attribute value is a list of whitespace-separated
+values, one of which is exactly equal to C<bar>.
 
-  my $fields = $css->select('input[name~="foo"]');
+  my $foo = $css->select('input[class~="foo"]');
+  my $foo = $css->select('input[class~=foo]');
 
 =head2 E[foo^="bar"]
 
 An C<E> element whose C<foo> attribute value begins exactly with the string
 C<bar>.
 
-  my $fields = $css->select('input[name^="f"]');
+  my $begins_with = $css->select('input[name^="f"]');
+  my $begins_with = $css->select('input[name^=f]');
 
 =head2 E[foo$="bar"]
 
 An C<E> element whose C<foo> attribute value ends exactly with the string
 C<bar>.
 
-  my $fields = $css->select('input[name$="o"]');
+  my $ends_with = $css->select('input[name$="o"]');
+  my $ends_with = $css->select('input[name$=o]');
 
 =head2 E[foo*="bar"]
 
 An C<E> element whose C<foo> attribute value contains the substring C<bar>.
 
-  my $fields = $css->select('input[name*="fo"]');
+  my $contains = $css->select('input[name*="fo"]');
+  my $contains = $css->select('input[name*=fo]');
 
 =head2 E:root
 
 An C<E> element, root of the document.
 
   my $root = $css->select(':root');
-
-=head2 E:checked
-
-A user interface element C<E> which is checked (for instance a radio-button or
-checkbox).
-
-  my $input = $css->select(':checked');
-
-=head2 E:empty
-
-An C<E> element that has no children (including text nodes).
-
-  my $empty = $css->select(':empty');
 
 =head2 E:nth-child(n)
 
@@ -539,17 +468,30 @@ An C<E> element, only sibling of its type.
 
   my $lonely = $css->select('div p:only-of-type');
 
-=head2 E.warning
+=head2 E:empty
 
-  my $warning = $css->select('div.warning');
+An C<E> element that has no children (including text nodes).
+
+  my $empty = $css->select(':empty');
+
+=head2 E:checked
+
+A user interface element C<E> which is checked (for instance a radio-button or
+checkbox).
+
+  my $input = $css->select(':checked');
+
+=head2 E.warning
 
 An C<E> element whose class is "warning".
 
+  my $warning = $css->select('div.warning');
+
 =head2 E#myid
 
-  my $foo = $css->select('div#foo');
-
 An C<E> element with C<ID> equal to "myid".
+
+  my $foo = $css->select('div#foo');
 
 =head2 E:not(s)
 
@@ -591,7 +533,7 @@ Elements of type C<E>, C<F> and C<G>.
 
 An C<E> element whose attributes match all following attribute selectors.
 
-  my $links = $css->select('a[foo^="b"][foo$="ar"]');
+  my $links = $css->select('a[foo^=b][foo$=ar]');
 
 =head1 ATTRIBUTES
 
@@ -600,7 +542,7 @@ L<Mojo::DOM::CSS> implements the following attributes.
 =head2 tree
 
   my $tree = $css->tree;
-  $css     = $css->tree(['root', ['text', 'foo']]);
+  $css     = $css->tree(['root']);
 
 Document Object Model. Note that this structure should only be used very
 carefully since it is very dynamic.
@@ -610,14 +552,26 @@ carefully since it is very dynamic.
 L<Mojo::DOM::CSS> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
+=head2 matches
+
+  my $bool = $css->matches('head > title');
+
+Check if first node in L</"tree"> matches the CSS selector.
+
 =head2 select
 
   my $results = $css->select('head > title');
 
-Run CSS selector against C<tree>.
+Run CSS selector against L</"tree">.
+
+=head2 select_one
+
+  my $result = $css->select_one('head > title');
+
+Run CSS selector against L</"tree"> and stop as soon as the first node matched.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

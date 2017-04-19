@@ -1,9 +1,10 @@
 package Mojolicious::Routes::Route;
 use Mojo::Base -base;
 
-use Carp 'croak';
+use Carp ();
+use Mojo::Util;
 use Mojolicious::Routes::Pattern;
-use Scalar::Util qw(blessed weaken);
+use Scalar::Util ();
 
 has [qw(inline parent partial)];
 has 'children' => sub { [] };
@@ -12,69 +13,39 @@ has pattern    => sub { Mojolicious::Routes::Pattern->new };
 sub AUTOLOAD {
   my $self = shift;
 
-  my ($package, $method) = our $AUTOLOAD =~ /^([\w:]+)::(\w+)$/;
-  croak "Undefined subroutine &${package}::$method called"
-    unless blessed $self && $self->isa(__PACKAGE__);
+  my ($package, $method) = our $AUTOLOAD =~ /^(.+)::(.+)$/;
+  Carp::croak "Undefined subroutine &${package}::$method called"
+    unless Scalar::Util::blessed $self && $self->isa(__PACKAGE__);
 
   # Call shortcut with current route
-  croak qq{Can't locate object method "$method" via package "$package"}
+  Carp::croak qq{Can't locate object method "$method" via package "$package"}
     unless my $shortcut = $self->root->shortcuts->{$method};
   return $self->$shortcut(@_);
 }
 
-sub DESTROY { }
-
-sub new { shift->SUPER::new->parse(@_) }
-
 sub add_child {
   my ($self, $route) = @_;
-  weaken $route->remove->parent($self)->{parent};
+  Scalar::Util::weaken $route->remove->parent($self)->{parent};
   push @{$self->children}, $route;
   return $self;
 }
 
 sub any { shift->_generate_route(ref $_[0] eq 'ARRAY' ? shift : [], @_) }
 
-sub bridge { shift->route(@_)->inline(1) }
-
 sub delete { shift->_generate_route(DELETE => @_) }
 
 sub detour { shift->partial(1)->to(@_) }
 
-sub find {
-  my ($self, $name) = @_;
-
-  my @children = (@{$self->children});
-  my $candidate;
-  while (my $child = shift @children) {
-
-    # Match
-    $candidate = $child->has_custom_name ? return $child : $child
-      if $child->name eq $name;
-
-    # Search children too
-    push @children, @{$child->children};
-  }
-
-  return $candidate;
-}
+sub find { shift->_index->{shift()} }
 
 sub get { shift->_generate_route(GET => @_) }
-
-sub has_conditions {
-  my $self = shift;
-  return 1 if @{$self->over || []};
-  return undef unless my $parent = $self->parent;
-  return $parent->has_conditions;
-}
 
 sub has_custom_name { !!shift->{custom} }
 
 sub has_websocket {
   my $self = shift;
-  return 1 if $self->is_websocket;
-  return undef unless my $parent = $self->parent;
-  return $parent->is_websocket;
+  return $self->{has_websocket} if exists $self->{has_websocket};
+  return $self->{has_websocket} = grep { $_->is_websocket } @{$self->_chain};
 }
 
 sub is_endpoint { $_[0]->inline ? undef : !@{$_[0]->children} }
@@ -84,8 +55,7 @@ sub is_websocket { !!shift->{websocket} }
 sub name {
   my $self = shift;
   return $self->{name} unless @_;
-  $self->{name}   = shift;
-  $self->{custom} = 1;
+  @$self{qw(name custom)} = (shift, 1);
   return $self;
 }
 
@@ -99,14 +69,14 @@ sub over {
   my $conditions = ref $_[0] eq 'ARRAY' ? $_[0] : [@_];
   return $self unless @$conditions;
   $self->{over} = $conditions;
-  $self->root->cache(0);
+  $self->root->cache->max_keys(0);
 
   return $self;
 }
 
 sub parse {
   my $self = shift;
-  $self->{name} = $self->pattern->parse(@_)->pattern // '';
+  $self->{name} = $self->pattern->parse(@_)->unparsed // '';
   $self->{name} =~ s/\W+//g;
   return $self;
 }
@@ -123,29 +93,34 @@ sub remove {
 }
 
 sub render {
-  my ($self, $path, $values) = @_;
-
-  # Render pattern
-  my $prefix = $self->pattern->render($values, !$path);
-  $path = "$prefix$path" unless $prefix eq '/';
-  $path ||= '/' unless my $parent = $self->parent;
-
-  # Let parent render
-  return $parent ? $parent->render($path, $values) : $path;
+  my ($self, $values) = @_;
+  my $path = join '',
+    map { $_->pattern->render($values, !@{$_->children} && !$_->partial) }
+    @{$self->_chain};
+  return $path || '/';
 }
 
-sub root {
-  my $root = my $parent = shift;
-  while ($parent = $parent->parent) { $root = $parent }
-  return $root;
-}
+sub root { shift->_chain->[0] }
 
 sub route {
   my $self   = shift;
-  my $route  = $self->add_child($self->new(@_))->children->[-1];
+  my $route  = $self->add_child(__PACKAGE__->new->parse(@_))->children->[-1];
   my $format = $self->pattern->constraints->{format};
   $route->pattern->constraints->{format} //= 0 if defined $format && !$format;
   return $route;
+}
+
+sub suggested_method {
+  my $self = shift;
+
+  my %via;
+  for my $route (@{$self->_chain}) {
+    next unless my @via = @{$route->via || []};
+    %via = map { $_ => 1 } keys %via ? grep { $via{$_} } @via : @via;
+  }
+
+  return 'POST' if $via{POST} && !$via{GET};
+  return $via{GET} ? 'GET' : (sort keys %via)[0] || 'GET';
 }
 
 sub to {
@@ -153,7 +128,7 @@ sub to {
 
   my $pattern = $self->pattern;
   return $pattern->defaults unless @_;
-  my ($shortcut, %defaults) = _defaults(@_);
+  my ($shortcut, %defaults) = Mojo::Util::_options(@_);
 
   if ($shortcut) {
 
@@ -169,16 +144,13 @@ sub to {
     }
   }
 
-  $pattern->defaults({%{$pattern->defaults}, %defaults});
+  @{$pattern->defaults}{keys %defaults} = values %defaults;
 
   return $self;
 }
 
 sub to_string {
-  my $self = shift;
-  my $pattern = $self->parent ? $self->parent->to_string : '';
-  $pattern .= $self->pattern->pattern if $self->pattern->pattern;
-  return $pattern;
+  join '', map { $_->pattern->unparsed // '' } @{shift->_chain};
 }
 
 sub under { shift->_generate_route(under => @_) }
@@ -197,22 +169,16 @@ sub websocket {
   return $route;
 }
 
-sub _defaults {
-
-  # Hash or shortcut (one)
-  return ref $_[0] eq 'HASH' ? (undef, %{shift()}) : @_ if @_ == 1;
-
-  # Shortcut and values (odd)
-  return shift, @_ if @_ % 2;
-
-  # Shortcut and hash or just values (even)
-  return ref $_[1] eq 'HASH' ? (shift, %{shift()}) : (undef, @_);
+sub _chain {
+  my @chain = (my $parent = shift);
+  unshift @chain, $parent while $parent = $parent->parent;
+  return \@chain;
 }
 
 sub _generate_route {
   my ($self, $methods, @args) = @_;
 
-  my ($cb, @conditions, @constraints, %defaults, $name, $pattern);
+  my (@conditions, @constraints, %defaults, $name, $pattern);
   while (defined(my $arg = shift @args)) {
 
     # First scalar is the pattern
@@ -225,29 +191,39 @@ sub _generate_route {
     elsif (!ref $arg) { $name = $arg }
 
     # Callback
-    elsif (ref $arg eq 'CODE') { $cb = $arg }
+    elsif (ref $arg eq 'CODE') { $defaults{cb} = $arg }
 
     # Constraints
-    elsif (ref $arg eq 'ARRAY') { @constraints = @$arg }
+    elsif (ref $arg eq 'ARRAY') { push @constraints, @$arg }
 
     # Defaults
-    elsif (ref $arg eq 'HASH') { %defaults = %$arg }
+    elsif (ref $arg eq 'HASH') { %defaults = (%defaults, %$arg) }
   }
 
-  # Callback
-  $defaults{cb} = $cb if $cb;
-
-  # Create bridge or route
   my $route
-    = $methods eq 'under'
-    ? $self->bridge($pattern, @constraints)
-    : $self->route($pattern, @constraints)->via($methods);
-  $route->over(\@conditions)->to(\%defaults);
+    = $self->route($pattern, @constraints)->over(\@conditions)->to(\%defaults);
+  $methods eq 'under' ? $route->inline(1) : $route->via($methods);
 
   return defined $name ? $route->name($name) : $route;
 }
 
+sub _index {
+  my $self = shift;
+
+  my (%auto, %custom);
+  my @children = (@{$self->children});
+  while (my $child = shift @children) {
+    if   ($child->has_custom_name) { $custom{$child->name} ||= $child }
+    else                           { $auto{$child->name}   ||= $child }
+    push @children, @{$child->children};
+  }
+
+  return {%auto, %custom};
+}
+
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -277,22 +253,22 @@ The children of this route, used for nesting routes.
 
 =head2 inline
 
-  my $inline = $r->inline;
-  $r         = $r->inline(1);
+  my $bool = $r->inline;
+  $r       = $r->inline($bool);
 
-Allow C<bridge> semantics for this route.
+Allow L</"under"> semantics for this route.
 
 =head2 parent
 
   my $parent = $r->parent;
   $r         = $r->parent(Mojolicious::Routes::Route->new);
 
-The parent of this route, used for nesting routes.
+The parent of this route, usually a L<Mojolicious::Routes::Route> object.
 
 =head2 partial
 
-  my $partial = $r->partial;
-  $r          = $r->partial(1);
+  my $bool = $r->partial;
+  $r       = $r->partial($bool);
 
 Route has no specific end, remaining characters will be captured in C<path>.
 
@@ -308,54 +284,87 @@ Pattern for this route, defaults to a L<Mojolicious::Routes::Pattern> object.
 L<Mojolicious::Routes::Route> inherits all methods from L<Mojo::Base> and
 implements the following new ones.
 
-=head2 new
-
-  my $r = Mojolicious::Routes::Route->new;
-  my $r = Mojolicious::Routes::Route->new('/:controller/:action');
-
-Construct a new L<Mojolicious::Routes::Route> object and <parse> pattern if
-necessary.
-
 =head2 add_child
 
   $r = $r->add_child(Mojolicious::Routes::Route->new);
 
-Add a new child to this route, it will be automatically removed from its
-current parent if necessary.
+Add a child to this route, it will be automatically removed from its current
+parent if necessary.
 
   # Reattach route
   $r->add_child($r->find('foo'));
 
 =head2 any
 
+  my $route = $r->any;
+  my $route = $r->any('/:foo');
   my $route = $r->any('/:foo' => sub {...});
-  my $route = $r->any([qw(GET POST)] => '/:foo' => sub {...});
+  my $route = $r->any('/:foo' => sub {...} => 'name');
+  my $route = $r->any('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->any('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->any('/:foo' => (agent => qr/Firefox/) => sub {...});
+  my $route = $r->any(['GET', 'POST'] => '/:foo' => sub {...});
+  my $route = $r->any(['GET', 'POST'] => '/:foo' => [foo => qr/\w+/]);
 
-Generate route matching any of the listed HTTP request methods or all. See
-also the L<Mojolicious::Lite> tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching any of the listed HTTP
+request methods or all.
 
+  # Route with pattern and destination
   $r->any('/user')->to('user#whatever');
 
-=head2 bridge
+All arguments are optional, but some have to appear in a certain order, like the
+two supported array reference values, which contain the HTTP methods to match
+and restrictive placeholders.
 
-  my $bridge = $r->bridge;
-  my $bridge = $r->bridge('/:action');
-  my $bridge = $r->bridge('/:action', action => qr/\w+/);
-  my $bridge = $r->bridge(format => 0);
+  # Route with HTTP methods, pattern, restrictive placeholders and destination
+  $r->any(['DELETE', 'PUT'] => '/:foo' => [foo => qr/\w+/])->to('foo#bar');
 
-Generate bridge route.
+There are also two supported string values, containing the route pattern and the
+route name, defaulting to the pattern C</> and a name based on the pattern.
 
-  my $auth = $r->bridge('/user')->to('user#auth');
-  $auth->get('/show')->to('#show');
-  $auth->post('/create')->to('#create');
+  # Route with pattern, name and destination
+  $r->any('/:foo' => 'foo_route')->to('foo#bar');
+
+An arbitrary number of key/value pairs in between the route pattern and name can
+be used to specify route conditions.
+
+  # Route with pattern, condition and destination
+  $r->any('/' => (agent => qr/Firefox/))->to('foo#bar');
+
+A hash reference is used to specify optional placeholders and default values for
+the stash.
+
+  # Route with pattern, optional placeholder and destination
+  $r->any('/:foo' => {foo => 'bar'})->to('foo#bar');
+
+And a code reference can be used to specify a C<cb> value to be merged into the
+default values for the stash.
+
+  # Route with pattern and a closure as destination
+  $r->any('/:foo' => sub {
+    my $c = shift;
+    $c->render(text => 'Hello World!');
+  });
+
+See L<Mojolicious::Guides::Tutorial> and L<Mojolicious::Guides::Routing> for
+more information.
 
 =head2 delete
 
+  my $route = $r->delete;
+  my $route = $r->delete('/:foo');
   my $route = $r->delete('/:foo' => sub {...});
+  my $route = $r->delete('/:foo' => sub {...} => 'name');
+  my $route = $r->delete('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->delete('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->delete('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only DELETE requests. See also the
-L<Mojolicious::Lite> tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<DELETE> requests,
+takes the same arguments as L</"any"> (except for the HTTP methods to match,
+which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->delete('/user')->to('user#remove');
 
 =head2 detour
@@ -366,7 +375,7 @@ L<Mojolicious::Lite> tutorial for more argument variations.
   $r = $r->detour('MyApp', {foo => 'bar'});
 
 Set default parameters for this route and allow partial matching to simplify
-application embedding, takes the same arguments as C<to>.
+application embedding, takes the same arguments as L</"to">.
 
 =head2 find
 
@@ -375,44 +384,49 @@ application embedding, takes the same arguments as C<to>.
 Find child route by name, custom names have precedence over automatically
 generated ones.
 
+  # Change default parameters of a named route
   $r->find('show_user')->to(foo => 'bar');
 
 =head2 get
 
+  my $route = $r->get;
+  my $route = $r->get('/:foo');
   my $route = $r->get('/:foo' => sub {...});
+  my $route = $r->get('/:foo' => sub {...} => 'name');
+  my $route = $r->get('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->get('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->get('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only GET requests. See also the L<Mojolicious::Lite>
-tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<GET> requests,
+takes the same arguments as L</"any"> (except for the HTTP methods to match,
+which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->get('/user')->to('user#show');
-
-=head2 has_conditions
-
-  my $success = $r->has_conditions;
-
-Check if this route has active conditions.
 
 =head2 has_custom_name
 
-  my $success = $r->has_custom_name;
+  my $bool = $r->has_custom_name;
 
 Check if this route has a custom name.
 
 =head2 has_websocket
 
-  my $success = $r->has_websocket;
+  my $bool = $r->has_websocket;
 
-Check if this route has a WebSocket ancestor.
+Check if this route has a WebSocket ancestor and cache the result for future
+checks.
 
 =head2 is_endpoint
 
-  my $success = $r->is_endpoint;
+  my $bool = $r->is_endpoint;
 
 Check if this route qualifies as an endpoint.
 
 =head2 is_websocket
 
-  my $success = $r->is_websocket;
+  my $bool = $r->is_websocket;
 
 Check if this route is a WebSocket.
 
@@ -425,15 +439,25 @@ The name of this route, defaults to an automatically generated name based on
 the route pattern. Note that the name C<current> is reserved for referring to
 the current route.
 
+  # Route with destination and custom name
   $r->get('/user')->to('user#show')->name('show_user');
 
 =head2 options
 
+  my $route = $r->options;
+  my $route = $r->options('/:foo');
   my $route = $r->options('/:foo' => sub {...});
+  my $route = $r->options('/:foo' => sub {...} => 'name');
+  my $route = $r->options('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->options('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->options('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only OPTIONS requests. See also the
-L<Mojolicious::Lite> tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<OPTIONS>
+requests, takes the same arguments as L</"any"> (except for the HTTP methods to
+match, which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->options('/user')->to('user#overview');
 
 =head2 over
@@ -446,7 +470,8 @@ L<Mojolicious::Lite> tutorial for more argument variations.
 Activate conditions for this route. Note that this automatically disables the
 routing cache, since conditions are too complex for caching.
 
-  $r->get('/foo')->over(host => qr/mojolicio\.us/)->to('foo#bar');
+  # Route with condition and destination
+  $r->get('/foo')->over(host => qr/mojolicious\.org/)->to('foo#bar');
 
 =head2 parse
 
@@ -458,29 +483,56 @@ Parse pattern.
 
 =head2 patch
 
+  my $route = $r->patch;
+  my $route = $r->patch('/:foo');
   my $route = $r->patch('/:foo' => sub {...});
+  my $route = $r->patch('/:foo' => sub {...} => 'name');
+  my $route = $r->patch('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->patch('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->patch('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only PATCH requests. See also the L<Mojolicious::Lite>
-tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<PATCH> requests,
+takes the same arguments as L</"any"> (except for the HTTP methods to match,
+which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->patch('/user')->to('user#update');
 
 =head2 post
 
+  my $route = $r->post;
+  my $route = $r->post('/:foo');
   my $route = $r->post('/:foo' => sub {...});
+  my $route = $r->post('/:foo' => sub {...} => 'name');
+  my $route = $r->post('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->post('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->post('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only POST requests. See also the L<Mojolicious::Lite>
-tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<POST> requests,
+takes the same arguments as L</"any"> (except for the HTTP methods to match,
+which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->post('/user')->to('user#create');
 
 =head2 put
 
+  my $route = $r->put;
+  my $route = $r->put('/:foo');
   my $route = $r->put('/:foo' => sub {...});
+  my $route = $r->put('/:foo' => sub {...} => 'name');
+  my $route = $r->put('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->put('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->put('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only PUT requests. See also the L<Mojolicious::Lite>
-tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only C<PUT> requests,
+takes the same arguments as L</"any"> (except for the HTTP methods to match,
+which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->put('/user')->to('user#replace');
 
 =head2 remove
@@ -497,8 +549,7 @@ Remove route from parent.
 
 =head2 render
 
-  my $path = $r->render($suffix);
-  my $path = $r->render($suffix, {foo => 'bar'});
+  my $path = $r->render({foo => 'bar'});
 
 Render route with parameters into a path.
 
@@ -506,9 +557,7 @@ Render route with parameters into a path.
 
   my $root = $r->root;
 
-The L<Mojolicious::Routes> object this route is an descendent of.
-
-  $r->root->cache(0);
+The L<Mojolicious::Routes> object this route is a descendant of.
 
 =head2 route
 
@@ -517,7 +566,15 @@ The L<Mojolicious::Routes> object this route is an descendent of.
   my $route = $r->route('/:action', action => qr/\w+/);
   my $route = $r->route(format => 0);
 
-Generate route matching all HTTP request methods.
+Low-level generator for routes matching all HTTP request methods, returns a
+L<Mojolicious::Routes::Route> object.
+
+=head2 suggested_method
+
+  my $method = $r->suggested_method;
+
+Suggested HTTP method for reaching this route, C<GET> and C<POST> are
+preferred.
 
 =head2 to
 
@@ -545,11 +602,19 @@ Stringify the whole route.
 =head2 under
 
   my $route = $r->under(sub {...});
-  my $route = $r->under('/:foo');
+  my $route = $r->under('/:foo' => sub {...});
+  my $route = $r->under('/:foo' => {foo => 'bar'});
+  my $route = $r->under('/:foo' => [foo => qr/\w+/]);
+  my $route = $r->under('/:foo' => (agent => qr/Firefox/));
+  my $route = $r->under([format => 0]);
 
-Generate bridge route. See also the L<Mojolicious::Lite> tutorial for more
-argument variations.
+Generate L<Mojolicious::Routes::Route> object for a nested route with its own
+intermediate destination, takes the same arguments as L</"any"> (except for the
+HTTP methods to match, which are not available). See
+L<Mojolicious::Guides::Tutorial> and L<Mojolicious::Guides::Routing> for more
+information.
 
+  # Intermediate destination and prefix shared between two routes
   my $auth = $r->under('/user')->to('user#auth');
   $auth->get('/show')->to('#show');
   $auth->post('/create')->to('#create');
@@ -558,38 +623,50 @@ argument variations.
 
   my $methods = $r->via;
   $r          = $r->via('GET');
-  $r          = $r->via(qw(GET POST));
-  $r          = $r->via([qw(GET POST)]);
+  $r          = $r->via('GET', 'POST');
+  $r          = $r->via(['GET', 'POST']);
 
 Restrict HTTP methods this route is allowed to handle, defaults to no
 restrictions.
 
-  $r->route('/foo')->via(qw(GET POST))->to('foo#bar');
+  # Route with two methods and destination
+  $r->route('/foo')->via('GET', 'POST')->to('foo#bar');
 
 =head2 websocket
 
-  my $ws = $r->websocket('/:foo' => sub {...});
+  my $route = $r->websocket;
+  my $route = $r->websocket('/:foo');
+  my $route = $r->websocket('/:foo' => sub {...});
+  my $route = $r->websocket('/:foo' => sub {...} => 'name');
+  my $route = $r->websocket('/:foo' => {foo => 'bar'} => sub {...});
+  my $route = $r->websocket('/:foo' => [foo => qr/\w+/] => sub {...});
+  my $route = $r->websocket('/:foo' => (agent => qr/Firefox/) => sub {...});
 
-Generate route matching only WebSocket handshakes. See also the
-L<Mojolicious::Lite> tutorial for more argument variations.
+Generate L<Mojolicious::Routes::Route> object matching only WebSocket
+handshakes, takes the same arguments as L</"any"> (except for the HTTP methods
+to match, which are implied). See L<Mojolicious::Guides::Tutorial> and
+L<Mojolicious::Guides::Routing> for more information.
 
+  # Route with destination
   $r->websocket('/echo')->to('example#echo');
 
-=head1 SHORTCUTS
+=head1 AUTOLOAD
 
-In addition to the attributes and methods above you can also call shortcuts
-on L<Mojolicious::Routes::Route> objects.
+In addition to the L</"ATTRIBUTES"> and L</"METHODS"> above you can also call
+shortcuts provided by L</"root"> on L<Mojolicious::Routes::Route> objects.
 
+  # Add a "firefox" shortcut
   $r->root->add_shortcut(firefox => sub {
     my ($r, $path) = @_;
     $r->get($path, agent => qr/Firefox/);
   });
 
+  # Use "firefox" shortcut to generate routes
   $r->firefox('/welcome')->to('firefox#welcome');
-  $r->firefox('/bye')->to('firefox#bye);
+  $r->firefox('/bye')->to('firefox#bye');
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

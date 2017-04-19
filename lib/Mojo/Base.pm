@@ -11,10 +11,59 @@ use Carp ();
 # Only Perl 5.14+ requires it on demand
 use IO::Handle ();
 
+# Supported on Perl 5.22+
+my $NAME
+  = eval { require Sub::Util; Sub::Util->can('set_subname') } || sub { $_[1] };
+
+# Protect subclasses using AUTOLOAD
+sub DESTROY { }
+
+# Declared here to avoid circular require problems in Mojo::Util
+sub _monkey_patch {
+  my ($class, %patch) = @_;
+  no strict 'refs';
+  no warnings 'redefine';
+  *{"${class}::$_"} = $NAME->("${class}::$_", $patch{$_}) for keys %patch;
+}
+
+sub attr {
+  my ($self, $attrs, $value) = @_;
+  return unless (my $class = ref $self || $self) && $attrs;
+
+  Carp::croak 'Default has to be a code reference or constant value'
+    if ref $value && ref $value ne 'CODE';
+
+  for my $attr (@{ref $attrs eq 'ARRAY' ? $attrs : [$attrs]}) {
+    Carp::croak qq{Attribute "$attr" invalid} unless $attr =~ /^[a-zA-Z_]\w*$/;
+
+    # Very performance-sensitive code with lots of micro-optimizations
+    if (ref $value) {
+      _monkey_patch $class, $attr, sub {
+        return
+          exists $_[0]{$attr} ? $_[0]{$attr} : ($_[0]{$attr} = $value->($_[0]))
+          if @_ == 1;
+        $_[0]{$attr} = $_[1];
+        $_[0];
+      };
+    }
+    elsif (defined $value) {
+      _monkey_patch $class, $attr, sub {
+        return exists $_[0]{$attr} ? $_[0]{$attr} : ($_[0]{$attr} = $value)
+          if @_ == 1;
+        $_[0]{$attr} = $_[1];
+        $_[0];
+      };
+    }
+    else {
+      _monkey_patch $class, $attr,
+        sub { return $_[0]{$attr} if @_ == 1; $_[0]{$attr} = $_[1]; $_[0] };
+    }
+  }
+}
+
 sub import {
   my $class = shift;
   return unless my $flag = shift;
-  no strict 'refs';
 
   # Base
   if ($flag eq '-base') { $flag = $class }
@@ -23,23 +72,21 @@ sub import {
   elsif ($flag eq '-strict') { $flag = undef }
 
   # Module
-  else {
-    my $file = $flag;
-    $file =~ s/::|'/\//g;
-    require "$file.pm" unless $flag->can('new');
+  elsif ((my $file = $flag) && !$flag->can('new')) {
+    $file =~ s!::|'!/!g;
+    require "$file.pm";
   }
 
   # ISA
   if ($flag) {
     my $caller = caller;
+    no strict 'refs';
     push @{"${caller}::ISA"}, $flag;
-    *{"${caller}::has"} = sub { attr($caller, @_) };
+    _monkey_patch $caller, 'has', sub { attr($caller, @_) };
   }
 
   # Mojo modules are strict!
-  strict->import;
-  warnings->import;
-  utf8->import;
+  $_->import for qw(strict warnings utf8);
   feature->import(':5.10');
 }
 
@@ -48,57 +95,15 @@ sub new {
   bless @_ ? @_ > 1 ? {@_} : {%{$_[0]}} : {}, ref $class || $class;
 }
 
-# Performance is very important for something as often used as accessors,
-# so we optimize them by compiling our own code, don't be scared, we have
-# tests for every single case
-sub attr {
-  my ($class, $attrs, $default) = @_;
-  return unless ($class = ref $class || $class) && $attrs;
-
-  Carp::croak 'Default has to be a code reference or constant value'
-    if ref $default && ref $default ne 'CODE';
-
-  # Compile attributes
-  for my $attr (@{ref $attrs eq 'ARRAY' ? $attrs : [$attrs]}) {
-    Carp::croak qq{Attribute "$attr" invalid} unless $attr =~ /^[a-zA-Z_]\w*$/;
-
-    # Header (check arguments)
-    my $code = "package $class;\nsub $attr {\n  if (\@_ == 1) {\n";
-
-    # No default value (return value)
-    unless (defined $default) { $code .= "    return \$_[0]{'$attr'};" }
-
-    # Default value
-    else {
-
-      # Return value
-      $code .= "    return \$_[0]{'$attr'} if exists \$_[0]{'$attr'};\n";
-
-      # Return default value
-      $code .= "    return \$_[0]{'$attr'} = ";
-      $code .= ref $default eq 'CODE' ? '$default->($_[0]);' : '$default;';
-    }
-
-    # Store value
-    $code .= "\n  }\n  \$_[0]{'$attr'} = \$_[1];\n";
-
-    # Footer (return invocant)
-    $code .= "  \$_[0];\n}";
-
-    # We compile custom attribute code for speed
-    no strict 'refs';
-    warn "-- Attribute $attr in $class\n$code\n\n" if $ENV{MOJO_BASE_DEBUG};
-    Carp::croak "Mojo::Base error: $@" unless eval "$code;1";
-  }
-}
-
 sub tap {
-  my ($self, $cb) = @_;
-  $_->$cb for $self;
+  my ($self, $cb) = (shift, shift);
+  $_->$cb(@_) for $self;
   return $self;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -110,7 +115,7 @@ Mojo::Base - Minimal base class for Mojo projects
   use Mojo::Base -base;
 
   has name => 'Nyan';
-  has [qw(birds mice)] => 2;
+  has ['age', 'weight'] => 4;
 
   package Tiger;
   use Mojo::Base 'Cat';
@@ -122,15 +127,16 @@ Mojo::Base - Minimal base class for Mojo projects
   use Mojo::Base -strict;
 
   my $mew = Cat->new(name => 'Longcat');
-  say $mew->mice;
-  say $mew->mice(3)->birds(4)->mice;
+  say $mew->age;
+  say $mew->age(3)->weight(5)->age;
 
-  my $rawr = Tiger->new(stripes => 23, mice => 0);
-  say $rawr->tap(sub { $_->friend->name('Tacgnol') })->mice;
+  my $rawr = Tiger->new(stripes => 38, weight => 250);
+  say $rawr->tap(sub { $_->friend->name('Tacgnol') })->weight;
 
 =head1 DESCRIPTION
 
-L<Mojo::Base> is a simple base class for L<Mojo> projects.
+L<Mojo::Base> is a simple base class for L<Mojo> projects with fluent
+interfaces.
 
   # Automatically enables "strict", "warnings", "utf8" and Perl 5.10 features
   use Mojo::Base -strict;
@@ -169,67 +175,71 @@ All three forms save a lot of typing.
 
 =head1 FUNCTIONS
 
-L<Mojo::Base> exports the following functions if imported with the C<-base>
-flag or a base class.
+L<Mojo::Base> implements the following functions, which can be imported with
+the C<-base> flag or by setting a base class.
 
 =head2 has
 
   has 'name';
-  has [qw(name1 name2 name3)];
+  has ['name1', 'name2', 'name3'];
   has name => 'foo';
   has name => sub {...};
-  has [qw(name1 name2 name3)] => 'foo';
-  has [qw(name1 name2 name3)] => sub {...};
+  has ['name1', 'name2', 'name3'] => 'foo';
+  has ['name1', 'name2', 'name3'] => sub {...};
 
-Create attributes for hash-based objects, just like the C<attr> method.
+Create attributes for hash-based objects, just like the L</"attr"> method.
 
 =head1 METHODS
 
 L<Mojo::Base> implements the following methods.
 
+=head2 attr
+
+  $object->attr('name');
+  SubClass->attr('name');
+  SubClass->attr(['name1', 'name2', 'name3']);
+  SubClass->attr(name => 'foo');
+  SubClass->attr(name => sub {...});
+  SubClass->attr(['name1', 'name2', 'name3'] => 'foo');
+  SubClass->attr(['name1', 'name2', 'name3'] => sub {...});
+
+Create attribute accessors for hash-based objects, an array reference can be
+used to create more than one at a time. Pass an optional second argument to set
+a default value, it should be a constant or a callback. The callback will be
+executed at accessor read time if there's no set value, and gets passed the
+current instance of the object as first argument. Accessors can be chained, that
+means they return their invocant when they are called with an argument.
+
 =head2 new
 
-  my $object = BaseSubClass->new;
-  my $object = BaseSubClass->new(name => 'value');
-  my $object = BaseSubClass->new({name => 'value'});
+  my $object = SubClass->new;
+  my $object = SubClass->new(name => 'value');
+  my $object = SubClass->new({name => 'value'});
 
 This base class provides a basic constructor for hash-based objects. You can
 pass it either a hash or a hash reference with attribute values.
 
-=head2 attr
-
-  $object->attr('name');
-  BaseSubClass->attr('name');
-  BaseSubClass->attr([qw(name1 name2 name3)]);
-  BaseSubClass->attr(name => 'foo');
-  BaseSubClass->attr(name => sub {...});
-  BaseSubClass->attr([qw(name1 name2 name3)] => 'foo');
-  BaseSubClass->attr([qw(name1 name2 name3)] => sub {...});
-
-Create attribute accessor for hash-based objects, an array reference can be
-used to create more than one at a time. Pass an optional second argument to
-set a default value, it should be a constant or a callback. The callback will
-be executed at accessor read time if there's no set value. Accessors can be
-chained, that means they return their invocant when they are called with an
-argument.
-
 =head2 tap
 
   $object = $object->tap(sub {...});
+  $object = $object->tap('some_method');
+  $object = $object->tap('some_method', @args);
 
-K combinator, tap into a method chain to perform operations on an object
-within the chain. The object will be the first argument passed to the closure
-and is also available as C<$_>.
+Tap into a method chain to perform operations on an object within the chain
+(also known as a K combinator or Kestrel). The object will be the first argument
+passed to the callback, and is also available as C<$_>. The callback's return
+value will be ignored; instead, the object (the callback's first argument) will
+be the return value. In this way, arbitrary code can be used within (i.e.,
+spliced or tapped into) a chained set of object method calls.
 
-=head1 DEBUGGING
+  # Longer version
+  $object = $object->tap(sub { $_->some_method(@args) });
 
-You can set the MOJO_BASE_DEBUG environment variable to get some advanced
-diagnostics information printed to C<STDERR>.
-
-  MOJO_BASE_DEBUG=1
+  # Inject side effects into a method chain
+  $object->foo('A')->tap(sub { say $_->foo })->foo('B');
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

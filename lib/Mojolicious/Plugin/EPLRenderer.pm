@@ -4,65 +4,62 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::Template;
 use Mojo::Util qw(encode md5_sum);
 
-sub register { $_[1]->renderer->add_handler(epl => \&_epl) }
+sub register {
+  my ($self, $app) = @_;
+  $app->renderer->add_handler(
+    epl => sub { _render(@_, Mojo::Template->new, $_[1]) });
+}
 
-sub _epl {
-  my ($renderer, $c, $output, $options) = @_;
-
-  # Template
-  my $inline = $options->{inline};
-  my $path   = $renderer->template_path($options);
-  $path = md5_sum encode('UTF-8', $inline) if defined $inline;
-  return undef unless defined $path;
+sub _render {
+  my ($renderer, $c, $output, $options, $mt, @args) = @_;
 
   # Cached
-  my $key   = delete $options->{cache} || $path;
-  my $cache = $renderer->cache;
-  my $mt    = $cache->get($key);
-  $mt ||= $cache->set($key => Mojo::Template->new)->get($key);
-  my $log = $c->app->log;
   if ($mt->compiled) {
-    $log->debug("Rendering cached @{[$mt->name]}.");
-    $$output = $mt->interpret($c);
+    $c->app->log->debug("Rendering cached @{[$mt->name]}");
+    $$output = $mt->process(@args);
   }
 
   # Not cached
   else {
+    my $inline = $options->{inline};
+    my $name = defined $inline ? md5_sum encode('UTF-8', $inline) : undef;
+    return unless defined($name //= $renderer->template_name($options));
 
     # Inline
     if (defined $inline) {
-      $log->debug('Rendering inline template.');
-      $$output = $mt->name('inline template')->render($inline, $c);
+      $c->app->log->debug(qq{Rendering inline template "$name"});
+      $$output = $mt->name(qq{inline template "$name"})->render($inline, @args);
     }
 
     # File
     else {
-      $mt->encoding($renderer->encoding) if $renderer->encoding;
-      return undef unless my $t = $renderer->template_name($options);
+      if (my $encoding = $renderer->encoding) { $mt->encoding($encoding) }
 
       # Try template
-      if (-r $path) {
-        $log->debug(qq{Rendering template "$t".});
-        $$output = $mt->name(qq{template "$t"})->render_file($path, $c);
+      if (defined(my $path = $renderer->template_path($options))) {
+        $c->app->log->debug(qq{Rendering template "$name"});
+        $$output = $mt->name(qq{template "$name"})->render_file($path, @args);
       }
 
       # Try DATA section
-      elsif (my $d = $renderer->get_data_template($options)) {
-        $log->debug(qq{Rendering template "$t" from DATA section.});
-        $$output
-          = $mt->name(qq{template "$t" from DATA section})->render($d, $c);
+      elsif (defined(my $d = $renderer->get_data_template($options))) {
+        $c->app->log->debug(qq{Rendering template "$name" from DATA section});
+        $$output = $mt->name(qq{template "$name" from DATA section})
+          ->render($d, @args);
       }
 
       # No template
-      else { $log->debug(qq{Template "$t" not found.}) and return undef }
+      else { $c->app->log->debug(qq{Template "$name" not found}) }
     }
   }
 
-  # Exception or success
-  return ref $$output ? die $$output : 1;
+  # Exception
+  die $$output if ref $$output;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -71,18 +68,21 @@ Mojolicious::Plugin::EPLRenderer - Embedded Perl Lite renderer plugin
 =head1 SYNOPSIS
 
   # Mojolicious
-  $self->plugin('EPLRenderer');
+  $app->plugin('EPLRenderer');
 
   # Mojolicious::Lite
   plugin 'EPLRenderer';
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::EPLRenderer> is a renderer for C<epl> templates. C<epl>
-templates are pretty much just raw L<Mojo::Template>.
+L<Mojolicious::Plugin::EPLRenderer> is a renderer for C<epl> templates, which
+are pretty much just raw L<Mojo::Template>.
 
 This is a core plugin, that means it is always enabled and its code a good
 example for learning to build new plugins, you're welcome to fork it.
+
+See L<Mojolicious::Plugins/"PLUGINS"> for a list of plugins that are available
+by default.
 
 =head1 METHODS
 
@@ -97,6 +97,6 @@ Register renderer in L<Mojolicious> application.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

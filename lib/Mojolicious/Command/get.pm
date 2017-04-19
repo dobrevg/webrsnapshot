@@ -1,63 +1,41 @@
 package Mojolicious::Command::get;
 use Mojo::Base 'Mojolicious::Command';
 
-use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mojo::DOM;
 use Mojo::IOLoop;
-use Mojo::JSON;
+use Mojo::JSON qw(encode_json j);
 use Mojo::JSON::Pointer;
 use Mojo::UserAgent;
-use Mojo::Util qw(decode encode);
+use Mojo::Util qw(decode encode getopt);
 use Scalar::Util 'weaken';
 
-has description => "Perform HTTP request.\n";
-has usage       => <<"EOF";
-usage: $0 get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
-
-  mojo get /
-  mojo get mojolicio.us
-  mojo get -v -r google.com
-  mojo get -M POST -c 'trololo' mojolicio.us
-  mojo get -H 'X-Bender: Bite my shiny metal ass!' mojolicio.us
-  mojo get mojolicio.us 'head > title' text
-  mojo get mojolicio.us .footer all
-  mojo get mojolicio.us a attr href
-  mojo get mojolicio.us '*' attr id
-  mojo get mojolicio.us 'h1, h2, h3' 3 text
-  mojo get https://api.metacpan.org/v0/author/SRI /name
-
-These options are available:
-  -C, --charset <charset>     Charset of HTML/XML content, defaults to auto
-                              detection.
-  -c, --content <content>     Content to send with request.
-  -H, --header <name:value>   Additional HTTP header.
-  -M, --method <method>       HTTP method to use, defaults to "GET".
-  -r, --redirect              Follow up to 10 redirects.
-  -v, --verbose               Print request and response headers to STDERR.
-EOF
+has description => 'Perform HTTP request';
+has usage => sub { shift->extract_usage };
 
 sub run {
   my ($self, @args) = @_;
 
-  GetOptionsFromArray \@args,
-    'C|charset=s' => \my $charset,
-    'c|content=s' => \(my $content = ''),
-    'H|header=s'  => \my @headers,
-    'M|method=s'  => \(my $method = 'GET'),
-    'r|redirect'  => \my $redirect,
-    'v|verbose'   => \my $verbose;
+  my $ua = Mojo::UserAgent->new(ioloop => Mojo::IOLoop->singleton);
+  getopt \@args,
+    'C|charset=s'            => \my $charset,
+    'c|content=s'            => \(my $content = ''),
+    'H|header=s'             => \my @headers,
+    'i|inactivity-timeout=i' => sub { $ua->inactivity_timeout($_[1]) },
+    'M|method=s'             => \(my $method = 'GET'),
+    'o|connect-timeout=i'    => sub { $ua->connect_timeout($_[1]) },
+    'r|redirect'             => \my $redirect,
+    'S|response-size=i'      => sub { $ua->max_response_size($_[1]) },
+    'v|verbose'              => \my $verbose;
 
   @args = map { decode 'UTF-8', $_ } @args;
   die $self->usage unless my $url = shift @args;
   my $selector = shift @args;
 
   # Parse header pairs
-  my %headers;
-  /^\s*([^:]+)\s*:\s*(.+)$/ and $headers{$1} = $2 for @headers;
+  my %headers = map { /^\s*([^:]+)\s*:\s*(.*+)$/ ? ($1, $2) : () } @headers;
 
   # Detect proxy for absolute URLs
-  my $ua = Mojo::UserAgent->new(ioloop => Mojo::IOLoop->singleton);
-  $url !~ m!^/! ? $ua->detect_proxy : $ua->app($self->app);
+  $url !~ m!^/! ? $ua->proxy->detect : $ua->server->app($self->app);
   $ua->max_redirects(10) if $redirect;
 
   my $buffer = '';
@@ -68,16 +46,13 @@ sub run {
       # Verbose
       weaken $tx;
       $tx->res->content->on(
-        body => sub {
-          warn $tx->req->$_ for qw(build_start_line build_headers);
-          warn $tx->res->$_ for qw(build_start_line build_headers);
-        }
-      ) if $verbose;
+        body => sub { warn _header($tx->req), _header($tx->res) })
+        if $verbose;
 
       # Stream content (ignore redirects)
       $tx->res->content->unsubscribe('read')->on(
         read => sub {
-          return if $redirect && $tx->res->is_status_class(300);
+          return if $redirect && $tx->res->is_redirect;
           defined $selector ? ($buffer .= pop) : print pop;
         }
       );
@@ -88,65 +63,61 @@ sub run {
   $verbose = 1 if $method eq 'HEAD';
   STDOUT->autoflush(1);
   my $tx = $ua->start($ua->build_tx($method, $url, \%headers, $content));
-  my ($err, $code) = $tx->error;
-  $url = encode 'UTF-8', $url;
-  warn qq{Problem loading URL "$url". ($err)\n} if $err && !$code;
+  my $res = $tx->result;
 
   # JSON Pointer
   return unless defined $selector;
-  my $type = $tx->res->headers->content_type // '';
-  return _json($buffer, $selector) if $type =~ /json/i;
+  return _json($buffer, $selector) if !length $selector || $selector =~ m!^/!;
 
   # Selector
-  _select($buffer, $selector, $charset // $tx->res->content->charset, @args);
+  $charset //= $res->content->charset || $res->default_charset;
+  _select($buffer, $selector, $charset, @args);
 }
+
+sub _header { $_[0]->build_start_line, $_[0]->headers->to_string, "\n\n" }
 
 sub _json {
-  my $json = Mojo::JSON->new;
-  return unless my $data = $json->decode(shift);
-  return unless defined($data = Mojo::JSON::Pointer->new->get($data, shift));
+  return unless my $data = j(shift);
+  return unless defined($data = Mojo::JSON::Pointer->new($data)->get(shift));
   return _say($data) unless ref $data eq 'HASH' || ref $data eq 'ARRAY';
-  say $json->encode($data);
+  say encode_json($data);
 }
 
-sub _say { say encode('UTF-8', $_[0]) if length $_[0] }
+sub _say { length && say encode('UTF-8', $_) for @_ }
 
 sub _select {
   my ($buffer, $selector, $charset, @args) = @_;
 
+  # Keep a strong reference to the root
   $buffer = decode($charset, $buffer) // $buffer if $charset;
-  my $results = Mojo::DOM->new($buffer)->find($selector);
+  my $dom     = Mojo::DOM->new($buffer);
+  my $results = $dom->find($selector);
 
-  my $finished;
   while (defined(my $command = shift @args)) {
 
     # Number
-    if ($command =~ /^\d+$/) {
-      return unless ($results = [$results->[$command]])->[0];
-      next;
-    }
+    ($results = $results->slice($command)) and next if $command =~ /^\d+$/;
 
     # Text
-    elsif ($command eq 'text') { _say($_->text) for @$results }
+    return _say($results->map('text')->each) if $command eq 'text';
 
     # All text
-    elsif ($command eq 'all') { _say($_->all_text) for @$results }
+    return _say($results->map('all_text')->each) if $command eq 'all';
 
     # Attribute
-    elsif ($command eq 'attr') {
-      next unless my $name = shift @args;
-      _say($_->attrs->{$name}) for @$results;
-    }
+    return _say($results->map(attr => $args[0] // '')->each)
+      if $command eq 'attr';
 
     # Unknown
-    else { die qq{Unknown command "$command".\n} }
-    $finished++;
+    die qq{Unknown command "$command".\n};
   }
 
-  unless ($finished) { _say($_) for @$results }
+  _say($results->each);
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -154,17 +125,56 @@ Mojolicious::Command::get - Get command
 
 =head1 SYNOPSIS
 
-  use Mojolicious::Command::get;
+  Usage: APPLICATION get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
 
-  my $get = Mojolicious::Command::get->new;
-  $get->run(@ARGV);
+    ./myapp.pl get /
+    ./myapp.pl get -H 'Accept: text/html' /hello.html 'head > title' text
+    ./myapp.pl get //sri:secr3t@/secrets.json /1/content
+    mojo get mojolicious.org
+    mojo get -v -r -o 25 -i 50 google.com
+    mojo get -v -H 'Host: mojolicious.org' -H 'Accept: */*' mojolicious.org
+    mojo get -M POST -H 'Content-Type: text/trololo' -c 'trololo' perl.org
+    mojo get mojolicious.org 'head > title' text
+    mojo get mojolicious.org .footer all
+    mojo get mojolicious.org a attr href
+    mojo get mojolicious.org '*' attr id
+    mojo get mojolicious.org 'h1, h2, h3' 3 text
+    mojo get https://api.metacpan.org/v0/author/SRI /name
+    mojo get -H 'Host: example.com' http+unix://%2Ftmp%2Fmyapp.sock/index.html
+
+  Options:
+    -C, --charset <charset>              Charset of HTML/XML content, defaults
+                                         to auto-detection
+    -c, --content <content>              Content to send with request
+    -H, --header <name:value>            Additional HTTP header
+    -h, --help                           Show this summary of available options
+        --home <path>                    Path to home directory of your
+                                         application, defaults to the value of
+                                         MOJO_HOME or auto-detection
+    -i, --inactivity-timeout <seconds>   Inactivity timeout, defaults to the
+                                         value of MOJO_INACTIVITY_TIMEOUT or 20
+    -M, --method <method>                HTTP method to use, defaults to "GET"
+    -m, --mode <name>                    Operating mode for your application,
+                                         defaults to the value of
+                                         MOJO_MODE/PLACK_ENV or "development"
+    -o, --connect-timeout <seconds>      Connect timeout, defaults to the value
+                                         of MOJO_CONNECT_TIMEOUT or 10
+    -r, --redirect                       Follow up to 10 redirects
+    -S, --response-size <size>           Maximum response size in bytes,
+                                         defaults to 2147483648 (2GB)
+    -v, --verbose                        Print request and response headers to
+                                         STDERR
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Command::get> is a command interface to L<Mojo::UserAgent>.
+L<Mojolicious::Command::get> is a command line interface for
+L<Mojo::UserAgent>.
 
 This is a core command, that means it is always enabled and its code a good
 example for learning to build new commands, you're welcome to fork it.
+
+See L<Mojolicious::Commands/"COMMANDS"> for a list of commands that are
+available by default.
 
 =head1 ATTRIBUTES
 
@@ -174,14 +184,14 @@ applications.
 =head2 description
 
   my $description = $get->description;
-  $get            = $get->description('Foo!');
+  $get            = $get->description('Foo');
 
 Short description of this command, used for the command list.
 
 =head2 usage
 
   my $usage = $get->usage;
-  $get      = $get->usage('Foo!');
+  $get      = $get->usage('Foo');
 
 Usage information for this command, used for the help screen.
 
@@ -198,6 +208,6 @@ Run this command.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

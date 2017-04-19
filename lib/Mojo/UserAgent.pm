@@ -3,13 +3,11 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 # "Fry: Since when is the Internet about robbing people of their privacy?
 #  Bender: August 6, 1991."
-use Carp 'croak';
-use List::Util 'first';
 use Mojo::IOLoop;
-use Mojo::Server::Daemon;
-use Mojo::URL;
-use Mojo::Util 'monkey_patch';
+use Mojo::Util qw(monkey_patch term_escape);
 use Mojo::UserAgent::CookieJar;
+use Mojo::UserAgent::Proxy;
+use Mojo::UserAgent::Server;
 use Mojo::UserAgent::Transactor;
 use Scalar::Util 'weaken';
 
@@ -19,158 +17,90 @@ has ca              => sub { $ENV{MOJO_CA_FILE} };
 has cert            => sub { $ENV{MOJO_CERT_FILE} };
 has connect_timeout => sub { $ENV{MOJO_CONNECT_TIMEOUT} || 10 };
 has cookie_jar      => sub { Mojo::UserAgent::CookieJar->new };
-has [qw(http_proxy https_proxy local_address no_proxy)];
+has [qw(local_address max_response_size)];
 has inactivity_timeout => sub { $ENV{MOJO_INACTIVITY_TIMEOUT} // 20 };
 has ioloop             => sub { Mojo::IOLoop->new };
 has key                => sub { $ENV{MOJO_KEY_FILE} };
 has max_connections    => 5;
 has max_redirects => sub { $ENV{MOJO_MAX_REDIRECTS} || 0 };
-has name => 'Mojolicious (Perl)';
+has proxy => sub { Mojo::UserAgent::Proxy->new };
 has request_timeout => sub { $ENV{MOJO_REQUEST_TIMEOUT} // 0 };
+has server => sub { Mojo::UserAgent::Server->new(ioloop => shift->ioloop) };
 has transactor => sub { Mojo::UserAgent::Transactor->new };
 
 # Common HTTP methods
 for my $name (qw(DELETE GET HEAD OPTIONS PATCH POST PUT)) {
-  monkey_patch __PACKAGE__, lc($name), sub {
-    my $self = shift;
-    my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+  monkey_patch __PACKAGE__, lc $name, sub {
+    my ($self, $cb) = (shift, ref $_[-1] eq 'CODE' ? pop : undef);
     return $self->start($self->build_tx($name, @_), $cb);
   };
 }
 
-sub DESTROY { shift->_cleanup }
-
-sub app {
-  my ($self, $app) = @_;
-
-  # Singleton application
-  state $singleton;
-  return $singleton = $app ? $app : $singleton unless ref $self;
-
-  # Default to singleton application
-  return $self->{app} || $singleton unless $app;
-  $self->{app} = $app;
-  return $self;
-}
-
-sub app_url {
-  my $self = shift;
-  $self->_server(@_);
-  return Mojo::URL->new("$self->{proto}://localhost:$self->{port}/");
-}
+sub DESTROY { Mojo::Util::_global_destruction() or shift->_cleanup }
 
 sub build_tx           { shift->transactor->tx(@_) }
 sub build_websocket_tx { shift->transactor->websocket(@_) }
 
-sub detect_proxy {
-  my $self = shift;
-  $self->http_proxy($ENV{HTTP_PROXY}   || $ENV{http_proxy});
-  $self->https_proxy($ENV{HTTPS_PROXY} || $ENV{https_proxy});
-  return $self->no_proxy([split /,/, $ENV{NO_PROXY} || $ENV{no_proxy} || '']);
-}
-
-sub need_proxy {
-  my ($self, $host) = @_;
-  return !first { $host =~ /\Q$_\E$/ } @{$self->no_proxy || []};
-}
-
 sub start {
   my ($self, $tx, $cb) = @_;
 
+  # Fork-safety
+  $self->_cleanup->server->restart unless ($self->{pid} //= $$) eq $$;
+
   # Non-blocking
   if ($cb) {
-    warn "-- Non-blocking request (@{[$tx->req->url->to_abs]})\n" if DEBUG;
-    unless ($self->{nb}) {
-      croak 'Blocking request in progress' if keys %{$self->{connections}};
-      warn "-- Switching to non-blocking mode\n" if DEBUG;
-      $self->_cleanup;
-      $self->{nb}++;
-    }
-    return $self->_start($tx, $cb);
+    warn "-- Non-blocking request (@{[_url($tx)]})\n" if DEBUG;
+    return $self->_start(Mojo::IOLoop->singleton, $tx, $cb);
   }
 
   # Blocking
-  warn "-- Blocking request (@{[$tx->req->url->to_abs]})\n" if DEBUG;
-  if ($self->{nb}) {
-    croak 'Non-blocking requests in progress' if keys %{$self->{connections}};
-    warn "-- Switching to blocking mode\n" if DEBUG;
-    $self->_cleanup;
-    delete $self->{nb};
-  }
-  $self->_start($tx => sub { shift->ioloop->stop; $tx = shift });
+  warn "-- Blocking request (@{[_url($tx)]})\n" if DEBUG;
+  $self->_start($self->ioloop, $tx => sub { shift->ioloop->stop; $tx = shift });
   $self->ioloop->start;
 
   return $tx;
 }
 
 sub websocket {
-  my $self = shift;
-  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+  my ($self, $cb) = (shift, pop);
   $self->start($self->build_websocket_tx(@_), $cb);
-}
-
-sub _cache {
-  my ($self, $name, $id) = @_;
-
-  # Enqueue and enforce connection limit
-  my $old = $self->{cache} ||= [];
-  if ($id) {
-    my $max = $self->max_connections;
-    $self->_remove(shift(@$old)->[1]) while @$old > $max;
-    push @$old, [$name, $id] if $max;
-    return undef;
-  }
-
-  # Dequeue
-  my $found;
-  my $loop = $self->_loop;
-  my $new = $self->{cache} = [];
-  for my $cached (@$old) {
-
-    # Search for id/name and remove corrupted connections
-    if (!$found && ($cached->[1] eq $name || $cached->[0] eq $name)) {
-      my $stream = $loop->stream($cached->[1]);
-      if ($stream && !$stream->is_readable) { $found = $cached->[1] }
-      else                                  { $loop->remove($cached->[1]) }
-    }
-
-    # Requeue
-    else { push @$new, $cached }
-  }
-
-  return $found;
 }
 
 sub _cleanup {
   my $self = shift;
-  return unless my $loop = $self->_loop;
-
-  # Clean up active connections (by closing them)
-  $self->_handle($_ => 1) for keys %{$self->{connections} || {}};
-
-  # Clean up keep-alive connections
-  $loop->remove($_->[1]) for @{delete $self->{cache} || []};
-
-  # Stop server
-  delete $self->{server};
+  delete $self->{pid};
+  $self->_finish($_, 1) for keys %{$self->{connections} || {}};
+  return $self;
 }
 
 sub _connect {
-  my ($self, $proto, $host, $port, $handle, $cb) = @_;
+  my ($self, $loop, $peer, $tx, $handle, $cb) = @_;
+
+  my $t = $self->transactor;
+  my ($proto, $host, $port) = $peer ? $t->peer($tx) : $t->endpoint($tx);
+
+  my %options = (timeout => $self->connect_timeout);
+  if ($proto eq 'http+unix') { $options{path} = $host }
+  else                       { @options{qw(address port)} = ($host, $port) }
+  if (my $local = $self->local_address) { $options{local_address} = $local }
+  $options{handle} = $handle if $handle;
+
+  # SOCKS
+  if ($proto eq 'socks') {
+    @options{qw(socks_address socks_port)} = @options{qw(address port)};
+    ($proto, @options{qw(address port)}) = $t->endpoint($tx);
+    my $userinfo = $tx->req->via_proxy(0)->proxy->userinfo;
+    @options{qw(socks_user socks_pass)} = split ':', $userinfo if $userinfo;
+  }
+
+  # TLS
+  map { $options{"tls_$_"} = $self->$_ } qw(ca cert key)
+    if ($options{tls} = $proto eq 'https');
 
   weaken $self;
   my $id;
-  return $id = $self->_loop->client(
-    address       => $host,
-    handle        => $handle,
-    local_address => $self->local_address,
-    port          => $port,
-    timeout       => $self->connect_timeout,
-    tls           => $proto eq 'https' ? 1 : 0,
-    tls_ca        => $self->ca,
-    tls_cert      => $self->cert,
-    tls_key       => $self->key,
-    sub {
+  return $id = $loop->client(
+    %options => sub {
       my ($loop, $err, $stream) = @_;
 
       # Connection error
@@ -179,44 +109,42 @@ sub _connect {
 
       # Connection established
       $stream->on(timeout => sub { $self->_error($id, 'Inactivity timeout') });
-      $stream->on(close => sub { $self->_handle($id => 1) });
-      $stream->on(error => sub { $self && $self->_error($id, pop, 1) });
-      $stream->on(read => sub { $self->_read($id => pop) });
-      $cb->();
+      $stream->on(close => sub { $self && $self->_finish($id, 1) });
+      $stream->on(error => sub { $self && $self->_error($id, pop) });
+      $stream->on(read => sub { $self->_read($id, pop) });
+      $self->$cb($id);
     }
   );
 }
 
 sub _connect_proxy {
-  my ($self, $old, $cb) = @_;
+  my ($self, $loop, $old, $cb) = @_;
 
   # Start CONNECT request
   return undef unless my $new = $self->transactor->proxy_connect($old);
   return $self->_start(
-    $new => sub {
+    ($loop, $new) => sub {
       my ($self, $tx) = @_;
 
       # CONNECT failed
-      unless (($tx->res->code // '') eq '200') {
-        $old->req->error('Proxy connection failed');
-        return $self->_finish($old, $cb);
+      $old->previous($tx)->req->via_proxy(0);
+      my $id = $tx->connection;
+      if ($tx->error || !$tx->res->is_success || !$tx->keep_alive) {
+        $old->res->error({message => 'Proxy connection failed'});
+        $self->_remove($id) if $id;
+        return $self->$cb($old);
       }
 
-      # Prevent proxy reassignment and start real transaction
-      $old->req->proxy(0);
-      return $self->_start($old->connection($tx->connection), $cb)
+      # Start real transaction without TLS upgrade
+      return $self->_start($loop, $old->connection($id), $cb)
         unless $tx->req->url->protocol eq 'https';
 
-      # TLS upgrade
-      return unless my $id = $tx->connection;
-      my $loop   = $self->_loop;
+      # TLS upgrade before starting the real transaction
       my $handle = $loop->stream($id)->steal_handle;
-      my $c      = delete $self->{connections}{$id};
-      $loop->remove($id);
-      weaken $self;
-      $id = $self->_connect($self->transactor->endpoint($old),
-        $handle, sub { $self->_start($old->connection($id), $cb) });
-      $self->{connections}{$id} = $c;
+      $self->_remove($id);
+      $id = $self->_connect($loop, 0, $old, $handle,
+        sub { shift->_start($loop, $old->connection($id), $cb) });
+      $self->{connections}{$id} = {cb => $cb, ioloop => $loop, tx => $old};
     }
   );
 }
@@ -224,249 +152,186 @@ sub _connect_proxy {
 sub _connected {
   my ($self, $id) = @_;
 
-  # Inactivity timeout
-  my $stream = $self->_loop->stream($id)->timeout($self->inactivity_timeout);
-
-  # Store connection information in transaction
-  my $tx     = $self->{connections}{$id}{tx}->connection($id);
+  my $c      = $self->{connections}{$id};
+  my $stream = $c->{ioloop}->stream($id)->timeout($self->inactivity_timeout);
+  my $tx     = $c->{tx}->connection($id);
   my $handle = $stream->handle;
-  $tx->local_address($handle->sockhost)->local_port($handle->sockport);
-  $tx->remote_address($handle->peerhost)->remote_port($handle->peerport);
+  unless ($handle->isa('IO::Socket::UNIX')) {
+    $tx->local_address($handle->sockhost)->local_port($handle->sockport);
+    $tx->remote_address($handle->peerhost)->remote_port($handle->peerport);
+  }
 
-  # Start writing
   weaken $self;
   $tx->on(resume => sub { $self->_write($id) });
   $self->_write($id);
 }
 
 sub _connection {
-  my ($self, $tx, $cb) = @_;
+  my ($self, $loop, $tx, $cb) = @_;
 
   # Reuse connection
-  my $id = $tx->connection;
   my ($proto, $host, $port) = $self->transactor->endpoint($tx);
-  $id ||= $self->_cache("$proto:$host:$port");
-  if ($id && !ref $id) {
-    warn "-- Reusing connection ($proto:$host:$port)\n" if DEBUG;
-    $self->{connections}{$id} = {cb => $cb, tx => $tx};
+  my $id = $tx->connection || $self->_dequeue($loop, "$proto:$host:$port", 1);
+  if ($id) {
+    warn "-- Reusing connection $id ($proto://$host:$port)\n" if DEBUG;
+    @{$self->{connections}{$id}}{qw(cb tx)} = ($cb, $tx);
     $tx->kept_alive(1) unless $tx->connection;
     $self->_connected($id);
     return $id;
   }
 
   # CONNECT request to proxy required
-  if (my $id = $self->_connect_proxy($tx, $cb)) { return $id }
+  if (my $id = $self->_connect_proxy($loop, $tx, $cb)) { return $id }
 
-  # Connect
-  warn "-- Connect ($proto:$host:$port)\n" if DEBUG;
-  ($proto, $host, $port) = $self->transactor->peer($tx);
-  weaken $self;
-  $id = $self->_connect(
-    ($proto, $host, $port, $id) => sub { $self->_connected($id) });
-  $self->{connections}{$id} = {cb => $cb, tx => $tx};
+  # New connection
+  $tx->res->error({message => "Unsupported protocol: $proto"})
+    and return $loop->next_tick(sub { $self->$cb($tx) })
+    unless $proto eq 'http' || $proto eq 'https' || $proto eq 'http+unix';
+  $id = $self->_connect($loop, 1, $tx, undef, \&_connected);
+  warn "-- Connect $id ($proto://$host:$port)\n" if DEBUG;
+  $self->{connections}{$id} = {cb => $cb, ioloop => $loop, tx => $tx};
 
   return $id;
 }
 
+sub _dequeue {
+  my ($self, $loop, $name, $test) = @_;
+
+  my $old = $self->{queue}{$loop} ||= [];
+  my ($found, @new);
+  for my $queued (@$old) {
+    push @new, $queued and next if $found || !grep { $_ eq $name } @$queued;
+
+    # Search for id/name and sort out corrupted connections if necessary
+    next unless my $stream = $loop->stream($queued->[1]);
+    $test && $stream->is_readable ? $stream->close : ($found = $queued->[1]);
+  }
+  @$old = @new;
+
+  return $found;
+}
+
 sub _error {
-  my ($self, $id, $err, $emit) = @_;
-  if (my $tx = $self->{connections}{$id}{tx}) { $tx->res->error($err) }
-  $self->emit(error => $err) if $emit;
-  $self->_handle($id => $err);
+  my ($self, $id, $err) = @_;
+  my $tx = $self->{connections}{$id}{tx};
+  $tx->res->error({message => $err}) if $tx;
+  $self->_finish($id, 1);
 }
 
 sub _finish {
-  my ($self, $tx, $cb, $close) = @_;
-
-  # Remove code from parser errors
-  my $res = $tx->res;
-  if (my $err = $res->error) { $res->error($err) }
-
-  else {
-
-    # Premature connection close
-    if ($close && !$res->code) { $res->error('Premature connection close') }
-
-    # 400/500
-    elsif ($res->is_status_class(400) || $res->is_status_class(500)) {
-      $res->error($res->message, $res->code);
-    }
-  }
-
-  $self->$cb($tx);
-}
-
-sub _handle {
   my ($self, $id, $close) = @_;
 
-  # Remove request timeout
-  return unless my $loop = $self->_loop;
-  my $c = $self->{connections}{$id};
-  $loop->remove($c->{timeout}) if $c->{timeout};
+  # Remove request timeout and finish transaction
+  return unless my $c = $self->{connections}{$id};
+  $c->{ioloop}->remove($c->{timeout}) if $c->{timeout};
+  return $self->_reuse($id, $close) unless my $old = $c->{tx};
 
-  # Finish WebSocket
-  my $old = $c->{tx};
-  if ($old && $old->is_websocket) {
-    delete $self->{connections}{$id};
-    $self->_remove($id, $close);
-    $old->client_close;
+  # Premature connection close
+  my $res = $old->closed->res->finish;
+  if ($close && !$res->code && !$res->error) {
+    $res->error({message => 'Premature connection close'});
   }
+
+  # Always remove connection for WebSockets
+  return $self->_remove($id) if $old->is_websocket;
+
+  $self->cookie_jar->collect($old);
 
   # Upgrade connection to WebSocket
-  elsif ($old && (my $new = $self->_upgrade($id))) {
-    if (my $jar = $self->cookie_jar) { $jar->extract($old) }
-    $old->client_close;
-    $self->_finish($new, $c->{cb});
-    $new->client_read($old->res->content->leftovers);
+  if (my $new = $self->transactor->upgrade($old)) {
+    weaken $self;
+    $new->on(resume => sub { $self->_write($id) });
+    $c->{cb}($self, $c->{tx} = $new);
+    return $new->client_read($old->res->content->leftovers);
   }
 
-  # Finish normal connection
-  else {
-    $self->_remove($id, $close);
-    return unless $old;
-    if (my $jar = $self->cookie_jar) { $jar->extract($old) }
-    $old->client_close;
-
-    # Handle redirects
-    $self->_finish($new || $old, $c->{cb}, $close)
-      unless $self->_redirect($c, $old);
-  }
+  # CONNECT requests always have a follow-up request
+  $self->_reuse($id, $close) unless uc $old->req->method eq 'CONNECT';
+  $res->error({message => $res->message, code => $res->code}) if $res->is_error;
+  $c->{cb}($self, $old) unless $self->_redirect($c, $old);
 }
-
-sub _loop { $_[0]{nb} ? Mojo::IOLoop->singleton : $_[0]->ioloop }
 
 sub _read {
   my ($self, $id, $chunk) = @_;
 
   # Corrupted connection
-  return                     unless my $c  = $self->{connections}{$id};
-  return $self->_remove($id) unless my $tx = $c->{tx};
+  return $self->_remove($id) unless my $tx = $self->{connections}{$id}{tx};
 
-  # Process incoming data
-  warn "-- Client <<< Server (@{[$tx->req->url->to_abs]})\n$chunk\n" if DEBUG;
+  warn term_escape "-- Client <<< Server (@{[_url($tx)]})\n$chunk\n" if DEBUG;
   $tx->client_read($chunk);
-  if    ($tx->is_finished)     { $self->_handle($id) }
-  elsif ($c->{tx}->is_writing) { $self->_write($id) }
-}
-
-sub _remove {
-  my ($self, $id, $close) = @_;
-
-  # Close connection
-  my $tx = (delete($self->{connections}{$id}) || {})->{tx};
-  unless (!$close && $tx && $tx->keep_alive && !$tx->error) {
-    $self->_cache($id);
-    return $self->_loop->remove($id);
-  }
-
-  # Keep connection alive
-  $self->_cache(join(':', $self->transactor->endpoint($tx)), $id)
-    unless uc $tx->req->method eq 'CONNECT' && ($tx->res->code // '') eq '200';
+  $self->_finish($id) if $tx->is_finished;
 }
 
 sub _redirect {
   my ($self, $c, $old) = @_;
-
-  # Follow redirect unless the maximum has been reached already
   return undef unless my $new = $self->transactor->redirect($old);
-  my $redirects = delete $c->{redirects} || 0;
-  return undef unless $redirects < $self->max_redirects;
-  my $id = $self->_start($new, delete $c->{cb});
-
-  return $self->{connections}{$id}{redirects} = $redirects + 1;
+  return undef unless @{$old->redirects} < $self->max_redirects;
+  return $self->_start($c->{ioloop}, $new, delete $c->{cb});
 }
 
-sub _server {
-  my ($self, $proto) = @_;
+sub _remove {
+  my ($self, $id) = @_;
+  my $c = delete $self->{connections}{$id};
+  $self->_dequeue($c->{ioloop}, $id);
+  $c->{ioloop}->remove($id);
+}
 
-  # Reuse server
-  return $self->{server} if $self->{server} && !$proto;
+sub _reuse {
+  my ($self, $id, $close) = @_;
 
-  # Start application server
-  my $loop   = $self->_loop;
-  my $server = $self->{server}
-    = Mojo::Server::Daemon->new(ioloop => $loop, silent => 1);
-  my $port = $self->{port} ||= $loop->generate_port;
-  die "Couldn't find a free TCP port for application.\n" unless $port;
-  $self->{proto} = $proto ||= 'http';
-  $server->listen(["$proto://127.0.0.1:$port"])->start;
-  warn "-- Application server started ($proto://127.0.0.1:$port)\n" if DEBUG;
-  return $server;
+  # Connection close
+  my $c   = $self->{connections}{$id};
+  my $tx  = delete $c->{tx};
+  my $max = $self->max_connections;
+  return $self->_remove($id)
+    if $close || !$tx || !$max || !$tx->keep_alive || $tx->error;
+
+  # Keep connection alive
+  my $queue = $self->{queue}{$c->{ioloop}} ||= [];
+  $self->_remove(shift(@$queue)->[1]) while @$queue && @$queue >= $max;
+  push @$queue, [join(':', $self->transactor->endpoint($tx)), $id];
 }
 
 sub _start {
-  my ($self, $tx, $cb) = @_;
+  my ($self, $loop, $tx, $cb) = @_;
 
-  # Embedded server (update application if necessary)
-  my $req = $tx->req;
-  my $url = $req->url;
-  if ($self->{port} || !$url->is_abs) {
-    if (my $app = $self->app) { $self->_server->app($app) }
-    my $base = $self->app_url;
-    $url->scheme($base->scheme)->authority($base->authority)
-      unless $url->is_abs;
+  # Application serve
+  my $url = $tx->req->url;
+  unless ($url->is_abs) {
+    my $base
+      = $loop == $self->ioloop ? $self->server->url : $self->server->nb_url;
+    $url->scheme($base->scheme)->host($base->host)->port($base->port);
   }
 
-  # Proxy
-  $self->detect_proxy if $ENV{MOJO_PROXY};
-  my $proto = $url->protocol;
-  if ($self->need_proxy($url->host)) {
+  $_->prepare($tx) for $self->proxy, $self->cookie_jar;
+  my $max = $self->max_response_size;
+  $tx->res->max_message_size($max) if defined $max;
 
-    # HTTP proxy
-    my $http = $self->http_proxy;
-    $req->proxy($http) if $http && !defined $req->proxy && $proto eq 'http';
-
-    # HTTPS proxy
-    my $https = $self->https_proxy;
-    $req->proxy($https) if $https && !defined $req->proxy && $proto eq 'https';
-  }
-
-  # We identify ourselves and accept gzip compression
-  my $headers = $req->headers;
-  $headers->user_agent($self->name) unless $headers->user_agent;
-  $headers->accept_encoding('gzip') unless $headers->accept_encoding;
-  if (my $jar = $self->cookie_jar) { $jar->inject($tx) }
-
-  # Connect and add request timeout if necessary
-  my $id = $self->emit(start => $tx)->_connection($tx, $cb);
+  $self->emit(start => $tx);
+  return undef unless my $id = $self->_connection($loop, $tx, $cb);
   if (my $timeout = $self->request_timeout) {
     weaken $self;
-    $self->{connections}{$id}{timeout} = $self->_loop->timer(
-      $timeout => sub { $self->_error($id => 'Request timeout') });
+    $self->{connections}{$id}{timeout}
+      = $loop->timer($timeout => sub { $self->_error($id, 'Request timeout') });
   }
 
   return $id;
 }
 
-sub _upgrade {
-  my ($self, $id) = @_;
-
-  my $c = $self->{connections}{$id};
-  return undef unless my $new = $self->transactor->upgrade($c->{tx});
-  weaken $self;
-  $new->on(resume => sub { $self->_write($id) });
-
-  return $c->{tx} = $new;
-}
+sub _url { shift->req->url->to_abs }
 
 sub _write {
   my ($self, $id) = @_;
 
-  # Get and write chunk
-  return unless my $c  = $self->{connections}{$id};
-  return unless my $tx = $c->{tx};
-  return unless $tx->is_writing;
-  return if $c->{writing}++;
+  # Protect from resume event recursion
+  my $c = $self->{connections}{$id};
+  return if !(my $tx = $c->{tx}) || $c->{writing};
+  local $c->{writing} = 1;
   my $chunk = $tx->client_write;
-  delete $c->{writing};
-  warn "-- Client >>> Server (@{[$tx->req->url->to_abs]})\n$chunk\n" if DEBUG;
-  my $stream = $self->_loop->stream($id)->write($chunk);
-  $self->_handle($id) if $tx->is_finished;
-
-  # Continue writing
-  return unless $tx->is_writing;
+  warn term_escape "-- Client >>> Server (@{[_url($tx)]})\n$chunk\n" if DEBUG;
+  return unless length $chunk;
   weaken $self;
-  $stream->write('' => sub { $self->_write($id) });
+  $c->{ioloop}->stream($id)->write($chunk => sub { $self->_write($id) });
 }
 
 1;
@@ -480,68 +345,80 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
 =head1 SYNOPSIS
 
   use Mojo::UserAgent;
-  my $ua = Mojo::UserAgent->new;
 
-  # Say hello to the Unicode snowman with "Do Not Track" header
-  say $ua->get('www.☃.net?hello=there' => {DNT => 1})->res->body;
+  # Fine grained response handling (dies on connection errors)
+  my $ua  = Mojo::UserAgent->new;
+  my $res = $ua->get('mojolicious.org/perldoc')->result;
+  if    ($res->is_success)  { say $res->body }
+  elsif ($res->is_error)    { say $res->message }
+  elsif ($res->code == 301) { say $res->headers->location }
+  else                      { say 'Whatever...' }
 
-  # Form POST with exception handling
-  my $tx = $ua->post('https://metacpan.org/search' => form => {q => 'mojo'});
-  if (my $res = $tx->success) { say $res->body }
-  else {
-    my ($err, $code) = $tx->error;
-    say $code ? "$code response: $err" : "Connection error: $err";
-  }
+  # Say hello to the Unicode snowman and include an Accept header
+  say $ua->get('www.☃.net?hello=there' => {Accept => '*/*'})->result->body;
 
-  # Quick JSON API request with Basic authentication
-  say $ua->get('https://sri:s3cret@example.com/search.json?q=perl')
-    ->res->json('/results/0/title');
-
-  # Extract data from HTML and XML resources
-  say $ua->get('www.perl.org')->res->dom->html->head->title->text;
+  # Extract data from HTML and XML resources with CSS selectors
+  say $ua->get('www.perl.org')->result->dom->at('title')->text;
 
   # Scrape the latest headlines from a news site
-  say $ua->get('perlnews.org')->res->dom('h2 > a')->pluck('text')->shuffle;
+  say $ua->get('blogs.perl.org')
+    ->result->dom->find('h2 > a')->map('text')->join("\n");
 
-  # IPv6 PUT request with content
-  my $tx
-    = $ua->put('[::1]:3000' => {'Content-Type' => 'text/plain'} => 'Hello!');
+  # IPv6 PUT request with Content-Type header and content
+  my $tx = $ua->put('[::1]:3000' => {'Content-Type' => 'text/plain'} => 'Hi!');
 
-  # Grab the latest Mojolicious release :)
-  $ua->max_redirects(5)->get('latest.mojolicio.us')
-    ->res->content->asset->move_to('/Users/sri/mojo.tar.gz');
+  # Quick JSON API request with Basic authentication
+  my $value = $ua->get('https://sri:t3st@example.com/test.json')->result->json;
 
-  # TLS certificate authentication and JSON POST
+  # JSON POST (application/json) with TLS certificate authentication
   my $tx = $ua->cert('tls.crt')->key('tls.key')
     ->post('https://example.com' => json => {top => 'secret'});
 
-  # Blocking parallel requests (does not work inside a running event loop)
-  my $delay = Mojo::IOLoop->delay;
-  for my $url ('mojolicio.us', 'cpan.org') {
-    my $end = $delay->begin(0);
-    $ua->get($url => sub {
-      my ($ua, $tx) = @_;
-      $end->($tx->res->dom->at('title')->text);
-    });
-  }
-  my @titles = $delay->wait;
+  # Search DuckDuckGo anonymously through Tor
+  $ua->proxy->http('socks://127.0.0.1:9050');
+  say $ua->get('api.3g2upl4pq6kufc4m.onion/?q=mojolicious&format=json')
+    ->result->json('/Abstract');
 
-  # Non-blocking parallel requests (does work inside a running event loop)
-  my $delay = Mojo::IOLoop->delay(sub {
-    my ($delay, @titles) = @_;
-    ...
+  # GET request via UNIX domain socket "/tmp/myapp.sock" (percent encoded slash)
+  say $ua->get('http+unix://%2Ftmp%2Fmyapp.sock/perldoc')->result->body;
+
+  # Follow redirects to download Mojolicious from GitHub
+  $ua->max_redirects(5)
+    ->get('https://www.github.com/kraih/mojo/tarball/master')
+    ->result->content->asset->move_to('/home/sri/mojo.tar.gz');
+
+  # Form POST (application/x-www-form-urlencoded) with manual exception handling
+  my $tx = $ua->post('https://metacpan.org/search' => form => {q => 'mojo'});
+  if (my $res = $tx->success) { say $res->body }
+  else {
+    my $err = $tx->error;
+    die "$err->{code} response: $err->{message}" if $err->{code};
+    die "Connection error: $err->{message}";
+  }
+
+  # Non-blocking request
+  $ua->get('mojolicious.org' => sub {
+    my ($ua, $tx) = @_;
+    say $tx->result->dom->at('title')->text;
   });
-  for my $url ('mojolicio.us', 'cpan.org') {
-    my $end = $delay->begin(0);
-    $ua->get($url => sub {
-      my ($ua, $tx) = @_;
-      $end->($tx->res->dom->at('title')->text);
-    });
-  }
-  $delay->wait unless Mojo::IOLoop->is_running;
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-  # Non-blocking WebSocket connection sending and receiving JSON messages
-  $ua->websocket('ws://example.com/echo.json' => sub {
+  # Concurrent non-blocking requests (synchronized with a delay)
+  Mojo::IOLoop->delay(
+    sub {
+      my $delay = shift;
+      $ua->get('mojolicious.org' => $delay->begin);
+      $ua->get('cpan.org'        => $delay->begin);
+    },
+    sub {
+      my ($delay, $mojo, $cpan) = @_;
+      say $mojo->result->dom->at('title')->text;
+      say $cpan->result->dom->at('title')->text;
+    }
+  )->wait;
+
+  # WebSocket connection sending and receiving JSON via UNIX domain socket
+  $ua->websocket('ws+unix://%2Ftmp%2Fmyapp.sock/echo.json' => sub {
     my ($ua, $tx) = @_;
     say 'WebSocket handshake failed!' and return unless $tx->is_websocket;
     $tx->on(json => sub {
@@ -556,36 +433,27 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
 =head1 DESCRIPTION
 
 L<Mojo::UserAgent> is a full featured non-blocking I/O HTTP and WebSocket user
-agent, with IPv6, TLS, SNI, IDNA, Comet (long polling), keep-alive, connection
-pooling, timeout, cookie, multipart, proxy, gzip compression and multiple
-event loop support.
+agent, with IPv6, TLS, SNI, IDNA, HTTP/SOCKS5 proxy, UNIX domain socket, Comet
+(long polling), keep-alive, connection pooling, timeout, cookie, multipart, gzip
+compression and multiple event loop support.
 
-For better scalability (epoll, kqueue) and to provide IPv6 as well as TLS
-support, the optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
-L<IO::Socket::SSL> (1.75+) will be used automatically by L<Mojo::IOLoop> if
-they are installed. Individual features can also be disabled with the
-MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
+All connections will be reset automatically if a new process has been forked,
+this allows multiple processes to share the same L<Mojo::UserAgent> object
+safely.
 
-See L<Mojolicious::Guides::Cookbook> for more.
+For better scalability (epoll, kqueue) and to provide non-blocking name
+resolution, SOCKS5 as well as TLS support, the optional modules L<EV> (4.0+),
+L<Net::DNS::Native> (0.15+), L<IO::Socket::Socks> (0.64+) and
+L<IO::Socket::SSL> (1.94+) will be used automatically if possible. Individual
+features can also be disabled with the C<MOJO_NO_NNR>, C<MOJO_NO_SOCKS> and
+C<MOJO_NO_TLS> environment variables.
+
+See L<Mojolicious::Guides::Cookbook/"USER AGENT"> for more.
 
 =head1 EVENTS
 
 L<Mojo::UserAgent> inherits all events from L<Mojo::EventEmitter> and can emit
 the following new ones.
-
-=head2 error
-
-  $ua->on(error => sub {
-    my ($ua, $err) = @_;
-    ...
-  });
-
-Emitted if an error occurs that can't be associated with a transaction.
-
-  $ua->on(error => sub {
-    my ($ua, $err) = @_;
-    say "This looks bad: $err";
-  });
 
 =head2 start
 
@@ -611,8 +479,9 @@ L<Mojo::UserAgent> implements the following attributes.
   my $ca = $ua->ca;
   $ua    = $ua->ca('/etc/tls/ca.crt');
 
-Path to TLS certificate authority file, defaults to the value of the
-MOJO_CA_FILE environment variable. Also activates hostname verification.
+Path to TLS certificate authority file used to verify the peer certificate,
+defaults to the value of the C<MOJO_CA_FILE> environment variable. Also
+activates hostname verification.
 
   # Show certificate authorities for debugging
   IO::Socket::SSL::set_defaults(
@@ -623,7 +492,7 @@ MOJO_CA_FILE environment variable. Also activates hostname verification.
   my $cert = $ua->cert;
   $ua      = $ua->cert('/etc/tls/client.crt');
 
-Path to TLS certificate file, defaults to the value of the MOJO_CERT_FILE
+Path to TLS certificate file, defaults to the value of the C<MOJO_CERT_FILE>
 environment variable.
 
 =head2 connect_timeout
@@ -632,7 +501,7 @@ environment variable.
   $ua         = $ua->connect_timeout(5);
 
 Maximum amount of time in seconds establishing a connection may take before
-getting canceled, defaults to the value of the MOJO_CONNECT_TIMEOUT
+getting canceled, defaults to the value of the C<MOJO_CONNECT_TIMEOUT>
 environment variable or C<10>.
 
 =head2 cookie_jar
@@ -640,25 +509,29 @@ environment variable or C<10>.
   my $cookie_jar = $ua->cookie_jar;
   $ua            = $ua->cookie_jar(Mojo::UserAgent::CookieJar->new);
 
-Cookie jar to use for this user agents requests, defaults to a
+Cookie jar to use for requests performed by this user agent, defaults to a
 L<Mojo::UserAgent::CookieJar> object.
 
-  # Disable cookie jar
-  $ua->cookie_jar(0);
+  # Ignore all cookies
+  $ua->cookie_jar->ignore(sub { 1 });
 
-=head2 http_proxy
+  # Ignore cookies for public suffixes
+  my $ps = IO::Socket::SSL::PublicSuffix->default;
+  $ua->cookie_jar->ignore(sub {
+    my $cookie = shift;
+    return undef unless my $domain = $cookie->domain;
+    return ($ps->public_suffix($domain))[0] eq '';
+  });
 
-  my $proxy = $ua->http_proxy;
-  $ua       = $ua->http_proxy('http://sri:secret@127.0.0.1:8080');
-
-Proxy server to use for HTTP and WebSocket requests.
-
-=head2 https_proxy
-
-  my $proxy = $ua->https_proxy;
-  $ua       = $ua->https_proxy('http://sri:secret@127.0.0.1:8080');
-
-Proxy server to use for HTTPS and WebSocket requests.
+  # Add custom cookie to the jar
+  $ua->cookie_jar->add(
+    Mojo::Cookie::Response->new(
+      name   => 'foo',
+      value  => 'bar',
+      domain => 'mojolicious.org',
+      path   => '/perldoc'
+    )
+  );
 
 =head2 inactivity_timeout
 
@@ -666,7 +539,7 @@ Proxy server to use for HTTPS and WebSocket requests.
   $ua         = $ua->inactivity_timeout(15);
 
 Maximum amount of time in seconds a connection can be inactive before getting
-closed, defaults to the value of the MOJO_INACTIVITY_TIMEOUT environment
+closed, defaults to the value of the C<MOJO_INACTIVITY_TIMEOUT> environment
 variable or C<20>. Setting the value to C<0> will allow connections to be
 inactive indefinitely.
 
@@ -683,7 +556,7 @@ L<Mojo::IOLoop> object.
   my $key = $ua->key;
   $ua     = $ua->key('/etc/tls/client.crt');
 
-Path to TLS key file, defaults to the value of the MOJO_KEY_FILE environment
+Path to TLS key file, defaults to the value of the C<MOJO_KEY_FILE> environment
 variable.
 
 =head2 local_address
@@ -698,8 +571,9 @@ Local address to bind to.
   my $max = $ua->max_connections;
   $ua     = $ua->max_connections(5);
 
-Maximum number of keep-alive connections that the user agent will retain
-before it starts closing the oldest cached ones, defaults to C<5>.
+Maximum number of keep-alive connections that the user agent will retain before
+it starts closing the oldest ones, defaults to C<5>. Setting the value to C<0>
+will prevent any connections from being kept alive.
 
 =head2 max_redirects
 
@@ -707,21 +581,40 @@ before it starts closing the oldest cached ones, defaults to C<5>.
   $ua     = $ua->max_redirects(3);
 
 Maximum number of redirects the user agent will follow before it fails,
-defaults to the value of the MOJO_MAX_REDIRECTS environment variable or C<0>.
+defaults to the value of the C<MOJO_MAX_REDIRECTS> environment variable or
+C<0>.
 
-=head2 name
+=head2 max_response_size
 
-  my $name = $ua->name;
-  $ua      = $ua->name('Mojolicious');
+  my $max = $ua->max_response_size;
+  $ua     = $ua->max_response_size(16777216);
 
-Value for C<User-Agent> request header, defaults to C<Mojolicious (Perl)>.
+Maximum response size in bytes, defaults to the value of
+L<Mojo::Message::Response/"max_message_size">. Setting the value to C<0> will
+allow responses of indefinite size. Note that increasing this value can also
+drastically increase memory usage, should you for example attempt to parse an
+excessively large response body with the methods L<Mojo::Message/"dom"> or
+L<Mojo::Message/"json">.
 
-=head2 no_proxy
+=head2 proxy
 
-  my $no_proxy = $ua->no_proxy;
-  $ua          = $ua->no_proxy([qw(localhost intranet.mojolicio.us)]);
+  my $proxy = $ua->proxy;
+  $ua       = $ua->proxy(Mojo::UserAgent::Proxy->new);
 
-Domains that don't require a proxy server to be used.
+Proxy manager, defaults to a L<Mojo::UserAgent::Proxy> object.
+
+  # Detect proxy servers from environment
+  $ua->proxy->detect;
+
+  # Manually configure HTTP proxy (using CONNECT for HTTPS/WebSockets)
+  $ua->proxy->http('http://127.0.0.1:8080')->https('http://127.0.0.1:8080');
+
+  # Manually configure Tor (SOCKS5)
+  $ua->proxy->http('socks://127.0.0.1:9050')->https('socks://127.0.0.1:9050');
+
+  # Manually configure UNIX domain socket (using CONNECT for HTTPS/WebSockets)
+  $ua->proxy->http('http+unix://%2Ftmp%2Fproxy.sock')
+    ->https('http+unix://%2Ftmp%2Fproxy.sock');
 
 =head2 request_timeout
 
@@ -730,12 +623,37 @@ Domains that don't require a proxy server to be used.
 
 Maximum amount of time in seconds establishing a connection, sending the
 request and receiving a whole response may take before getting canceled,
-defaults to the value of the MOJO_REQUEST_TIMEOUT environment variable or
-C<0>. Setting the value to C<0> will allow the user agent to wait
-indefinitely. The timeout will reset for every followed redirect.
+defaults to the value of the C<MOJO_REQUEST_TIMEOUT> environment variable or
+C<0>. Setting the value to C<0> will allow the user agent to wait indefinitely.
+The timeout will reset for every followed redirect.
 
   # Total limit of 5 seconds, of which 3 seconds may be spent connecting
   $ua->max_redirects(0)->connect_timeout(3)->request_timeout(5);
+
+=head2 server
+
+  my $server = $ua->server;
+  $ua        = $ua->server(Mojo::UserAgent::Server->new);
+
+Application server relative URLs will be processed with, defaults to a
+L<Mojo::UserAgent::Server> object.
+
+  # Mock web service
+  $ua->server->app(Mojolicious->new);
+  $ua->server->app->routes->get('/time' => sub {
+    my $c = shift;
+    $c->render(json => {now => time});
+  });
+  my $time = $ua->get('/time')->result->json->{now};
+
+  # Change log level
+  $ua->server->app->log->level('fatal');
+
+  # Port currently used for processing relative URLs blocking
+  say $ua->server->url->port;
+
+  # Port currently used for processing relative URLs non-blocking
+  say $ua->server->nb_url->port;
 
 =head2 transactor
 
@@ -744,214 +662,207 @@ indefinitely. The timeout will reset for every followed redirect.
 
 Transaction builder, defaults to a L<Mojo::UserAgent::Transactor> object.
 
+  # Change name of user agent
+  $ua->transactor->name('MyUA 1.0');
+
 =head1 METHODS
 
 L<Mojo::UserAgent> inherits all methods from L<Mojo::EventEmitter> and
 implements the following new ones.
 
-=head2 app
-
-  my $app = Mojo::UserAgent->app;
-            Mojo::UserAgent->app(MyApp->new);
-  my $app = $ua->app;
-  $ua     = $ua->app(MyApp->new);
-
-Application relative URLs will be processed with, instance specific
-applications override the global default.
-
-  # Introspect
-  say $ua->app->secret;
-
-  # Change log level
-  $ua->app->log->level('fatal');
-
-  # Change application behavior
-  $ua->app->defaults(testing => 'oh yea!');
-
-=head2 app_url
-
-  my $url = $ua->app_url;
-  my $url = $ua->app_url('http');
-  my $url = $ua->app_url('https');
-
-Get absolute L<Mojo::URL> object for C<app> and switch protocol if necessary.
-
-  # Port currently used for processing relative URLs
-  say $ua->app_url->port;
-
 =head2 build_tx
 
   my $tx = $ua->build_tx(GET => 'example.com');
-  my $tx = $ua->build_tx(PUT => 'http://example.com' => {DNT => 1} => 'Hi!');
   my $tx = $ua->build_tx(
-    PUT => 'http://example.com' => {DNT => 1} => form => {a => 'b'});
+    PUT => 'http://example.com' => {Accept => '*/*'} => 'Content!');
   my $tx = $ua->build_tx(
-    PUT => 'http://example.com' => {DNT => 1} => json => {a => 'b'});
+    PUT => 'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
+  my $tx = $ua->build_tx(
+    PUT => 'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
 Generate L<Mojo::Transaction::HTTP> object with
 L<Mojo::UserAgent::Transactor/"tx">.
 
-  # Request with cookie
+  # Request with custom cookie
+  my $tx = $ua->build_tx(GET => 'https://example.com/account');
+  $tx->req->cookies({name => 'user', value => 'sri'});
+  $tx = $ua->start($tx);
+
+  # Deactivate gzip compression
   my $tx = $ua->build_tx(GET => 'example.com');
-  $tx->req->cookies({name => 'foo', value => 'bar'});
-  $ua->start($tx);
+  $tx->req->headers->remove('Accept-Encoding');
+  $tx = $ua->start($tx);
+
+  # Interrupt response by raising an error
+  my $tx = $ua->build_tx(GET => 'http://example.com');
+  $tx->res->on(progress => sub {
+    my $res = shift;
+    return unless my $server = $res->headers->server;
+    $res->error({message => 'Oh noes, it is IIS!'}) if $server =~ /IIS/;
+  });
+  $tx = $ua->start($tx);
 
 =head2 build_websocket_tx
 
   my $tx = $ua->build_websocket_tx('ws://example.com');
-  my $tx =
-    $ua->build_websocket_tx('ws://example.com' => {DNT => 1} => ['v1.proto']);
+  my $tx = $ua->build_websocket_tx(
+    'ws://example.com' => {DNT => 1} => ['v1.proto']);
 
 Generate L<Mojo::Transaction::HTTP> object with
 L<Mojo::UserAgent::Transactor/"websocket">.
 
-=head2 delete
-
-  my $tx = $ua->delete('example.com');
-  my $tx = $ua->delete('http://example.com' => {DNT => 1} => 'Hi!');
-  my $tx = $ua->delete(
-    'http://example.com' => {DNT => 1} => form => {a => 'b'});
-  my $tx = $ua->delete(
-    'http://example.com' => {DNT => 1} => json => {a => 'b'});
-
-Perform blocking DELETE request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
-
-  $ua->delete('http://example.com' => sub {
+  # Custom WebSocket handshake with cookie
+  my $tx = $ua->build_websocket_tx('wss://example.com/echo');
+  $tx->req->cookies({name => 'user', value => 'sri'});
+  $ua->start($tx => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say 'WebSocket handshake failed!' and return unless $tx->is_websocket;
+    $tx->on(message => sub {
+      my ($tx, $msg) = @_;
+      say "WebSocket message: $msg";
+      $tx->finish;
+    });
+    $tx->send('Hi!');
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-=head2 detect_proxy
+=head2 delete
 
-  $ua = $ua->detect_proxy;
+  my $tx = $ua->delete('example.com');
+  my $tx = $ua->delete('http://example.com' => {Accept => '*/*'} => 'Content!');
+  my $tx = $ua->delete(
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
+  my $tx = $ua->delete(
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Check environment variables HTTP_PROXY, http_proxy, HTTPS_PROXY, https_proxy,
-NO_PROXY and no_proxy for proxy information. Automatic proxy detection can be
-enabled with the MOJO_PROXY environment variable.
+Perform blocking C<DELETE> request and return resulting
+L<Mojo::Transaction::HTTP> object, takes the same arguments as
+L<Mojo::UserAgent::Transactor/"tx"> (except for the C<DELETE> method, which is
+implied). You can also append a callback to perform requests non-blocking.
+
+  $ua->delete('http://example.com' => json => {a => 'b'} => sub {
+    my ($ua, $tx) = @_;
+    say $tx->result->body;
+  });
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 get
 
   my $tx = $ua->get('example.com');
-  my $tx = $ua->get('http://example.com' => {DNT => 1} => 'Hi!');
-  my $tx = $ua->get('http://example.com' => {DNT => 1} => form => {a => 'b'});
-  my $tx = $ua->get('http://example.com' => {DNT => 1} => json => {a => 'b'});
+  my $tx = $ua->get('http://example.com' => {Accept => '*/*'} => 'Content!');
+  my $tx = $ua->get(
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
+  my $tx = $ua->get(
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking GET request and return resulting L<Mojo::Transaction::HTTP>
-object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx">
-(except for the method). You can also append a callback to perform requests
-non-blocking.
+Perform blocking C<GET> request and return resulting L<Mojo::Transaction::HTTP>
+object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx"> (except
+for the C<GET> method, which is implied). You can also append a callback to
+perform requests non-blocking.
 
-  $ua->get('http://example.com' => sub {
+  $ua->get('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 head
 
   my $tx = $ua->head('example.com');
-  my $tx = $ua->head('http://example.com' => {DNT => 1} => 'Hi!');
+  my $tx = $ua->head('http://example.com' => {Accept => '*/*'} => 'Content!');
   my $tx = $ua->head(
-    'http://example.com' => {DNT => 1} => form => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
   my $tx = $ua->head(
-    'http://example.com' => {DNT => 1} => json => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking HEAD request and return resulting L<Mojo::Transaction::HTTP>
-object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx">
-(except for the method). You can also append a callback to perform requests
-non-blocking.
+Perform blocking C<HEAD> request and return resulting
+L<Mojo::Transaction::HTTP> object, takes the same arguments as
+L<Mojo::UserAgent::Transactor/"tx"> (except for the C<HEAD> method, which is
+implied). You can also append a callback to perform requests non-blocking.
 
-  $ua->head('http://example.com' => sub {
+  $ua->head('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
-
-=head2 need_proxy
-
-  my $success = $ua->need_proxy('intranet.example.com');
-
-Check if request for domain would use a proxy server.
 
 =head2 options
 
   my $tx = $ua->options('example.com');
-  my $tx = $ua->options('http://example.com' => {DNT => 1} => 'Hi!');
+  my $tx = $ua->options('http://example.com' => {Accept => '*/*'} => 'Content!');
   my $tx = $ua->options(
-    'http://example.com' => {DNT => 1} => form => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
   my $tx = $ua->options(
-    'http://example.com' => {DNT => 1} => json => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking OPTIONS request and return resulting
+Perform blocking C<OPTIONS> request and return resulting
 L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+L<Mojo::UserAgent::Transactor/"tx"> (except for the C<OPTIONS> method, which is
+implied). You can also append a callback to perform requests non-blocking.
 
-  $ua->options('http://example.com' => sub {
+  $ua->options('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 patch
 
   my $tx = $ua->patch('example.com');
-  my $tx = $ua->patch('http://example.com' => {DNT => 1} => 'Hi!');
+  my $tx = $ua->patch('http://example.com' => {Accept => '*/*'} => 'Content!');
   my $tx = $ua->patch(
-    'http://example.com' => {DNT => 1} => form => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
   my $tx = $ua->patch(
-    'http://example.com' => {DNT => 1} => json => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking PATCH request and return resulting L<Mojo::Transaction::HTTP>
-object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx">
-(except for the method). You can also append a callback to perform requests
-non-blocking.
+Perform blocking C<PATCH> request and return resulting
+L<Mojo::Transaction::HTTP> object, takes the same arguments as
+L<Mojo::UserAgent::Transactor/"tx"> (except for the C<PATCH> method, which is
+implied). You can also append a callback to perform requests non-blocking.
 
-  $ua->patch('http://example.com' => sub {
+  $ua->patch('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 post
 
   my $tx = $ua->post('example.com');
-  my $tx = $ua->post('http://example.com' => {DNT => 1} => 'Hi!');
+  my $tx = $ua->post('http://example.com' => {Accept => '*/*'} => 'Content!');
   my $tx = $ua->post(
-    'http://example.com' => {DNT => 1} => form => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
   my $tx = $ua->post(
-    'http://example.com' => {DNT => 1} => json => {a => 'b'});
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking POST request and return resulting L<Mojo::Transaction::HTTP>
-object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx">
-(except for the method). You can also append a callback to perform requests
-non-blocking.
+Perform blocking C<POST> request and return resulting
+L<Mojo::Transaction::HTTP> object, takes the same arguments as
+L<Mojo::UserAgent::Transactor/"tx"> (except for the C<POST> method, which is
+implied). You can also append a callback to perform requests non-blocking.
 
-  $ua->post('http://example.com' => sub {
+  $ua->post('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 put
 
   my $tx = $ua->put('example.com');
-  my $tx = $ua->put('http://example.com' => {DNT => 1} => 'Hi!');
-  my $tx = $ua->put('http://example.com' => {DNT => 1} => form => {a => 'b'});
-  my $tx = $ua->put('http://example.com' => {DNT => 1} => json => {a => 'b'});
+  my $tx = $ua->put('http://example.com' => {Accept => '*/*'} => 'Content!');
+  my $tx = $ua->put(
+    'http://example.com' => {Accept => '*/*'} => form => {a => 'b'});
+  my $tx = $ua->put(
+    'http://example.com' => {Accept => '*/*'} => json => {a => 'b'});
 
-Perform blocking PUT request and return resulting L<Mojo::Transaction::HTTP>
-object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx">
-(except for the method). You can also append a callback to perform requests
-non-blocking.
+Perform blocking C<PUT> request and return resulting L<Mojo::Transaction::HTTP>
+object, takes the same arguments as L<Mojo::UserAgent::Transactor/"tx"> (except
+for the C<PUT> method, which is implied). You can also append a callback to
+perform requests non-blocking.
 
-  $ua->put('http://example.com' => sub {
+  $ua->put('http://example.com' => json => {a => 'b'} => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
@@ -959,13 +870,14 @@ non-blocking.
 
   my $tx = $ua->start(Mojo::Transaction::HTTP->new);
 
-Perform blocking request. You can also append a callback to perform requests
-non-blocking.
+Perform blocking request for a custom L<Mojo::Transaction::HTTP> object, which
+can be prepared manually or with L</"build_tx">. You can also append a callback
+to perform requests non-blocking.
 
   my $tx = $ua->build_tx(GET => 'http://example.com');
   $ua->start($tx => sub {
     my ($ua, $tx) = @_;
-    say $tx->res->body;
+    say $tx->result->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
@@ -976,13 +888,14 @@ non-blocking.
     'ws://example.com' => {DNT => 1} => ['v1.proto'] => sub {...});
 
 Open a non-blocking WebSocket connection with transparent handshake, takes the
-same arguments as L<Mojo::UserAgent::Transactor/"websocket">. The callback
-will receive either a L<Mojo::Transaction::WebSocket> or
-L<Mojo::Transaction::HTTP> object.
+same arguments as L<Mojo::UserAgent::Transactor/"websocket">. The callback will
+receive either a L<Mojo::Transaction::WebSocket> or L<Mojo::Transaction::HTTP>
+object, depending on if the handshake was successful.
 
-  $ua->websocket('ws://example.com/echo' => sub {
+  $ua->websocket('wss://example.com/echo' => ['v1.proto'] => sub {
     my ($ua, $tx) = @_;
     say 'WebSocket handshake failed!' and return unless $tx->is_websocket;
+    say 'Subprotocol negotiation failed!' and return unless $tx->protocol;
     $tx->on(finish => sub {
       my ($tx, $code, $reason) = @_;
       say "WebSocket closed with status $code.";
@@ -996,15 +909,23 @@ L<Mojo::Transaction::HTTP> object.
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
+You can activate C<permessage-deflate> compression by setting the
+C<Sec-WebSocket-Extensions> header, this can result in much better performance,
+but also increases memory usage by up to 300KB per connection.
+
+  $ua->websocket('ws://example.com/foo' => {
+    'Sec-WebSocket-Extensions' => 'permessage-deflate'
+  } => sub {...});
+
 =head1 DEBUGGING
 
-You can set the MOJO_USERAGENT_DEBUG environment variable to get some advanced
-diagnostics information printed to C<STDERR>.
+You can set the C<MOJO_USERAGENT_DEBUG> environment variable to get some
+advanced diagnostics information printed to C<STDERR>.
 
   MOJO_USERAGENT_DEBUG=1
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

@@ -1,18 +1,15 @@
 package Mojolicious::Plugin::JSONConfig;
 use Mojo::Base 'Mojolicious::Plugin::Config';
 
-use Mojo::JSON;
+use Mojo::JSON 'from_json';
 use Mojo::Template;
-use Mojo::Util 'encode';
 
 sub parse {
   my ($self, $content, $file, $conf, $app) = @_;
 
-  my $json   = Mojo::JSON->new;
-  my $config = $json->decode($self->render($content, $file, $conf, $app));
-  my $err    = $json->error;
-  die qq{Couldn't parse config "$file": $err} if !$config && $err;
-  die qq{Invalid config "$file".} if !$config || ref $config ne 'HASH';
+  my $config = eval { from_json $self->render($content, $file, $conf, $app) };
+  die qq{Can't parse config "$file": $@} if $@;
+  die qq{Invalid config "$file"} unless ref $config eq 'HASH';
 
   return $config;
 }
@@ -23,16 +20,18 @@ sub render {
   my ($self, $content, $file, $conf, $app) = @_;
 
   # Application instance and helper
-  my $prepend = q[my $app = shift; no strict 'refs'; no warnings 'redefine';];
-  $prepend .= q[sub app; *app = sub { $app }; use Mojo::Base -strict;];
+  my $prepend = q[no strict 'refs'; no warnings 'redefine';];
+  $prepend .= q[my $app = shift; sub app; local *app = sub { $app };];
+  $prepend .= q[use Mojo::Base -strict; no warnings 'ambiguous';];
 
-  # Render and encode for JSON decoding
   my $mt = Mojo::Template->new($conf->{template} || {})->name($file);
-  my $json = $mt->prepend($prepend . $mt->prepend)->render($content, $app);
-  return ref $json ? die $json : encode 'UTF-8', $json;
+  my $output = $mt->prepend($prepend . $mt->prepend)->render($content, $app);
+  return ref $output ? die $output : $output;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -42,12 +41,18 @@ Mojolicious::Plugin::JSONConfig - JSON configuration plugin
 
   # myapp.json (it's just JSON with embedded Perl)
   {
-    "foo"       : "bar",
-    "music_dir" : "<%= app->home->rel_dir('music') %>"
+    %# Just a value
+    "foo": "bar",
+
+    %# Nested data structures are fine too
+    "baz": ["♥"],
+
+    %# You have full access to the application
+    "music_dir": "<%= app->home->child('music') %>"
   }
 
   # Mojolicious
-  my $config = $self->plugin('JSONConfig');
+  my $config = $app->plugin('JSONConfig');
   say $config->{foo};
 
   # Mojolicious::Lite
@@ -57,7 +62,7 @@ Mojolicious::Plugin::JSONConfig - JSON configuration plugin
   # foo.html.ep
   %= $config->{foo}
 
-  # The configuration is available application wide
+  # The configuration is available application-wide
   my $config = app->config;
   say $config->{foo};
 
@@ -69,13 +74,20 @@ Mojolicious::Plugin::JSONConfig - JSON configuration plugin
 L<Mojolicious::Plugin::JSONConfig> is a JSON configuration plugin that
 preprocesses its input with L<Mojo::Template>.
 
-The application object can be accessed via C<$app> or the C<app> function. You
-can extend the normal config file C<myapp.json> with C<mode> specific ones
-like C<myapp.$mode.json>. A default configuration filename will be generated
-from the value of L<Mojolicious/"moniker">.
+The application object can be accessed via C<$app> or the C<app> function. A
+default configuration filename in the application home directory will be
+generated from the value of L<Mojolicious/"moniker"> (C<$moniker.json>). You can
+extend the normal configuration file C<$moniker.json> with C<mode> specific ones
+like C<$moniker.$mode.json>, which will be detected automatically.
+
+If the configuration value C<config_override> has been set in L<Mojo/"config">
+when this plugin is loaded, it will not do anything.
 
 The code of this plugin is a good example for learning to build new plugins,
 you're welcome to fork it.
+
+See L<Mojolicious::Plugins/"PLUGINS"> for a list of plugins that are available
+by default.
 
 =head1 OPTIONS
 
@@ -99,7 +111,7 @@ L<Mojolicious::Plugin::Config> and implements the following new ones.
 
   $plugin->parse($content, $file, $conf, $app);
 
-Process content with C<render> and parse it with L<Mojo::JSON>.
+Process content with L</"render"> and parse it with L<Mojo::JSON>.
 
   sub parse {
     my ($self, $content, $file, $conf, $app) = @_;
@@ -130,6 +142,6 @@ Process configuration file with L<Mojo::Template>.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

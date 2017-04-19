@@ -610,5 +610,5 @@ get '/config' => sub {
     }
 };
 
-app->secret($config->{appsecret});
+app->secrets([$config->{appsecret}]);
 app->start;

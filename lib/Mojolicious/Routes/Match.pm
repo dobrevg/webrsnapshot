@@ -1,106 +1,99 @@
 package Mojolicious::Routes::Match;
 use Mojo::Base -base;
 
+use Mojo::Util;
+
 has [qw(endpoint root)];
+has position => 0;
 has stack => sub { [] };
 
-sub match { $_[0]->_match($_[0]->root, $_[1], $_[2]) }
+sub find { $_[0]->_match($_[0]->root, $_[1], $_[2]) }
 
 sub path_for {
-  my ($self, $name, %values) = (shift, _values(@_));
+  my ($self, $name, %values) = (shift, Mojo::Util::_options(@_));
 
   # Current route
-  my $endpoint;
-  if ($name && $name eq 'current' || !$name) {
-    return unless $endpoint = $self->endpoint;
+  my $route;
+  if (!$name || $name eq 'current') {
+    return {} unless $route = $self->endpoint;
   }
 
   # Find endpoint
-  else { return $name unless $endpoint = $self->root->lookup($name) }
+  else { return {path => $name} unless $route = $self->root->lookup($name) }
 
   # Merge values (clear format)
   my $captures = $self->stack->[-1] || {};
   %values = (%$captures, format => undef, %values);
-  my $pattern = $endpoint->pattern;
+  my $pattern = $route->pattern;
   $values{format}
-    = defined $captures->{format}
+    //= defined $captures->{format}
     ? $captures->{format}
     : $pattern->defaults->{format}
     if $pattern->constraints->{format};
 
-  my $path = $endpoint->render('', \%values);
-  return wantarray ? ($path, $endpoint->has_websocket) : $path;
+  my $path = $route->render(\%values);
+  return {path => $path, websocket => $route->has_websocket};
 }
 
 sub _match {
   my ($self, $r, $c, $options) = @_;
 
   # Pattern
-  my $path = $options->{path};
-  return
-    unless my $captures = $r->pattern->match_partial(\$path, $r->is_endpoint);
+  my $path    = $options->{path};
+  my $partial = $r->partial;
+  my $detect  = (my $endpoint = $r->is_endpoint) && !$partial;
+  return undef
+    unless my $captures = $r->pattern->match_partial(\$path, $detect);
   local $options->{path} = $path;
-  $captures = $self->{captures} = {%{$self->{captures} || {}}, %$captures};
+  local @{$self->{captures} ||= {}}{keys %$captures} = values %$captures;
+  $captures = $self->{captures};
 
   # Method
   my $methods = $r->via;
-  return if $methods && !grep { $_ eq $options->{method} } @$methods;
+  return undef if $methods && !grep { $_ eq $options->{method} } @$methods;
 
   # Conditions
   if (my $over = $r->over) {
     my $conditions = $self->{conditions} ||= $self->root->conditions;
     for (my $i = 0; $i < @$over; $i += 2) {
-      return unless my $condition = $conditions->{$over->[$i]};
-      return if !$condition->($r, $c, $captures, $over->[$i + 1]);
+      return undef unless my $condition = $conditions->{$over->[$i]};
+      return undef if !$condition->($r, $c, $captures, $over->[$i + 1]);
     }
   }
 
   # WebSocket
-  return if $r->is_websocket && !$options->{websocket};
+  return undef if $r->is_websocket && !$options->{websocket};
 
   # Partial
   my $empty = !length $path || $path eq '/';
-  if ($r->partial) {
+  if ($partial) {
     $captures->{path} = $path;
     $self->endpoint($r);
     $empty = 1;
   }
 
-  # Endpoint (or bridge)
-  my $endpoint = $r->is_endpoint;
+  # Endpoint (or intermediate destination)
   if (($endpoint && $empty) || $r->inline) {
     push @{$self->stack}, {%$captures};
-    return $self->endpoint($r) if $endpoint && $empty;
-    delete $captures->{$_} for qw(app cb);
+    if ($endpoint && $empty) {
+      my $format = $captures->{format};
+      if ($format) { $_->{format} = $format for @{$self->stack} }
+      return !!$self->endpoint($r);
+    }
+    delete @$captures{qw(app cb)};
   }
 
   # Match children
-  my $snapshot = [@{$self->stack}];
+  my @snapshot = $r->parent ? ([@{$self->stack}], $captures) : ([], {});
   for my $child (@{$r->children}) {
-    $self->_match($child, $c, $options);
-
-    # Endpoint found
-    return if $self->endpoint;
-
-    # Reset
-    if   ($r->parent) { $self->stack([@$snapshot])->{captures} = $captures }
-    else              { $self->stack([])->{captures}           = {} }
+    return 1 if $self->_match($child, $c, $options);
+    $self->stack([@{$snapshot[0]}])->{captures} = $snapshot[1];
   }
 }
 
-sub _values {
-
-  # Hash or name (one)
-  return ref $_[0] eq 'HASH' ? (undef, %{shift()}) : @_ if @_ == 1;
-
-  # Name and values (odd)
-  return shift, @_ if @_ % 2;
-
-  # Name and hash or just values (even)
-  return ref $_[1] eq 'HASH' ? (shift, %{shift()}) : (undef, @_);
-}
-
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -120,13 +113,13 @@ Mojolicious::Routes::Match - Find routes
   # Match
   my $c = Mojolicious::Controller->new;
   my $match = Mojolicious::Routes::Match->new(root => $r);
-  $match->match($c => {method => 'PUT', path => '/foo/bar'});
+  $match->find($c => {method => 'PUT', path => '/foo/bar'});
   say $match->stack->[0]{controller};
   say $match->stack->[0]{action};
 
   # Render
-  say $match->path_for;
-  say $match->path_for(action => 'baz');
+  say $match->path_for->{path};
+  say $match->path_for(action => 'baz')->{path};
 
 =head1 DESCRIPTION
 
@@ -139,22 +132,30 @@ L<Mojolicious::Routes::Match> implements the following attributes.
 
 =head2 endpoint
 
-  my $endpoint = $match->endpoint;
-  $match       = $match->endpoint(Mojolicious::Routes::Route->new);
+  my $route = $match->endpoint;
+  $match    = $match->endpoint(Mojolicious::Routes::Route->new);
 
-The route endpoint that matched.
+The route endpoint that matched, usually a L<Mojolicious::Routes::Route>
+object.
+
+=head2 position
+
+  my $position = $match->position;
+  $match       = $match->position(2);
+
+Current position on the L</"stack">, defaults to C<0>.
 
 =head2 root
 
   my $root = $match->root;
   $match   = $match->root(Mojolicious::Routes->new);
 
-The root of the route structure.
+The root of the route structure, usually a L<Mojolicious::Routes> object.
 
 =head2 stack
 
   my $stack = $match->stack;
-  $match    = $match->stack([{foo => 'bar'}]);
+  $match    = $match->stack([{action => 'foo'}, {action => 'bar'}]);
 
 Captured parameters with nesting history.
 
@@ -163,31 +164,26 @@ Captured parameters with nesting history.
 L<Mojolicious::Routes::Match> inherits all methods from L<Mojo::Base> and
 implements the following new ones.
 
-=head2 match
+=head2 find
 
-  $match->match(Mojolicious::Controller->new, {method => 'GET', path => '/'});
+  $match->find(Mojolicious::Controller->new, {method => 'GET', path => '/'});
 
-Match controller and options against C<root> to find appropriate C<endpoint>.
+Match controller and options against L</"root"> to find an appropriate
+L</"endpoint">.
 
 =head2 path_for
 
-  my $path        = $match->path_for;
-  my $path        = $match->path_for(foo => 'bar');
-  my $path        = $match->path_for({foo => 'bar'});
-  my $path        = $match->path_for('named');
-  my $path        = $match->path_for('named', foo => 'bar');
-  my $path        = $match->path_for('named', {foo => 'bar'});
-  my ($path, $ws) = $match->path_for;
-  my ($path, $ws) = $match->path_for(foo => 'bar');
-  my ($path, $ws) = $match->path_for({foo => 'bar'});
-  my ($path, $ws) = $match->path_for('named');
-  my ($path, $ws) = $match->path_for('named', foo => 'bar');
-  my ($path, $ws) = $match->path_for('named', {foo => 'bar'});
+  my $info = $match->path_for;
+  my $info = $match->path_for(foo => 'bar');
+  my $info = $match->path_for({foo => 'bar'});
+  my $info = $match->path_for('named');
+  my $info = $match->path_for('named', foo => 'bar');
+  my $info = $match->path_for('named', {foo => 'bar'});
 
 Render matching route with parameters into path.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

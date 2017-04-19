@@ -15,7 +15,7 @@ sub _check {
   my ($value, $pattern) = @_;
   return 1
     if $value && $pattern && ref $pattern eq 'Regexp' && $value =~ $pattern;
-  return $value && defined $pattern && $pattern eq $value ? 1 : undef;
+  return $value && defined $pattern && $pattern eq $value;
 }
 
 sub _headers {
@@ -24,13 +24,14 @@ sub _headers {
 
   # All headers need to match
   my $headers = $c->req->headers;
-  while (my ($name, $pattern) = each %$patterns) {
-    return undef unless _check(scalar $headers->header($name), $pattern);
-  }
+  _check($headers->header($_), $patterns->{$_}) || return undef
+    for keys %$patterns;
   return 1;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -39,8 +40,8 @@ Mojolicious::Plugin::HeaderCondition - Header condition plugin
 =head1 SYNOPSIS
 
   # Mojolicious
-  $self->plugin('HeaderCondition');
-  $self->routes->get('/:controller/:action')
+  $app->plugin('HeaderCondition');
+  $app->routes->get('/:controller/:action')
     ->over(headers => {Referer => qr/example\.com/});
 
   # Mojolicious::Lite
@@ -48,7 +49,7 @@ Mojolicious::Plugin::HeaderCondition - Header condition plugin
   get '/' => (headers => {Referer => qr/example\.com/}) => sub {...};
 
   # All headers need to match
-  $self->routes->get('/:controller/:action')->over(headers => {
+  $app->routes->get('/:controller/:action')->over(headers => {
     'X-Secret-Header' => 'Foo',
     Referer => qr/example\.com/
   });
@@ -57,15 +58,18 @@ Mojolicious::Plugin::HeaderCondition - Header condition plugin
   get '/' => (agent => qr/Firefox/) => sub {...};
 
   # The "host" condition is a shortcut for the detected host
-  get '/' => (host => qr/mojolicio\.us/) => sub {...};
+  get '/' => (host => qr/mojolicious\.org/) => sub {...};
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::HeaderCondition> is a route condition for header based
+L<Mojolicious::Plugin::HeaderCondition> is a route condition for header-based
 routes.
 
 This is a core plugin, that means it is always enabled and its code a good
 example for learning to build new plugins, you're welcome to fork it.
+
+See L<Mojolicious::Plugins/"PLUGINS"> for a list of plugins that are available
+by default.
 
 =head1 METHODS
 
@@ -80,6 +84,6 @@ Register conditions in L<Mojolicious> application.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

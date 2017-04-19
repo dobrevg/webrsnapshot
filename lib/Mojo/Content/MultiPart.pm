@@ -5,18 +5,10 @@ use Mojo::Util 'b64_encode';
 
 has parts => sub { [] };
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->on(read => \&_read);
-  return $self;
-}
-
 sub body_contains {
   my ($self, $chunk) = @_;
-  for my $part (@{$self->parts}) {
-    return 1 if index($part->build_headers, $chunk) >= 0;
-    return 1 if $part->body_contains($chunk);
-  }
+  ($_->headers_contain($chunk) or $_->body_contains($chunk)) and return 1
+    for @{$self->parts};
   return undef;
 }
 
@@ -24,12 +16,10 @@ sub body_size {
   my $self = shift;
 
   # Check for existing Content-Lenght header
-  my $content_len = $self->headers->content_length;
-  return $content_len if $content_len;
+  if (my $len = $self->headers->content_length) { return $len }
 
   # Calculate length of whole body
-  my $boundary_len = length($self->build_boundary) + 6;
-  my $len          = $boundary_len - 2;
+  my $len = my $boundary_len = length($self->build_boundary) + 6;
   $len += $_->header_size + $_->body_size + $boundary_len for @{$self->parts};
 
   return $len;
@@ -39,16 +29,15 @@ sub build_boundary {
   my $self = shift;
 
   # Check for existing boundary
-  if (defined(my $boundary = $self->boundary)) { return $boundary }
+  my $boundary;
+  return $boundary if defined($boundary = $self->boundary);
 
   # Generate and check boundary
-  my $boundary;
   my $size = 1;
-  while (1) {
-    $boundary = b64_encode join('', map chr(rand(256)), 1 .. $size++ * 3);
+  do {
+    $boundary = b64_encode join('', map chr(rand 256), 1 .. $size++ * 3);
     $boundary =~ s/\W/X/g;
-    last unless $self->body_contains($boundary);
-  }
+  } while $self->body_contains($boundary);
 
   # Add boundary to Content-Type header
   my $headers = $self->headers;
@@ -96,20 +85,23 @@ sub get_body_chunk {
     $len += $content_len;
 
     # Boundary
-    if (($len + $boundary_len) > $offset) {
-
-      # Last boundary
-      return substr "\x0d\x0a--$boundary--", $offset - $len
-        if $#{$parts} == $i;
-
-      # Middle boundary
-      return substr "\x0d\x0a--$boundary\x0d\x0a", $offset - $len;
+    if ($#$parts == $i) {
+      $boundary .= '--';
+      $boundary_len += 2;
     }
+    return substr "\x0d\x0a--$boundary\x0d\x0a", $offset - $len
+      if ($len + $boundary_len) > $offset;
     $len += $boundary_len;
   }
 }
 
 sub is_multipart {1}
+
+sub new {
+  my $self = shift->SUPER::new(@_);
+  $self->on(read => \&_read);
+  return $self;
+}
 
 sub _parse_multipart_body {
   my ($self, $boundary) = @_;
@@ -193,11 +185,13 @@ sub _read {
   }
 
   # Check buffer size
-  $self->{limit} = $self->{state} = 'finished'
+  @$self{qw(state limit)} = ('finished', 1)
     if length($self->{multipart} // '') > $self->max_buffer_size;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -213,8 +207,10 @@ Mojo::Content::MultiPart - HTTP multipart content
 
 =head1 DESCRIPTION
 
-L<Mojo::Content::MultiPart> is a container for HTTP multipart content as
-described in RFC 2616.
+L<Mojo::Content::MultiPart> is a container for HTTP multipart content, based on
+L<RFC 7230|http://tools.ietf.org/html/rfc7230>,
+L<RFC 7231|http://tools.ietf.org/html/rfc7231> and
+L<RFC 2388|http://tools.ietf.org/html/rfc2388>.
 
 =head1 EVENTS
 
@@ -244,7 +240,7 @@ implements the following new ones.
 =head2 parts
 
   my $parts = $multi->parts;
-  $multi    = $multi->parts([]);
+  $multi    = $multi->parts([Mojo::Content::Single->new]);
 
 Content parts embedded in this multipart content, usually
 L<Mojo::Content::Single> objects.
@@ -254,16 +250,9 @@ L<Mojo::Content::Single> objects.
 L<Mojo::Content::MultiPart> inherits all methods from L<Mojo::Content> and
 implements the following new ones.
 
-=head2 new
-
-  my $multi = Mojo::Content::MultiPart->new;
-
-Construct a new L<Mojo::Content::MultiPart> object and subscribe to C<read>
-event with default content parser.
-
 =head2 body_contains
 
-  my $success = $multi->body_contains('foobarbaz');
+  my $bool = $multi->body_contains('foobarbaz');
 
 Check if content parts contain a specific string.
 
@@ -289,16 +278,29 @@ Clone content if possible, otherwise return C<undef>.
 
   my $bytes = $multi->get_body_chunk(0);
 
-Get a chunk of content starting from a specific position.
+Get a chunk of content starting from a specific position. Note that it might
+not be possible to get the same chunk twice if content was generated
+dynamically.
 
 =head2 is_multipart
 
-  my $true = $multi->is_multipart;
+  my $bool = $multi->is_multipart;
 
-True.
+True, this is a L<Mojo::Content::MultiPart> object.
+
+=head2 new
+
+  my $multi = Mojo::Content::MultiPart->new;
+  my $multi
+    = Mojo::Content::MultiPart->new(parts => [Mojo::Content::Single->new]);
+  my $multi
+    = Mojo::Content::MultiPart->new({parts => [Mojo::Content::Single->new]});
+
+Construct a new L<Mojo::Content::MultiPart> object and subscribe to L</"read">
+event with default content parser.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

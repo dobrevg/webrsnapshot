@@ -1,23 +1,16 @@
 package Mojo::Upload;
 use Mojo::Base -base;
 
-use Mojo::Asset::File;
-use Mojo::Headers;
+has [qw(asset filename headers name)];
 
-has asset => sub { Mojo::Asset::File->new };
-has [qw(filename name)];
-has headers => sub { Mojo::Headers->new };
-
-sub move_to {
-  my $self = shift;
-  $self->asset->move_to(@_);
-  return $self;
-}
+sub move_to { $_[0]->asset->move_to($_[1]) and return $_[0] }
 
 sub size  { shift->asset->size }
 sub slurp { shift->asset->slurp }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -59,7 +52,7 @@ Name of the uploaded file.
   my $headers = $upload->headers;
   $upload     = $upload->headers(Mojo::Headers->new);
 
-Headers for upload, defaults to a L<Mojo::Headers> object.
+Headers for upload, usually a L<Mojo::Headers> object.
 
 =head2 name
 
@@ -93,6 +86,6 @@ Read all uploaded data at once.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

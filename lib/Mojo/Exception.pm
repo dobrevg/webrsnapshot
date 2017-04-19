@@ -1,113 +1,93 @@
 package Mojo::Exception;
 use Mojo::Base -base;
-use overload
-  'bool'   => sub {1},
-  '""'     => sub { shift->to_string },
-  fallback => 1;
+use overload bool => sub {1}, '""' => sub { shift->to_string }, fallback => 1;
 
-use Scalar::Util 'blessed';
-
-has [qw(frames line lines_before lines_after)] => sub { [] };
+has [qw(frames line lines_after lines_before)] => sub { [] };
 has message => 'Exception!';
 has 'verbose';
 
-sub new {
-  my $self = shift->SUPER::new;
-  return @_ ? $self->_detect(@_) : $self;
+sub inspect {
+  my ($self, @sources) = @_;
+
+  # Extract file and line from message
+  my @files;
+  my $msg = $self->lines_before([])->line([])->lines_after([])->message;
+  while ($msg =~ /at\s+(.+?)\s+line\s+(\d+)/g) { unshift @files, [$1, $2] }
+
+  # Extract file and line from stack trace
+  if (my $zero = $self->frames->[0]) { push @files, [$zero->[1], $zero->[2]] }
+
+  # Search for context in files
+  for my $file (@files) {
+    next unless -r $file->[0] && open my $handle, '<:utf8', $file->[0];
+    $self->_context($file->[1], [[<$handle>]]);
+    return $self;
+  }
+
+  # Search for context in sources
+  $self->_context($files[-1][1], [map { [split "\n"] } @sources]) if @sources;
+
+  return $self;
 }
 
-sub throw { die shift->new->trace(2)->_detect(@_) }
+sub new { @_ > 1 ? shift->SUPER::new(message => shift) : shift->SUPER::new }
 
 sub to_string {
   my $self = shift;
 
-  return $self->message unless $self->verbose;
-  my $str = $self->message ? $self->message : '';
+  my $str = $self->message;
+  return $str unless $self->verbose;
 
-  # Before
+  $str .= "\n" unless $str =~ /\n$/;
   $str .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_before};
-
-  # Line
-  $str .= ($self->line->[0] . ': ' . $self->line->[1] . "\n")
-    if $self->line->[0];
-
-  # After
+  $str .= $self->line->[0] . ': ' . $self->line->[1] . "\n" if $self->line->[0];
   $str .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_after};
 
   return $str;
 }
 
+sub throw { CORE::die shift->new(shift)->trace(2)->inspect }
+
 sub trace {
-  my ($self, $start) = @_;
-  $start //= 1;
+  my ($self, $start) = (shift, shift // 1);
   my @frames;
   while (my @trace = caller($start++)) { push @frames, \@trace }
   return $self->frames(\@frames);
 }
 
+sub _append {
+  my ($stack, $line) = @_;
+  chomp $line;
+  push @$stack, $line;
+}
+
 sub _context {
-  my ($self, $num, $lines) = @_;
+  my ($self, $num, $sources) = @_;
 
   # Line
-  return unless defined $lines->[0][$num - 1];
+  return unless defined $sources->[0][$num - 1];
   $self->line([$num]);
-  for my $line (@$lines) {
-    chomp(my $code = $line->[$num - 1]);
-    push @{$self->line}, $code;
-  }
+  _append($self->line, $_->[$num - 1]) for @$sources;
 
   # Before
   for my $i (2 .. 6) {
     last if ((my $previous = $num - $i) < 0);
-    next unless defined $lines->[0][$previous];
     unshift @{$self->lines_before}, [$previous + 1];
-    for my $line (@$lines) {
-      chomp(my $code = $line->[$previous]);
-      push @{$self->lines_before->[0]}, $code;
-    }
+    _append($self->lines_before->[0], $_->[$previous]) for @$sources;
   }
 
   # After
   for my $i (0 .. 4) {
     next if ((my $next = $num + $i) < 0);
-    next unless defined $lines->[0][$next];
+    next unless defined $sources->[0][$next];
     push @{$self->lines_after}, [$next + 1];
-    for my $line (@$lines) {
-      last unless defined(my $code = $line->[$next]);
-      chomp $code;
-      push @{$self->lines_after->[-1]}, $code;
-    }
+    _append($self->lines_after->[-1], $_->[$next]) for @$sources;
   }
-}
-
-sub _detect {
-  my ($self, $msg, $files) = @_;
-
-  return $msg if blessed $msg && $msg->isa('Mojo::Exception');
-  $self->message($msg);
-
-  # Extract file and line from message
-  my @trace;
-  while ($msg =~ /at\s+(.+?)\s+line\s+(\d+)/g) { unshift @trace, [$1, $2] }
-
-  # Extract file and line from stacktrace
-  my $first = $self->frames->[0];
-  unshift @trace, [$first->[1], $first->[2]] if $first;
-
-  # Search for context in files
-  for my $frame (@trace) {
-    next unless -r $frame->[0] && open my $handle, '<:utf8', $frame->[0];
-    $self->_context($frame->[1], [[<$handle>]]);
-    return $self;
-  }
-
-  # More context
-  $self->_context($trace[0][1], [map { [split /\n/] } @$files]) if $files;
-
-  return $self;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -117,11 +97,16 @@ Mojo::Exception - Exceptions with context
 
   use Mojo::Exception;
 
-  # Throw exception
-  Mojo::Exception->throw('Not again!');
+  # Throw exception and show stack trace
+  eval { Mojo::Exception->throw('Something went wrong!') };
+  say "$_->[1]:$_->[2]" for @{$@->frames};
 
   # Customize exception
-  die Mojo::Exception->new('Not again!')->trace(2)->verbose(1);
+  eval {
+    my $e = Mojo::Exception->new('Died at test.pl line 3.');
+    die $e->trace(2)->inspect->verbose(1);
+  };
+  say $@;
 
 =head1 DESCRIPTION
 
@@ -134,80 +119,119 @@ L<Mojo::Exception> implements the following attributes.
 =head2 frames
 
   my $frames = $e->frames;
-  $e         = $e->frames($frames);
+  $e         = $e->frames([$frame1, $frame2]);
 
-Stacktrace.
+Stack trace if available.
+
+  # Extract information from the last frame
+  my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext,
+      $is_require, $hints, $bitmask, $hinthash) = @{$e->frames->[-1]};
 
 =head2 line
 
   my $line = $e->line;
-  $e       = $e->line([3 => 'foo']);
+  $e       = $e->line([3, 'die;']);
 
-The line where the exception occurred.
+The line where the exception occurred if available.
 
 =head2 lines_after
 
   my $lines = $e->lines_after;
-  $e        = $e->lines_after([[1 => 'bar'], [2 => 'baz']]);
+  $e        = $e->lines_after([[4, 'say $foo;'], [5, 'say $bar;']]);
 
-Lines after the line where the exception occurred.
+Lines after the line where the exception occurred if available.
 
 =head2 lines_before
 
   my $lines = $e->lines_before;
-  $e        = $e->lines_before([[4 => 'bar'], [5 => 'baz']]);
+  $e        = $e->lines_before([[1, 'my $foo = 23;'], [2, 'my $bar = 24;']]);
 
-Lines before the line where the exception occurred.
+Lines before the line where the exception occurred if available.
 
 =head2 message
 
   my $msg = $e->message;
-  $e      = $e->message('Oops!');
+  $e      = $e->message('Died at test.pl line 3.');
 
-Exception message.
+Exception message, defaults to C<Exception!>.
 
 =head2 verbose
 
-  my $verbose = $e->verbose;
-  $e          = $e->verbose(1);
+  my $bool = $e->verbose;
+  $e       = $e->verbose($bool);
 
-Render exception with context.
+Enable context information for L</"to_string">.
 
 =head1 METHODS
 
 L<Mojo::Exception> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
+=head2 inspect
+
+  $e = $e->inspect;
+  $e = $e->inspect($source1, $source2);
+
+Inspect L</"message">, L</"frames"> and optional additional sources to fill
+L</"lines_before">, L</"line"> and L</"lines_after"> with context information.
+
 =head2 new
 
-  my $e = Mojo::Exception->new('Oops!');
-  my $e = Mojo::Exception->new('Oops!', $files);
+  my $e = Mojo::Exception->new;
+  my $e = Mojo::Exception->new('Died at test.pl line 3.');
 
-Construct a new L<Mojo::Exception> object.
-
-=head2 throw
-
-  Mojo::Exception->throw('Oops!');
-  Mojo::Exception->throw('Oops!', $files);
-
-Throw exception with stacktrace.
+Construct a new L<Mojo::Exception> object and assign L</"message"> if necessary.
 
 =head2 to_string
 
   my $str = $e->to_string;
-  my $str = "$e";
 
 Render exception.
+
+  # Render exception with context
+  say $e->verbose(1)->to_string;
+
+=head2 throw
+
+  Mojo::Exception->throw('Something went wrong!');
+
+Throw exception from the current execution context.
+
+  # Longer version
+  die Mojo::Exception->new('Something went wrong!')->trace->inspect;
 
 =head2 trace
 
   $e = $e->trace;
-  $e = $e->trace(2);
+  $e = $e->trace($skip);
 
-Store stacktrace.
+Generate stack trace and store all L</"frames">, defaults to skipping C<1> call
+frame.
+
+  # Skip 3 call frames
+  $e->trace(3);
+
+  # Skip no call frames
+  $e->trace(0);
+
+=head1 OPERATORS
+
+L<Mojo::Exception> overloads the following operators.
+
+=head2 bool
+
+  my $bool = !!$e;
+
+Always true.
+
+=head2 stringify
+
+  my $str = "$e";
+
+Alias for L</"to_string">.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

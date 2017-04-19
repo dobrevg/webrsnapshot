@@ -8,7 +8,7 @@ sub run {
   my $req = $tx->req->parse($env);
   $tx->local_port($env->{SERVER_PORT})->remote_address($env->{REMOTE_ADDR});
 
-  # Request body
+  # Request body (may block if we try to read too much)
   my $len = $env->{CONTENT_LENGTH};
   until ($req->is_finished) {
     my $chunk = ($len && $len < 131072) ? $len : 131072;
@@ -17,20 +17,17 @@ sub run {
     last if ($len -= $read) <= 0;
   }
 
-  # Handle request
   $self->emit(request => $tx);
 
   # Response headers
-  my $res     = $tx->res->fix_headers;
-  my $headers = $res->content->headers;
+  my $res  = $tx->res->fix_headers;
+  my $hash = $res->headers->to_hash(1);
   my @headers;
-  for my $name (@{$headers->names}) {
-    push @headers, $name => $_ for map {@$_} $headers->header($name);
-  }
+  for my $name (keys %$hash) { push @headers, $name, $_ for @{$hash->{$name}} }
 
   # PSGI response
   my $io = Mojo::Server::PSGI::_IO->new(tx => $tx, empty => $tx->is_empty);
-  return [$res->code || 404, \@headers, $io];
+  return [$res->code // 404, \@headers, $io];
 }
 
 sub to_psgi_app {
@@ -45,7 +42,7 @@ package Mojo::Server::PSGI::_IO;
 use Mojo::Base -base;
 
 # Finish transaction
-sub close { shift->{tx}->server_close }
+sub close { shift->{tx}->closed }
 
 sub getline {
   my $self = shift;
@@ -66,6 +63,8 @@ sub getline {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Server::PSGI - PSGI server
@@ -75,8 +74,7 @@ Mojo::Server::PSGI - PSGI server
   use Mojo::Server::PSGI;
 
   my $psgi = Mojo::Server::PSGI->new;
-  $psgi->unsubscribe('request');
-  $psgi->on(request => sub {
+  $psgi->unsubscribe('request')->on(request => sub {
     my ($psgi, $tx) = @_;
 
     # Request
@@ -95,14 +93,18 @@ Mojo::Server::PSGI - PSGI server
 
 =head1 DESCRIPTION
 
-L<Mojo::Server::PSGI> allows L<Mojo> applications to run on all PSGI
+L<Mojo::Server::PSGI> allows L<Mojolicious> applications to run on all L<PSGI>
 compatible servers.
 
-See L<Mojolicious::Guides::Cookbook> for more.
+See L<Mojolicious::Guides::Cookbook/"DEPLOYMENT"> for more.
 
 =head1 EVENTS
 
 L<Mojo::Server::PSGI> inherits all events from L<Mojo::Server>.
+
+=head1 ATTRIBUTES
+
+L<Mojo::Server::PSGI> inherits all attributes from L<Mojo::Server>.
 
 =head1 METHODS
 
@@ -123,6 +125,6 @@ Turn L<Mojo> application into L<PSGI> application.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

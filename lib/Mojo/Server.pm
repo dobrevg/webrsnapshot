@@ -2,46 +2,58 @@ package Mojo::Server;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
-use FindBin;
-use Mojo::Loader;
+use Mojo::File 'path';
+use Mojo::Loader 'load_class';
 use Mojo::Util 'md5_sum';
+use POSIX ();
 use Scalar::Util 'blessed';
 
-has app => sub { shift->build_app('Mojo::HelloWorld') };
-
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->on(request => sub { shift->app->handler(shift) });
-  return $self;
-}
+has app           => sub { shift->build_app('Mojo::HelloWorld') };
+has reverse_proxy => sub { $ENV{MOJO_REVERSE_PROXY} };
 
 sub build_app {
-  my ($self, $app) = @_;
+  my ($self, $app) = (shift, shift);
   local $ENV{MOJO_EXE};
-  return $app->new unless my $e = Mojo::Loader->new->load($app);
-  die ref $e ? $e : qq{Couldn't find application class "$app".\n};
+  return $self->app($app->new(@_))->app unless my $e = load_class $app;
+  die ref $e ? $e : qq{Can't find application class "$app" in \@INC. (@INC)\n};
 }
 
-sub build_tx { shift->app->build_tx }
+sub build_tx {
+  my $self = shift;
+  my $tx   = $self->app->build_tx;
+  $tx->req->reverse_proxy(1) if $self->reverse_proxy;
+  return $tx;
+}
+
+sub daemonize {
+
+  # Fork and kill parent
+  die "Can't fork: $!" unless defined(my $pid = fork);
+  exit 0 if $pid;
+  POSIX::setsid or die "Can't start a new session: $!";
+
+  # Close filehandles
+  open STDIN,  '</dev/null';
+  open STDOUT, '>/dev/null';
+  open STDERR, '>&STDOUT';
+}
 
 sub load_app {
   my ($self, $path) = @_;
 
-  # Clean environment (reset FindBin)
+  # Clean environment (reset FindBin defensively)
   {
-    local $0 = $path;
+    local $0 = $path = path($path)->to_abs->to_string;
+    require FindBin;
     FindBin->again;
     local $ENV{MOJO_APP_LOADER} = 1;
     local $ENV{MOJO_EXE};
 
     # Try to load application from script into sandbox
-    my $app = eval sprintf <<'EOF', md5_sum($path . $$);
-package Mojo::Server::SandBox::%s;
-my $app = do $path;
-if (!$app && (my $e = $@ || $!)) { die $e }
-$app;
-EOF
-    die qq{Couldn't load application from file "$path": $@} if !$app && $@;
+    delete $INC{$path};
+    my $app = eval
+      "package Mojo::Server::Sandbox::@{[md5_sum $path]}; require \$path";
+    die qq{Can't load application from file "$path": $@} if $@;
     die qq{File "$path" did not return an application object.\n}
       unless blessed $app && $app->isa('Mojo');
     $self->app($app);
@@ -51,13 +63,21 @@ EOF
   return $self->app;
 }
 
+sub new {
+  my $self = shift->SUPER::new(@_);
+  $self->on(request => sub { shift->app->handler(shift) });
+  return $self;
+}
+
 sub run { croak 'Method "run" not implemented by subclass' }
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
-Mojo::Server - HTTP server base class
+Mojo::Server - HTTP/WebSocket server base class
 
 =head1 SYNOPSIS
 
@@ -76,12 +96,15 @@ Mojo::Server - HTTP server base class
 
 =head1 DESCRIPTION
 
-L<Mojo::Server> is an abstract HTTP server base class.
+L<Mojo::Server> is an abstract base class for HTTP/WebSocket servers and server
+interfaces, like L<Mojo::Server::CGI>, L<Mojo::Server::Daemon>,
+L<Mojo::Server::Hypnotoad>, L<Mojo::Server::Morbo>, L<Mojo::Server::Prefork>
+and L<Mojo::Server::PSGI>.
 
 =head1 EVENTS
 
-L<Mojo::Server> inherits all events from L<Mojo::EventEmitter> and can emit
-the following new ones.
+L<Mojo::Server> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
 
 =head2 request
 
@@ -92,8 +115,7 @@ the following new ones.
 
 Emitted when a request is ready and needs to be handled.
 
-  $server->unsubscribe('request');
-  $server->on(request => sub {
+  $server->unsubscribe('request')->on(request => sub {
     my ($server, $tx) = @_;
     $tx->res->code(200);
     $tx->res->headers->content_type('text/plain');
@@ -112,23 +134,26 @@ L<Mojo::Server> implements the following attributes.
 
 Application this server handles, defaults to a L<Mojo::HelloWorld> object.
 
+=head2 reverse_proxy
+
+  my $bool = $server->reverse_proxy;
+  $server  = $server->reverse_proxy($bool);
+
+This server operates behind a reverse proxy, defaults to the value of the
+C<MOJO_REVERSE_PROXY> environment variable.
+
 =head1 METHODS
 
 L<Mojo::Server> inherits all methods from L<Mojo::EventEmitter> and implements
 the following new ones.
 
-=head2 new
-
-  my $server = Mojo::Server->new;
-
-Construct a new L<Mojo::Server> object and subscribe to C<request> event with
-default request handling.
-
 =head2 build_app
 
-  my $app = $server->build_app('Mojo::HelloWorld');
+  my $app = $server->build_app('MyApp');
+  my $app = $server->build_app('MyApp', log => Mojo::Log->new);
+  my $app = $server->build_app('MyApp', {log => Mojo::Log->new});
 
-Build application from class.
+Build application from class and assign it to L</"app">.
 
 =head2 build_tx
 
@@ -136,13 +161,28 @@ Build application from class.
 
 Let application build a transaction.
 
+=head2 daemonize
+
+  $server->daemonize;
+
+Daemonize server process.
+
 =head2 load_app
 
   my $app = $server->load_app('/home/sri/myapp.pl');
 
-Load application from script.
+Load application from script and assign it to L</"app">.
 
   say Mojo::Server->new->load_app('./myapp.pl')->home;
+
+=head2 new
+
+  my $server = Mojo::Server->new;
+  my $server = Mojo::Server->new(reverse_proxy => 1);
+  my $server = Mojo::Server->new({reverse_proxy => 1});
+
+Construct a new L<Mojo::Server> object and subscribe to L</"request"> event
+with default request handling.
 
 =head2 run
 
@@ -152,6 +192,6 @@ Run server. Meant to be overloaded in a subclass.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

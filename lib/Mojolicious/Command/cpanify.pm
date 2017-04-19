@@ -1,34 +1,25 @@
 package Mojolicious::Command::cpanify;
 use Mojo::Base 'Mojolicious::Command';
 
-use File::Basename 'basename';
-use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
-use Mojo::UserAgent;
+use Mojo::File 'path';
+use Mojo::Util 'getopt';
 
-has description => "Upload distribution to CPAN.\n";
-has usage       => <<"EOF";
-usage: $0 cpanify [OPTIONS] [FILE]
-
-  mojo cpanify -u sri -p secr3t Mojolicious-Plugin-MyPlugin-0.01.tar.gz
-
-These options are available:
-  -p, --password <password>   PAUSE password.
-  -u, --user <name>           PAUSE username.
-EOF
+has description => 'Upload distribution to CPAN';
+has usage => sub { shift->extract_usage };
 
 sub run {
   my ($self, @args) = @_;
 
-  GetOptionsFromArray \@args,
+  getopt \@args,
     'p|password=s' => \(my $password = ''),
     'u|user=s'     => \(my $user     = '');
   die $self->usage unless my $file = shift @args;
 
-  my $tx = Mojo::UserAgent->new->detect_proxy->post(
+  my $tx = $self->app->ua->tap(sub { $_->proxy->detect })->post(
     "https://$user:$password\@pause.perl.org/pause/authenquery" => form => {
       HIDDENNAME                        => $user,
       CAN_MULTIPART                     => 1,
-      pause99_add_uri_upload            => basename($file),
+      pause99_add_uri_upload            => path($file)->basename,
       SUBMIT_pause99_add_uri_httpupload => ' Upload this file from my disk ',
       pause99_add_uri_uri               => '',
       pause99_add_uri_httpupload        => {file => $file},
@@ -36,11 +27,11 @@ sub run {
   );
 
   unless ($tx->success) {
-    my $code = $tx->res->code || '';
-    my $msg = $tx->error;
-    if    ($code eq '401') { $msg = 'Wrong username or password.' }
-    elsif ($code eq '409') { $msg = 'File already exists on CPAN.' }
-    die qq{Problem uploading file "$file". ($msg)\n};
+    my $code = $tx->res->code // 0;
+    my $msg = $tx->error->{message};
+    if    ($code == 401) { $msg = 'Wrong username or password.' }
+    elsif ($code == 409) { $msg = 'File already exists on CPAN.' }
+    die qq{Problem uploading file "$file": $msg\n};
   }
 
   say 'Upload successful!';
@@ -48,16 +39,22 @@ sub run {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
-Mojolicious::Command::cpanify - Cpanify command
+Mojolicious::Command::cpanify - CPAN-ify command
 
 =head1 SYNOPSIS
 
-  use Mojolicious::Command::cpanify;
+  Usage: APPLICATION cpanify [OPTIONS] [FILE]
 
-  my $cpanify = Mojolicious::Command::cpanify->new;
-  $cpanify->run(@ARGV);
+    mojo cpanify -u sri -p secr3t Mojolicious-Plugin-MyPlugin-0.01.tar.gz
+
+  Options:
+    -h, --help                  Show this summary of available options
+    -p, --password <password>   PAUSE password
+    -u, --user <name>           PAUSE username
 
 =head1 DESCRIPTION
 
@@ -65,6 +62,9 @@ L<Mojolicious::Command::cpanify> uploads files to CPAN.
 
 This is a core command, that means it is always enabled and its code a good
 example for learning to build new commands, you're welcome to fork it.
+
+See L<Mojolicious::Commands/"COMMANDS"> for a list of commands that are
+available by default.
 
 =head1 ATTRIBUTES
 
@@ -74,14 +74,14 @@ L<Mojolicious::Command> and implements the following new ones.
 =head2 description
 
   my $description = $cpanify->description;
-  $cpanify        = $cpanify->description('Foo!');
+  $cpanify        = $cpanify->description('Foo');
 
 Short description of this command, used for the command list.
 
 =head2 usage
 
   my $usage = $cpanify->usage;
-  $cpanify  = $cpanify->usage('Foo!');
+  $cpanify  = $cpanify->usage('Foo');
 
 Usage information for this command, used for the help screen.
 
@@ -98,6 +98,6 @@ Run this command.
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

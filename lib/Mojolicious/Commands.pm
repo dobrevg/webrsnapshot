@@ -1,33 +1,18 @@
 package Mojolicious::Commands;
 use Mojo::Base 'Mojolicious::Command';
 
-use Getopt::Long 'GetOptions';
-use List::Util 'max';
+use Mojo::Loader qw(find_modules find_packages load_class);
 use Mojo::Server;
+use Mojo::Util qw(getopt tablify);
 
-has hint => <<"EOF";
+has hint => <<EOF;
 
-These options are available for all commands:
-    -h, --help          Get more information on a specific command.
-        --home <path>   Path to your applications home directory, defaults to
-                        the value of MOJO_HOME or auto detection.
-    -m, --mode <name>   Run mode of your application, defaults to the value of
-                        MOJO_MODE/PLACK_ENV or "development".
-
-See '$0 help COMMAND' for more information on a specific command.
+See 'APPLICATION help COMMAND' for more information on a specific command.
 EOF
-has message => <<"EOF";
-usage: $0 COMMAND [OPTIONS]
-
-Tip: CGI and PSGI environments can be automatically detected very often and
-     work without commands.
-
-These commands are currently available:
-EOF
+has message    => sub { shift->extract_usage . "\nCommands:\n" };
 has namespaces => sub { ['Mojolicious::Command'] };
 
 sub detect {
-  my ($self, $guess) = @_;
 
   # PSGI (Plack only for now)
   return 'psgi' if defined $ENV{PLACK_ENV};
@@ -36,18 +21,7 @@ sub detect {
   return 'cgi' if defined $ENV{PATH_INFO} || defined $ENV{GATEWAY_INTERFACE};
 
   # Nothing
-  return $guess;
-}
-
-# Command line options for MOJO_HELP, MOJO_HOME and MOJO_MODE
-BEGIN {
-  Getopt::Long::Configure(qw(no_auto_abbrev no_ignore_case pass_through));
-  GetOptions(
-    'h|help'   => sub { $ENV{MOJO_HELP} = 1 },
-    'home=s'   => sub { $ENV{MOJO_HOME} = $_[1] },
-    'm|mode=s' => sub { $ENV{MOJO_MODE} = $_[1] }
-  ) unless __PACKAGE__->detect;
-  Getopt::Long::Configure('default');
+  return undef;
 }
 
 sub run {
@@ -57,15 +31,17 @@ sub run {
   return $self->app if defined $ENV{MOJO_APP_LOADER};
 
   # Try to detect environment
-  $name = $self->detect($name) unless $ENV{MOJO_NO_DETECT};
+  if (!$ENV{MOJO_NO_DETECT} && (my $env = $self->detect)) { $name = $env }
 
   # Run command
   if ($name && $name =~ /^\w+$/ && ($name ne 'help' || $args[0])) {
 
     # Help
     $name = shift @args if my $help = $name eq 'help';
-    $help = $ENV{MOJO_HELP} = $ENV{MOJO_HELP} ? 1 : $help;
+    $help = $ENV{MOJO_HELP} ||= $help;
 
+    # Remove options shared by all commands before loading the command
+    _args(\@args);
     my $module;
     $module = _command("${_}::$name", 1) and last for @{$self->namespaces};
 
@@ -82,40 +58,40 @@ sub run {
   return 1 if $ENV{HARNESS_ACTIVE};
 
   # Find all available commands
-  my (@commands, %seen);
-  my $loader = Mojo::Loader->new;
-  for my $namespace (@{$self->namespaces}) {
-    for my $module (@{$loader->search($namespace)}) {
-      next unless my $command = _command($module);
-      $command =~ s/^${namespace}:://;
-      push @commands, [$command => $module] unless $seen{$command}++;
-    }
+  my %all;
+  for my $ns (@{$self->namespaces}) {
+    $all{substr $_, length "${ns}::"} //= $_->new->description
+      for grep { _command($_) } find_modules($ns), find_packages($ns);
   }
 
-  # Print list of all available commands
-  my $max = max map { length $_->[0] } @commands;
-  print $self->message;
-  for my $command (@commands) {
-    my $name        = $command->[0];
-    my $description = $command->[1]->new->description;
-    print "  $name", (' ' x ($max - length $name)), "   $description";
-  }
-  return print $self->hint;
+  my @rows = map { [" $_", $all{$_}] } sort keys %all;
+  return print $self->message, tablify(\@rows), $self->hint;
 }
 
-sub start_app {
-  my $self = shift;
-  return Mojo::Server->new->build_app(shift)->start(@_);
+sub start_app { shift; Mojo::Server->new->build_app(shift)->start(@_) }
+
+# Command line options for MOJO_HELP, MOJO_HOME and MOJO_MODE
+sub _args {
+  getopt shift, ['pass_through'],
+    'h|help'   => \$ENV{MOJO_HELP},
+    'home=s'   => \$ENV{MOJO_HOME},
+    'm|mode=s' => \$ENV{MOJO_MODE}
+    unless __PACKAGE__->detect;
 }
+
+# Do not remove options from @ARGV
+BEGIN { _args([@ARGV]) }
 
 sub _command {
   my ($module, $fatal) = @_;
   return $module->isa('Mojolicious::Command') ? $module : undef
-    unless my $e = Mojo::Loader->new->load($module);
+    unless my $e = load_class $module;
   $fatal && ref $e ? die $e : return undef;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -123,15 +99,27 @@ Mojolicious::Commands - Command line interface
 
 =head1 SYNOPSIS
 
-  use Mojolicious::Commands;
+  Usage: APPLICATION COMMAND [OPTIONS]
 
-  my $commands = Mojolicious::Commands->new;
-  push @{$commands->namespaces}, 'MyApp::Command';
-  $commands->run('daemon');
+    mojo version
+    mojo generate lite_app
+    ./myapp.pl daemon -m production -l http://*:8080
+    ./myapp.pl get /foo
+    ./myapp.pl routes -v
+
+  Tip: CGI and PSGI environments can be automatically detected very often and
+       work without commands.
+
+  Options (for all commands):
+    -h, --help          Get more information on a specific command
+        --home <path>   Path to home directory of your application, defaults to
+                        the value of MOJO_HOME or auto-detection
+    -m, --mode <name>   Operating mode for your application, defaults to the
+                        value of MOJO_MODE/PLACK_ENV or "development"
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Commands> is the interactive command line interface to the
+L<Mojolicious::Commands> is the interactive command line interface for the
 L<Mojolicious> framework. It will automatically detect available commands in
 the C<Mojolicious::Command> namespace.
 
@@ -139,42 +127,31 @@ the C<Mojolicious::Command> namespace.
 
 These commands are available by default.
 
-=head2 help
-
-  $ mojo
-  $ mojo help
-  $ ./myapp.pl help
-
-List available commands with short descriptions.
-
-  $ mojo help <command>
-  $ ./myapp.pl help <command>
-
-List available options for the command with short descriptions.
-
 =head2 cgi
 
   $ ./myapp.pl cgi
 
-Start application with CGI backend, usually auto detected.
+Use L<Mojolicious::Command::cgi> to start application with CGI backend, usually
+auto detected.
 
 =head2 cpanify
 
   $ mojo cpanify -u sri -p secr3t Mojolicious-Plugin-Fun-0.1.tar.gz
 
-Upload files to CPAN.
+Use L<Mojolicious::Command::cpanify> for uploading files to CPAN.
 
 =head2 daemon
 
   $ ./myapp.pl daemon
 
-Start application with standalone HTTP and WebSocket server.
+Use L<Mojolicious::Command::daemon> to start application with standalone HTTP
+and WebSocket server.
 
 =head2 eval
 
   $ ./myapp.pl eval 'say app->home'
 
-Run code against application.
+Use L<Mojolicious::Command::eval> to run code against application.
 
 =head2 generate
 
@@ -193,74 +170,94 @@ List available options for generator command with short descriptions.
 
   $ mojo generate app <AppName>
 
-Generate application directory structure for a fully functional L<Mojolicious>
-application.
+Use L<Mojolicious::Command::generate::app> to generate application directory
+structure for a fully functional L<Mojolicious> application.
 
 =head2 generate lite_app
 
   $ mojo generate lite_app
 
-Generate a fully functional L<Mojolicious::Lite> application.
+Use L<Mojolicious::Command::generate::lite_app> to generate a fully functional
+L<Mojolicious::Lite> application.
 
 =head2 generate makefile
 
   $ mojo generate makefile
   $ ./myapp.pl generate makefile
 
-Generate C<Makefile.PL> file for application.
+Use L<Mojolicious::Command::generate::makefile> to generate C<Makefile.PL> file
+for application.
 
 =head2 generate plugin
 
   $ mojo generate plugin <PluginName>
 
-Generate directory structure for a fully functional L<Mojolicious> plugin.
+Use L<Mojolicious::Command::generate::plugin> to generate directory structure
+for a fully functional L<Mojolicious> plugin.
 
 =head2 get
 
-  $ mojo get http://mojolicio.us
+  $ mojo get http://mojolicious.org
   $ ./myapp.pl get /foo
 
-Perform requests to remote host or local application.
+Use L<Mojolicious::Command::get> to perform requests to remote host or local
+application.
+
+=head2 help
+
+  $ mojo
+  $ mojo help
+  $ ./myapp.pl help
+
+List available commands with short descriptions.
+
+  $ mojo help <command>
+  $ ./myapp.pl help <command>
+
+List available options for the command with short descriptions.
 
 =head2 inflate
 
   $ ./myapp.pl inflate
 
-Turn templates and static files embedded in the C<DATA> sections of your
-application into real files.
+Use L<Mojolicious::Command::inflate> to turn templates and static files
+embedded in the C<DATA> sections of your application into real files.
 
 =head2 prefork
 
   $ ./myapp.pl prefork
 
-Start application with standalone preforking HTTP and WebSocket server.
+Use L<Mojolicious::Command::prefork> to start application with standalone
+pre-forking HTTP and WebSocket server.
 
 =head2 psgi
 
   $ ./myapp.pl psgi
 
-Start application with PSGI backend, usually auto detected.
+Use L<Mojolicious::Command::psgi> to start application with PSGI backend,
+usually auto detected.
 
 =head2 routes
 
   $ ./myapp.pl routes
 
-List application routes.
+Use L<Mojolicious::Command::routes> to list application routes.
 
 =head2 test
 
   $ ./myapp.pl test
   $ ./myapp.pl test t/fun.t
 
-Runs application tests from the C<t> directory.
+Use L<Mojolicious::Command::test> to run application tests from the C<t>
+directory.
 
 =head2 version
 
   $ mojo version
   $ ./myapp.pl version
 
-Show version information for installed core and optional modules, very useful
-for debugging.
+Use L<Mojolicious::Command::version> to show version information for available
+core and optional modules, very useful for debugging.
 
 =head1 ATTRIBUTES
 
@@ -270,7 +267,7 @@ and implements the following new ones.
 =head2 hint
 
   my $hint  = $commands->hint;
-  $commands = $commands->hint('Foo!');
+  $commands = $commands->hint('Foo');
 
 Short hint shown after listing available commands.
 
@@ -299,9 +296,8 @@ implements the following new ones.
 =head2 detect
 
   my $env = $commands->detect;
-  my $env = $commands->detect($guess);
 
-Try to detect environment.
+Try to detect environment, or return C<undef> if none could be detected.
 
 =head2 run
 
@@ -309,20 +305,22 @@ Try to detect environment.
   $commands->run(@ARGV);
 
 Load and run commands. Automatic deployment environment detection can be
-disabled with the MOJO_NO_DETECT environment variable.
+disabled with the C<MOJO_NO_DETECT> environment variable.
 
 =head2 start_app
 
   Mojolicious::Commands->start_app('MyApp');
   Mojolicious::Commands->start_app(MyApp => @ARGV);
 
-Load application and start the command line interface for it.
+Load application from class and start the command line interface for it. Note
+that the options C<-h>/C<--help>, C<--home> and C<-m>/C<--mode>, which are
+shared by all commands, will be parsed from C<@ARGV> during compile time.
 
-  # Always start daemon for application and ignore @ARGV
+  # Always start daemon for application
   Mojolicious::Commands->start_app('MyApp', 'daemon', '-l', 'http://*:8080');
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Mojolicious>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut
