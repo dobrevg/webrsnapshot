@@ -1,7 +1,7 @@
+use warnings;
+use strict;
 package Mojolicious::Plugin::Authentication;
-{
-  $Mojolicious::Plugin::Authentication::VERSION = '1.25';
-}
+$Mojolicious::Plugin::Authentication::VERSION = '1.29';
 use Mojo::Base 'Mojolicious::Plugin';
 
 sub register {
@@ -25,12 +25,14 @@ sub register {
     my $load_user_cb      = $args->{load_user};
     my $validate_user_cb  = $args->{validate_user};
     my $current_user_fn   = $args->{current_user_fn} || 'current_user';
+    my $fail_render       = $args->{fail_render};
 
     # Unconditionally load the user based on uid in session
     my $user_loader_sub = sub {
         my $c = shift;
+        my $uid = $c->session($session_key);
 
-        if (my $uid = $c->session($session_key)) {
+        if (defined($uid)) {
             my $user = $load_user_cb->($c, $uid);
             if ($user) {
                 $c->stash($our_stash_key => { user => $user });
@@ -67,7 +69,9 @@ sub register {
 
     $app->routes->add_condition(authenticated => sub {
         my ($r, $c, $captures, $required) = @_;
-        return (!$required || $c->is_user_authenticated) ? 1 : 0;
+        my $res = (!$required || $c->is_user_authenticated) ? 1 : 0;
+        $c->render(%$fail_render) if $fail_render && !$res;
+        return $res;
     });
 
     $app->routes->add_condition(signed => sub {
@@ -118,15 +122,24 @@ sub register {
 
     $app->helper(authenticate => sub {
         my ($c, $user, $pass, $extradata) = @_;
-        if (my $uid = $validate_user_cb->($c, $user, $pass, $extradata)) {
+
+        $extradata ||= {};
+        my $uid = $validate_user_cb->($c, $user, $pass, $extradata);
+
+        # if extradata contains "auto_validate", assume the passed username is in fact valid, and
+        # auto_validate contains the uid; used for oAuth and other stuff that does not work with
+        # usernames and passwords; use this with extreme care if you must
+        if(defined($extradata->{auto_validate})) {
+            $c->session($session_key => $extradata->{auto_validate});
+            delete $c->stash->{$our_stash_key};
+            return 1 if defined( $current_user->($c) );
+        } elsif (defined($uid)) {
             $c->session($session_key => $uid);
             # Clear stash to force reload of any already loaded user object
             delete $c->stash->{$our_stash_key};
             return 1 if defined( $current_user->($c) );
-            # Failed to load user object. Perhaps some kind of race condition or other error?
-            return;
         }
-        return;
+        return undef;
     });
 }
 
@@ -138,7 +151,7 @@ Mojolicious::Plugin::Authentication - A plugin to make authentication a bit easi
 
 =head1 VERSION
 
-version 1.25
+version 1.29
 
 =head1 SYNOPSIS
 
@@ -153,7 +166,7 @@ version 1.25
     });
 
     if ($self->authenticate('username', 'password', { optional => 'extra data stuff' })) {
-        ... 
+        ...
     }
 
 
@@ -161,7 +174,7 @@ version 1.25
 
 =head2 authenticate($username, $password, $extra_data_hashref)
 
-Authenticate will use the supplied C<load_user> and C<validate_user> subroutine refs to see whether a user exists with the given username and password, and will set up the session accordingly.  Returns true when the user has been successfully authenticated, false otherwise. You can pass additional data along in the extra_data hashref, it will be passed to your C<validate_user> subroutine as-is.
+Authenticate will use the supplied C<load_user> and C<validate_user> subroutine refs to see whether a user exists with the given username and password, and will set up the session accordingly.  Returns true when the user has been successfully authenticated, false otherwise. You can pass additional data along in the extra_data hashref, it will be passed to your C<validate_user> subroutine as-is. If the extra data hash contains a key 'auto_validate', the value of that key will be used as the UID, and authenticate will not call your validate_user callback; this can be used when working with oAuth tokens or other authentication mechanisms that do not use a local username and password form.
 
 =head2 is_user_authenticated
 
@@ -201,7 +214,7 @@ The following options can be set for the plugin:
 
 =item current_user_fn (optional) Set the name for the current_user() helper function
 
-=back 
+=back
 
 In order to set the session expiry time, use the following in your startup routine:
 
@@ -213,7 +226,7 @@ In order to set the session expiry time, use the following in your startup routi
 
 The coderef you pass to the load_user configuration key has the following signature:
 
-    sub { 
+    sub {
         my ($app, $uid) = @_;
         ...
         return $user;
@@ -231,7 +244,7 @@ User validation is what happens when we need to authenticate someone. The codere
         return $uid;
     }
 
-You must return either a user id or undef. The user id can be numerical or a string. Do not return hashrefs, arrayrefs or objects, since the behaviour of this plugin could get a little bit on the odd side of weird if you do that. 
+You must return either a user id or undef. The user id can be numerical or a string. Do not return hashrefs, arrayrefs or objects, since the behaviour of this plugin could get a little bit on the odd side of weird if you do that.
 
 =head1 EXAMPLES
 
@@ -246,7 +259,7 @@ This plugin also exports a routing condition you can use in order to limit acces
     my $authenticated_only = $r->route('/members')->over(authenticated => 1)->to('members#index');
     $authenticated_only->route('online')->to('members#online');
 
-If someone is not authenticated, these routes will not be considered by the dispatcher and unless you have set up a catch-all route, a 404 Not Found will be generated instead. 
+If someone is not authenticated, these routes will not be considered by the dispatcher and unless you have set up a catch-all route, a 404 Not Found will be generated instead.
 
 And another condition for fast and unsecured checking for users, having a signature (without validating it). This method just checks client cookies for uid data existing.
 
@@ -282,7 +295,7 @@ Lazy and unsecured methods:
 
 If you want to be able to send people to a login page, you will have to use the following:
 
-    my $auth_bridge = $r->bridge('/members')->to('auth#check');
+    my $auth_bridge = $r->under('/members')->to('auth#check');
     $auth_bridge->route('/list')->to('members#list'); # only visible to logged in users
 
 And in your Auth controller you would put:
@@ -340,10 +353,10 @@ L<http://search.cpan.org/dist/Mojolicious-Plugin-Authentication/>
 
 =head1 ACKNOWLEDGEMENTS
 
-Andrew Parker   
+Andrew Parker
     -   For pointing out some bugs that crept in; a silent reminder not to code while sleepy
 
-Mirko Westermeier (memowe) 
+Mirko Westermeier (memowe)
     -   For doing some (much needed) code cleanup
 
 Terrence Brannon (metaperl)
@@ -361,11 +374,14 @@ Ed W
         a bit more sane.
 
 SailingYYC (Github)
-    -   For reporting an issue with routing conditions; I really should not code while sleepy, brainfarts imminent! 
+    -   For reporting an issue with routing conditions; I really should not code while sleepy, brainfarts imminent!
+
+carragom (Github)
+    -   For fixing the bug that'd consider an uid of 0 or "0" to be a problem
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2011-2012 Ben van Staveren.
+Copyright 2011-2015 Ben van Staveren.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
