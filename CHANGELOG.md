@@ -1,9 +1,19 @@
 Version 0.Next
 -----------
 
+
+
+Version 0.7
+-----------
+
 * [improvement] - Add simple Host Summary
+* [improvement] - Update to jQuery 3.2.1
+* [improvement] - Update to jQuery UI 1.12.1
+* [improvement] - Convert code to "4 spaces" tabs for better readability
 * [feature]     - Add user defined backup intervals
 * [feature]     - Add LVM support
+* [feature]     - Add include_conf support
+* [feature]     - Add stop_on_stale_lockfile support
 * [change]      - Move libs to libs/Webrsnapshot
 
 
