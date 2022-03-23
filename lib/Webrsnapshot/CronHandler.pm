@@ -51,9 +51,10 @@ sub writeCronContent {
 
 	# Open the config file for writing
 	open (CRONFILE, ">$cronfile") || return $!;  
-	print CRONFILE ("# Copyright© (2013-2015) Georgi Dobrev (dobrev.g at gmail dot com)\n");
+	print CRONFILE ("# Copyright© (2013-2022) Georgi Dobrev\n");
 	print CRONFILE ("# ----------------------------------------------------------------------------\n");
-	print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n\n");
+	print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n");
+	print CRONFILE ("# If you use Webrsnapshot, don't edit this file manually. It can be overwritten\n\n");
 
 	for (my $i=1; $i<=$_[0];$i++) {
 		if ($_[$i] ne "") { printf CRONFILE ("$_[$i]\n"); }

@@ -38,7 +38,7 @@ Have a bug or a feature request? Please read first the [Issue Guidelines](https:
 ============
 
 Webrsnapshot - Web interface for the backup tool rsnapshot.
-Copyright (C) 2013 - 2017 Georgi Dobrev
+Copyright (C) (2013-2022) Georgi Dobrev
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
