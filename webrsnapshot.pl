@@ -262,13 +262,13 @@ post '/cron' => sub {
 
 		# 0 - Ok
 		# -1 - Error
-		# If returns diferent then 1, then we have a problem
+		# If returns diferent then 0, then we have a problem
 		if ($saveResult != 0) {
-			$self->flash(saved=>'no');
-			$self->flash(error_message=>"$!");
+			$self->flash(message_text=>"$!");
 		} else {
-			$self->flash(saved=>'yes');
+			$self->flash(message_text=>"Cron sucessfully saved.");
 		}
+		$self->flash(saved=>$saveResult);
 
 		$self->redirect_to('/cron');
 	} else {
@@ -422,26 +422,20 @@ post '/config' => sub {
 			push(@saveResult, $lastLine);
 			$savelinescount = scalar @saveResult;
 		}
+
+		# 0 - Ok
+		# 1 - warning but successfull save
+		# 2 - error in the rsnapshot.conf file
+		# 3 - error while copying the rsnapshot file
 		# If returns 0, then we have successfull save
+		$self->flash(saved=>$saveResult[-1]);
 		if ($saveResult[-1] eq "0") {
-			$self->flash(saved=>'yes');
-		} 
-		# If returns 1, then we have warning but successfull save
-		elsif ($saveResult[-1] eq "1") {
-			$self->flash(saved=>'yes');
-			$self->flash(warning=>'ui-state-highlight');
-			$self->flash(warning_message=>"@saveResult");
+			$self->flash(message_text=>"Config sucessfully saved.");
+		} else {
+			splice(@saveResult,-1,1);
+			$self->flash(message_text=>"@saveResult");
 		}
-		# If returns 2, then we have error in the rsnapshot.conf file
-		elsif ( $saveResult[-1] eq "2") {
-			$self->flash(saved=>'no');
-			$self->flash(error_message=>"@saveResult");
-		}
-		# If returns 3, then we have error while copying the rsnapshot file
-		elsif ( $saveResult[-1] eq "3") {
-			$self->flash(saved=>'no');
-			$self->flash(error_message=>"@saveResult");
-		}
+
 		$self->redirect_to('/config');
 	} else {
 		$self->render('login');

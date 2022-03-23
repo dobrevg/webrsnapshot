@@ -41,8 +41,17 @@
 
 				<div class="col py-3">
 					<!-- ToDo: Toast message ?!? -->
-					<div class="alert" id="alert-message" role="alert">
-						Message: <%= flash 'message_text' %>
+					<div class="position-absolute p-3 top-50 start-50 translate-middle" style="z-index: 10;">
+						<div class="alert alert-dismissible fade" id="alert-message" role="alert">
+							<b>CODE: <%= flash 'saved' %></b>
+							<hr>
+							<%= flash 'message_text' %>
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+						</div>
+					</div>
+
+					<!-- Placeholder -->
+					<div class="alert">
 					</div>
 					<%= content %>
 				</div>
@@ -52,16 +61,26 @@
 			// Initialize tooltips
 			var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
 			var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  				return new bootstrap.Tooltip(tooltipTriggerEl,{
-  					boundary: document.body,
-  					animation: true
-  				})
+				return new bootstrap.Tooltip(tooltipTriggerEl,{
+					boundary: document.body,
+					animation: true
+				})
 			});
-			if ("<%= flash 'saved' %>" == "yes") {
-				document.getElementById("alert-message").classList.add("alert-success");
-			}
-			if ("<%= flash 'saved' %>" == "no") {
-				document.getElementById("alert-message").classList.add("alert-danger");
+			var x;
+			if("<%= flash 'saved' %>" != "") {
+				
+				switch (x = parseInt(<%= flash 'saved' %>)) {
+					case 1:
+						document.getElementById("alert-message").classList.add("alert-warning");
+						break;
+					case -1:
+					case 2:
+						document.getElementById("alert-message").classList.add("alert-danger");
+						break;
+					default:
+						document.getElementById("alert-message").classList.add("alert-success");
+				}
+				document.getElementById("alert-message").classList.add("show");
 			}
 			
 		</script>
