@@ -1,62 +1,21 @@
-% layout $custom_template;
-% title 'Webrsnapshot';
+% layout $default_template;
+% title "Webrsnapshot";
 
-<!--
-#######################################################################
-# This file is part of Webrsnapshot - The web interface for rsnapshot
-# Copyright© (2013-2014) Georgi Dobrev (dobrev.g at gmail dot com)
-#
-# Webrsnapshot is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Webrsnapshot is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-#######################################################################
--->
-<div id="bodycontainer">
-  <div id="menucontainer">
-    <ul id="menu">
-      <% my $menu_prt = 0; %>
-      <% while ( @$mainmenu > $menu_prt) { %>
-        <% my @menuitem = @$mainmenu[$menu_prt++]; %>
-        <li>
-          <a href=<%= $menuitem[0][1] %> <% if ($menuitem[0][0] eq "Home" ) { %> class="active"<% } %> >
-          <%= $menuitem[0][0] %></a>
-        </li>
-      <% } %>
-    </ul>
-  </div>
-  <div id="content">
-    <div id="tabs">
-      <ul>
-        <li><a>Home</a></li>
-      </ul>
-
-      <div id="tabs-1">
-      
-      <ul>
-      <h3>General Information</h3>
-        <li>Rsnapshot config file: <strong><%= $rs_configfile %></strong></li>
-        <li>Rsnapshot root(backup folder): <strong><%= $rs_root_dir %></strong></li>
-        <li>
-          Backup partition:<strong> <%= $partitionInfoPart %></strong>
-          with mount point: <strong><%= $partitionInfoMP %></strong>
-        </li>
-        <li>
-          Allocation: <strong><%= $partitionInfoPerc %></strong>
-          (Size: <strong><%= $partitionInfoSize %></strong>, 
-           Used: <strong><%= $partitionInfoUsed %></strong>,
-           Free: <strong><%= $partitionInfoFree %></strong>)
-        </li>
-      </ul>
-      </div> <!--  End of Tab 1 -->
-    </div>
-  </div> <!-- End of "content" -->
-</div> <!-- End of "bodycontainer" -->
+<h3>General Information</h3>
+<ul>
+	<li>Rsnapshot config file: <strong><%= $rs_configfile %></strong></li>
+	<li>Rsnapshot root(backup folder): <strong><%= $rs_root_dir %></strong></li>
+	<li>
+		Backup partition:<strong> <%= $partitionInfoPart %></strong>
+		with mount point: <strong><%= $partitionInfoMP %></strong>
+	</li>
+	<li>
+		Allocation: <strong><%= $partitionInfoPerc %></strong>
+		(Size: <strong><%= $partitionInfoSize %></strong>, 
+		Used: <strong><%= $partitionInfoUsed %></strong>,
+		Free: <strong><%= $partitionInfoFree %></strong>)
+	</li>
+</ul>
+<script>
+	document.getElementById("menuEntry-home").classList.add("active");
+</script>
