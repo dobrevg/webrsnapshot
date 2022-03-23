@@ -8,14 +8,16 @@ function addIncludeEntry(id) {
 	// Clone the element
 	var includeEntryElement = document.getElementById("include_");
 	var includeEntryClone = includeEntryElement.cloneNode(true);
-	// Create the next id
-	var next_id = parseInt(id)+1;
 	// Change the ids in the element to be add
 	includeEntryClone.classList.remove('d-none');
-	includeEntryClone.id = "include_"+next_id;
-	includeEntryClone.getElementsByTagName("input")[0].name = "include_"+next_id;
-	includeEntryClone.getElementsByTagName("button").include_del.setAttribute("onclick","delInclExclEntry('include_" + next_id + "');");
+	includeEntryClone.id = "include_"+id;
+	includeEntryClone.getElementsByTagName("input")[0].name = "include_"+id;
+	includeEntryClone.getElementsByTagName("button").include_del.setAttribute("onclick","delInclExclEntry('include_" + id + "');");
 	includeEntryClone.getElementsByTagName("button").include_del.disabled = false;
+	// Create the next id
+	var next_id = parseInt(id)+1;
+	document.getElementById("include_count").value = next_id;
+	document.getElementById("add_include_btn").setAttribute("onclick","addIncludeEntry('"+next_id+"');");
 	// Add element to the page
 	document.getElementById("include").append(includeEntryClone);
 }
@@ -25,14 +27,16 @@ function addExcludeEntry(id) {
 	// Clone the element
 	var excludeEntryElement = document.getElementById("exclude_");
 	var excludeEntryClone = excludeEntryElement.cloneNode(true);
-	// Create the next id
-	var next_id = parseInt(id)+1;
 	// Change the ids in the element to be add
 	excludeEntryClone.classList.remove('d-none');
-	excludeEntryClone.id = "exclude_"+next_id;
-	excludeEntryClone.getElementsByTagName("input")[0].name = "exclude_"+next_id;
-	excludeEntryClone.getElementsByTagName("button").exclude_del.setAttribute("onclick","delInclExclEntry('exclude_" + next_id + "');");
+	excludeEntryClone.id = "exclude_"+id;
+	excludeEntryClone.getElementsByTagName("input")[0].name = "exclude_"+id;
+	excludeEntryClone.getElementsByTagName("button").exclude_del.setAttribute("onclick","delInclExclEntry('exclude_" + id + "');");
 	excludeEntryClone.getElementsByTagName("button").exclude_del.disabled = false;
+	// Create the next id
+	var next_id = parseInt(id)+1;
+	document.getElementById("exclude_count").value = next_id;
+	document.getElementById("add_exclude_btn").setAttribute("onclick","addExcludeEntry('"+next_id+"');");
 	// Add element to the page
 	document.getElementById("exclude").append(excludeEntryClone);
 }
@@ -49,6 +53,8 @@ function hostDeleteDir(serverid, dirid) {
 
 //Add another directory for backup on specific host
 function hostAddDir(serverid, dirid) {
+	console.log("hostAddDir serverid: "+serverid);
+	console.log("hostAddDir dirid: "+dirid);
 	// Clone the element
 	var newDirEntryElement = document.getElementById("new_dir_entry");
 	var newDirEntryClone = newDirEntryElement.cloneNode(true);
@@ -61,6 +67,13 @@ function hostAddDir(serverid, dirid) {
 	newDirEntryClone.getElementsByTagName("input")[1].id = "server_"+serverid+"_dir_"+dirid+"_args";
 	newDirEntryClone.getElementsByTagName("button").hostdir_del.disabled = false;
 	newDirEntryClone.getElementsByTagName("button").hostdir_del.setAttribute("onclick","hostDeleteDir("+serverid+", "+dirid+");");
+	// Create dir count
+	var nextid= parseInt(dirid)+1;
+	var dircount_id = "server_"+serverid+"_dircount";
+	console.log("hostAddDir nextid: "+nextid);
+	console.log("dircount id: "+dircount_id);
+	document.getElementById("srv_"+serverid+"_adddir_btn").setAttribute("onclick","hostAddDir("+serverid+","+nextid+");");
+	document.getElementById(dircount_id).value = nextid;
 	// Add element to the page
 	document.getElementById("server_"+serverid+"_config").append(newDirEntryClone);
 }
@@ -68,10 +81,11 @@ function hostAddDir(serverid, dirid) {
 //Add new Host
 function addNewHost(id) {
 	var lastid = parseInt(id)-1;
-	var lastKnownHostElement = document.getElementById("host_item_"+lastid);
+	var lastKnownHostElement = document.getElementById("host_item_new");
 	var newHostEntryClone = lastKnownHostElement.cloneNode(true);
 	// Change the ids in the element to be add
 	newHostEntryClone.id = "host_item_"+id;
+	newHostEntryClone.classList.remove("d-none");
 	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("data-bs-target","#collapse_"+id);
 	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("aria-controls","collapse_"+id);
 	var newHostName = document.getElementById("modal_add_host").getElementsByTagName("input")[0].value;
@@ -79,13 +93,20 @@ function addNewHost(id) {
 	newHostEntryClone.getElementsByTagName("button")[1].id = "server_"+id+"_dir_0_del"
 	newHostEntryClone.getElementsByTagName("button")[1].setAttribute("onclick","hostDeleteDir("+id+", 0);");
 	newHostEntryClone.getElementsByTagName("button")[2].setAttribute("onclick","hostAddDir("+id+",1);");
+	newHostEntryClone.getElementsByTagName("button")[2].disabled = true;
 	newHostEntryClone.getElementsByTagName("button")[3].setAttribute("onclick","hostDelete("+id+");");
 	newHostEntryClone.getElementsByTagName("input")[0].id = "server_"+id+"_dir_0_dir";
 	newHostEntryClone.getElementsByTagName("input")[0].name = "server_"+id+"_dir_0_dir";
-	newHostEntryClone.getElementsByTagName("input")[0].value = "";
+	newHostEntryClone.getElementsByTagName("input")[0].value = "/etc/";
 	newHostEntryClone.getElementsByTagName("input")[1].id = "server_"+id+"_dir_0_args";
 	newHostEntryClone.getElementsByTagName("input")[1].name = "server_"+id+"_dir_0_args";
 	newHostEntryClone.getElementsByTagName("input")[1].value = "";
+	newHostEntryClone.getElementsByTagName("input")[2].id = "server_label_"+id;
+	newHostEntryClone.getElementsByTagName("input")[2].name = "server_label_"+id;
+	newHostEntryClone.getElementsByTagName("input")[2].value = newHostName;
+	newHostEntryClone.getElementsByTagName("input")[3].id = "server_"+id+"_dircount";
+	newHostEntryClone.getElementsByTagName("input")[3].name = "server_"+id+"_dircount";
+	newHostEntryClone.getElementsByTagName("input")[3].value = 1;
 	newHostEntryClone.getElementsByTagName("div")[0].id = "collapse_"+id;
 	newHostEntryClone.getElementsByTagName("div")[0].setAttribute("aria-labelledby","server_"+id+"_name");
 	newHostEntryClone.getElementsByTagName("div")[2].id = "server_"+id+"_config";
@@ -93,6 +114,7 @@ function addNewHost(id) {
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
 	document.getElementById("modal_add_host_btn").setAttribute("onclick","addNewHost("+nextid+");");
+	document.getElementById("servers_count").value = nextid;
 	// Reset the input in modal
 	document.getElementById("modal_add_host").getElementsByTagName("input")[0].value = "";
 	// Add element to the page
@@ -102,8 +124,6 @@ function addNewHost(id) {
 
 //Add line to backup_script 
 function addBkpScript(id) {
-	
-	var nextid = parseInt(id)+1;
 	var backupScriptElement = document.getElementById("add_bkp_script");
 	var backupScriptClone = backupScriptElement.cloneNode(true);
 	// Change the ids in the element to be add
@@ -112,8 +132,10 @@ function addBkpScript(id) {
 	backupScriptClone.getElementsByTagName("input")[0].name ="bkp_script_"+id+"_script";
 	backupScriptClone.getElementsByTagName("input")[1].name ="bkp_script_"+id+"_target";
 	backupScriptClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpScript("+id+");");
-	//
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
 	document.getElementById("add_bkp_script_btn").setAttribute("onclick","addBkpScript("+nextid+");");
+	document.getElementById("bkp_script_count").value = nextid;
 	
 	// Add element to the page
 	document.getElementById("bkp_scripts").append(backupScriptClone);
@@ -126,7 +148,6 @@ function delBkpScript(id) {
 
 // Add line to retain
 function addRetain(id) {
-	var nextid = parseInt(id)+1;
 	var retainElement = document.getElementById("retain_to_add");
 	var retainClone = retainElement.cloneNode(true);
 	// Change the ids in the element to be add
@@ -136,8 +157,10 @@ function addRetain(id) {
 	retainClone.getElementsByTagName("input")[1].name ="retain_"+id+"_count";
 	retainClone.getElementsByTagName("input")[1].value = 1;
 	retainClone.getElementsByTagName("button")[0].setAttribute("onclick","delRetain('"+id+"');");
-	//
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
 	document.getElementById("retain_add_btn").setAttribute("onclick","addRetain('"+nextid+"');");
+	document.getElementById("retain_count").value = nextid;
 	// Add element to the page
 	document.getElementById("retains").append(retainClone);
 }

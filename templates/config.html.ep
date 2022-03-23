@@ -503,6 +503,7 @@
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="Add new retain entry"></i>
 				</span>
+				<input type="hidden" id="retain_count" name="retain_count" value="<%= $retain_ptr %>" />
 				<button class="btn btn-outline-primary" type="button" id="retain_add_btn"
 					onclick="addRetain(<%= $retain_ptr %>);">Add</button>
 			</div>
@@ -578,7 +579,9 @@
 						This parameter can be specified as many times as needed, with one pattern defined
 						per line."></i>
 				</span>
-				<button class="btn btn-outline-primary" type="button" onclick="addIncludeEntry('<%= $include_ptr %>');">
+				<input type="hidden" id="include_count" name="include_count" value="<%= $include_ptr %>">
+				<button class="btn btn-outline-primary" type="button" id="add_include_btn" 
+					onclick="addIncludeEntry(<%= $include_ptr %>);">
 					Add Include
 				</button>
 			</div>
@@ -607,9 +610,12 @@
 									This parameter can be specified as many times as needed, with one pattern defined 
 									per line."></i>
 							</span>
-							<button class="btn btn-outline-danger" type="button" onclick="delInclExclPtr('exclude_<%= $exclude_ptr %>');">Delete</button>
 							<input type="text" class="form-control" name="exclude_<%= $exclude_ptr %>"
 								class="configfield" value="<%= @$exclude[$exclude_ptr++] %>">
+							<button class="btn btn-outline-danger" type="button" 
+								onclick="delInclExclPtr('exclude_<%= $exclude_ptr %>');">
+								Delete
+							</button>
 						</div>
 					<% } %>
 				<% } %>
@@ -622,7 +628,9 @@
 						This parameter can be specified as many times as needed, with one pattern defined
 						per line."></i>
 				</span>
-				<button class="btn btn-outline-primary" type="button" onclick="addExcludeEntry('<%= $exclude_ptr %>');">
+				<input type="hidden" id="exclude_count" name="exclude_count" value="<%= $exclude_ptr %>" />
+				<button class="btn btn-outline-primary" type="button" id="add_exclude_btn" 
+					onclick="addExcludeEntry('<%= $exclude_ptr %>');">
 					Add Exclude
 				</button>
 			</div>
@@ -714,8 +722,12 @@
 											<% $bkp_srv_ptr++; $newdirid++; %>
 											<% goto SRVLABEL; %>
 										<% } %>
+										<input type="hidden" id="server_label_<%= $serverid %>"
+											name="server_label_<%= $serverid %>" value="<%= substr($server->[1], 0, -1)%>"/>
+										<input type="hidden" id="server_<%= $serverid %>_dircount"
+											name="server_<%= $serverid %>_dircount" value="<%= $newdirid %>">
 									</div>
-									<button class="btn btn-outline-primary mt-3" type="button" 
+									<button class="btn btn-outline-primary mt-3" type="button" id="srv_<%= $serverid %>_adddir_btn"
 										onclick="hostAddDir(<%= $serverid %>,<%= $newdirid %>);">
 										Add Entry
 									</button>
@@ -726,7 +738,6 @@
 								</div>
 							</div>
 						</div><!-- End of Host/accordion item -->
-
 						<div id="new_dir_entry" class="input-group d-none">
 							<span class="border-radius input-group-text">
 								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -743,12 +754,16 @@
 								Delete
 							</button>
 						</div>
+						<input type="hidden">
+						<input type="hidden">
 					<% } %>	
 				<% } %>
 			</div> <!-- End of Hosts Accordion -->
+
 			<button type="button" class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#modal_add_host">
 				Add Host
 			</button>
+			<input type="hidden" id="servers_count" name="servers_count" value="<%= $bkp_srv_ptr %>">
 			<div class="modal fade" id="modal_add_host" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" 
 				aria-labelledby="staticBackdropLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -760,24 +775,57 @@
 						<div class="modal-body">
 							<div id="new_host_entry" class="input-group">
 								<span class="border-radius input-group-text">
-									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-										title="Add new host to the configuration. This hostname can be any name and is only 
-										used to better identify the server."></i>
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+										data-bs-placement="right" title="Add new host to the configuration. This 
+										hostname can be any name and is only used to better identify the server. 
+										Then enter the first directory name and immediately save the configuration."></i>
 								</span>
 								<input type="text" class="form-control" placeholder="hostname" name="new_host_entry">
 							</div>
-							<div class="modal-footer">
-								<button type="button" class="btn btn-primary" id="modal_add_host_btn" data-bs-dismiss="modal" 
-									onclick="addNewHost(<%= $bkp_srv_ptr %>)">
-									Add
-								</button>
-							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" id="modal_add_host_btn" data-bs-dismiss="modal" 
+								onclick="addNewHost(<%= $bkp_srv_ptr %>)">
+								Add
+							</button>
 						</div>
 					</div>
 				</div>
-			</div> <!-- End of Tab 7 -->
+			</div> 
+
+			<div class="accordion-item d-none" id="host_item_new">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" aria-expanded="false">
+					</button>
+				</h2>
+				<div class="accordion-collapse collapse" data-bs-parent="#accordion">
+					<div class="accordion-body">
+						<div>
+							<div class="input-group">
+								<span class="border-radius input-group-text">
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
+										data-bs-html="true" data-bs-placement="right"
+										title="Directory to backup"></i>
+								</span>
+								<input type="text" placeholder="directory" class="form-control">
+								<span class="border-radius input-group-text">
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
+										data-bs-html="true" data-bs-placement="right"
+										title="Optional directory args"></i>
+								</span>
+								<input type="text" placeholder="optional args" class="form-control">
+								<button class="btn btn-outline-danger" type="button">Delete</button>
+							</div>
+							<input type="hidden">
+							<input type="hidden">
+						</div>
+						<button class="btn btn-outline-primary mt-3" type="button">Add Entry</button>
+						<button class="btn btn-outline-danger mt-3 float-end" type="button">Delete Host</button>
+					</div>
+				</div>
+			</div>
 			<hr>
-		</div>
+		</div><!-- End of Tab 7 -->
 	<!-- 
 	##########################################################
 	Tab: Scripts executed while backuping 
@@ -804,8 +852,9 @@
 								name="bkp_script_<%= $bkp_script_ptr %>_script">
 							<input type="text" class="form-control" value="<%= $script->[1] %>" 
 								name="bkp_script_<%= $bkp_script_ptr %>_target">
-							<button class="btn btn-outline-danger" type="button" 
-								onclick="delBkpScript(<%= $bkp_script_ptr %>);">Add</button>
+							<button class="btn btn-outline-danger" type="button" onclick="delBkpScript(<%= $bkp_script_ptr %>);">
+								Delete
+							</button>
 						</div>
 						<% $bkp_script_ptr++; %>
 					<% } %>
@@ -822,6 +871,7 @@
 						For this reason, rsnapshot prevents you from specifying a destination directory for a
 						<b>backup_script</b> that will clobber other backups."></i>
 				</span>
+				<input type="hidden" id="bkp_script_count" name="bkp_script_count" value="<%= $bkp_script_ptr %>">
 				<button class="btn btn-outline-primary" type="button" id="add_bkp_script_btn" 
 					onclick="addBkpScript(<%= $bkp_script_ptr %>);">
 					Add
