@@ -1,13 +1,9 @@
 % layout $default_template;
 % title 'Webrsnapshot';
 
-<div id="bodycontainer">
-	<div id="content">
-		<div id="tabs">
-			<ul>
-				<li><a>Log</a></li>
-			</ul>
-			<textarea id="logtextarea" readonly><%= $log_content %></textarea>
-		</div> <!-- End of Tabs -->
-	</div> <!-- End of Content -->
-</div> <!-- End of "bodycontainer" -->
+<h3>Log</h3>
+<div class="form-floating">
+	<textarea class="form-control" id="logtextarea" readonly style="height: 75vh;">
+<%= $log_content %>
+	</textarea>
+</div>
