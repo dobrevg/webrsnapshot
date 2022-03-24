@@ -15,48 +15,52 @@
 		<script src="<%= $default_template %>/js/webrsnapshot.js"></script>
 	</head>
 	<body>
-		<div class="container-fluid">
-			<div class="row flex-nowrap">
-				<div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-white">
-					<div class="d-flex flex-column align-items-start align-items-sm-start px-3 pt-2 text-white min-vh-100">
-						<!-- Just placeholder -->
-						<div class="container-fluid">
-							<div class="alert" role="alert"></div>
-						</div>
-						<nav class="nav nav-pills nav-justified flex-column mb-sm-auto">
-							<a class="nav-link text-start" id="menuEntry-home" href="/">Home</a>
-							<a class="nav-link text-start" id="menuEntry-hosts" href="/hosts">Hosts</a>
-							<a class="nav-link text-start" id="menuEntry-config" href="/config">Config</a>
-							<a class="nav-link text-start" id="menuEntry-log" href="/log">Log</a>
-							<a class="nav-link text-start" id="menuEntry-cron" href="/cron">Cronjobs</a>
-						</nav>
-
-						<hr>
-						<a href="/logout">
-							<button class="btn btn-outline-success" type="button">Logout</button>
-						</a>
-						<hr>
+			<div class="container-fluid">
+			<nav class="navbar navbar-expand-md navbar-primaryx">
+				<div class="container-fluid">
+					<button class="navbar-toggler navbar-dark bg-primary" type="button" data-bs-toggle="collapse" 
+						data-bs-target="#mainmenu">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="container-fluid collapse navbar-collapse px-0" id="mainmenu">
+						<ul class="navbar-nav me-auto mb-2 mb-md-0 w-100">
+							<li class="nav-item">
+								<a class="nav-link text-start" id="menuEntry-home" href="/">Home</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start" id="menuEntry-hosts" href="/hosts">Hosts</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start" id="menuEntry-config" href="/config">Config</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start" id="menuEntry-log" href="/log">Log</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start" id="menuEntry-cron" href="/cron">Cronjobs</a>
+							</li>
+							<li class="nav-item ms-md-auto">
+								<a class="nav-link text-start" id="menuEntry-cron" href="/logout">Logout</a>
+							</li>
+						</ul>
 					</div>
 				</div>
-
-				<div class="col py-3">
-					<!-- ToDo: Toast message ?!? -->
-					<div class="position-absolute p-3 top-50 start-50 translate-middle" style="z-index: 10;">
-						<div class="alert alert-dismissible fade" id="alert-message" role="alert">
-							<b>CODE: <%= flash 'saved' %></b>
-							<hr>
-							<%= flash 'message_text' %>
-							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-						</div>
-					</div>
-
-					<!-- Placeholder -->
-					<div class="alert">
-					</div>
-					<%= content %>
+			</nav>
+			<hr class="mt-0">
+			<!-- ToDo: Toast message ?!? -->
+			<div class="position-absolute p-3 top-50 start-50 translate-middle" style="z-index: 10;">
+				<div class="alert alert-dismissible fade" id="alert-message" role="alert">
+					<b>CODE: <%= flash 'saved' %></b>
+					<hr>
+					<%= flash 'message_text' %>
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 				</div>
 			</div>
-		</div>
+	
+			<!-- Placeholder -->
+			<%= content %>
+		</div>					
+
 		<script>
 			// Initialize tooltips
 			var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
