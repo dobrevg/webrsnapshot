@@ -6,7 +6,11 @@
 ## Quick install
 ----------------
 
-* Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want
+* Clone Webrsnapshot git repo `git clone https://github.com/dobrevg/webrsnapshot.git`
+* Enter the directory `cd webrsnapshot`
+* Pull the required submodules. `git submodule update --init --recursive`
+* Switch to the Mojolicious Plugin directory `cd ./submodules/mojo/lib/Mojolicious/Plugin/`
+* Link the Authenticatin plugin `ln -s ../../../../Mojolicious-Plugin-Authentication/lib/Mojolicious/Plugin/Authentication.pm`
 * Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
 * Run `./bin/appStart.sh` to start the server (see the requirements below)
 * Run `./bin/appStop.sh` to stop the server
@@ -17,6 +21,7 @@
 ----------------
 
 * Just execute: `git pull` in the folder where webrsnapshot is installed
+* Then update the submodules `git submodule update --remote --merge`
 * Adjust webrsnapshot.conf for your needs (optional)
 * Stop and start the application server
 
