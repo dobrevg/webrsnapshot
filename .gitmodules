@@ -1,0 +1,9 @@
+[submodule "submodules/mojo"]
+	path = submodules/mojo
+	url = https://github.com/mojolicious/mojo.git
+[submodule "submodules/Mojolicious-Plugin-Authentication"]
+	path = submodules/Mojolicious-Plugin-Authentication
+	url = https://github.com/benvanstaveren/Mojolicious-Plugin-Authentication.git
+[submodule "submodules/File-ReadBackwards"]
+	path = submodules/File-ReadBackwards
+	url = https://github.com/uperl/File-ReadBackwards.git
