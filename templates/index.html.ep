@@ -1,7 +1,7 @@
 % layout $default_template;
 % title "Webrsnapshot";
 
-<h3>General Information</h3>
+<h3 class="ms-3">General Information</h3>
 <ul>
 	<li>Rsnapshot config file: <strong><%= $rs_configfile %></strong></li>
 	<li>Rsnapshot root(backup folder): <strong><%= $rs_root_dir %></strong></li>

@@ -1,7 +1,7 @@
 % layout $default_template;
 % title 'Webrsnapshot';
 
-<h3>Cronjobs</h3>
+<h3 class="ms-3">Cronjobs</h3>
 <div class="container-fluid">
 	<form method="post" action="/cron" name="cronform">
 		<div class="input-group my-2">

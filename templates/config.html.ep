@@ -2,16 +2,50 @@
 % title "Webrsnapshot";
 
 <form method="post" action="/config" name="rsnapshotconfform">
-	<ul class="nav nav-tabs">
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link active" href="#tabs-1">Root</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-2">Commands</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-3">LVM Config</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-4">Global Config</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-5">Backup Interval</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-6">Include/Exclude</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-7">Hosts</a></li>
-		<li class="nav-item"><a data-bs-toggle="tab" class="nav-link" href="#tabs-8">Scripts</a></li>
-	</ul>
+	<div>
+		<ul class="nav nav-tabs nav-tabs-responsive">
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link active" href="#tabs-1" data-toggle="tab" aria-controls="home" aria-expanded="true">
+					<span class="text">Root</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-2" data-toggle="tab" aria-controls="commands">
+					<span class="text">Commands</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-3" data-toggle="tab" aria-controls="lvm_config">
+					<span class="text">LVM Config</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-4" data-toggle="tab" aria-controls="global_config">
+					<span class="text">Global Config</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-5" data-toggle="tab" aria-controls="backup_interval">
+					<span class="text">Backup Interval</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-6" data-toggle="tab" aria-controls="include_exclude">
+					<span class="text">Include/Exclude</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-7" data-toggle="tab" aria-controls="hosts">
+					<span class="text">Hosts</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-8" data-toggle="tab" aria-controls="scripts">
+					<span class="text">Scripts</span>
+				</a>
+			</li>
+		</ul>
+	</div>
 
 	<div class="tab-content">
 	<!-- 
@@ -900,4 +934,60 @@
 </form>
 <script>
 	document.getElementById("menuEntry-config").classList.add("active");
+
+	// Handle next and prev arrows
+	document.addEventListener("DOMContentLoaded", function(){
+		// Set breakpoint for the tab menu on JS
+		const mediaQuery = window.matchMedia('(min-width: 920px)');
+		function handleTabletChange(e) {
+			var tabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'));
+			// Check if the media query is true
+			if (e.matches) {
+				tabList.forEach(function(tab){
+					tab.classList.remove("d-none","prev","next");
+				});
+			} else {
+				// Handle prev and next arrow
+				tabList.forEach(function(tab){
+					if (tab.classList.contains("active")) {
+						if( tab.parentElement.previousElementSibling ) {
+							var prev = tab.parentElement.previousElementSibling.firstElementChild;
+							prev.classList.remove("d-none");
+							prev.classList.add("prev");
+						}
+						if( tab.parentElement.nextElementSibling ) {
+							var next = tab.parentElement.nextElementSibling.firstElementChild
+							next.classList.remove("d-none");
+							next.classList.add("next");
+						}
+					} 
+					if (!tab.classList.contains("prev") && !tab.classList.contains("next") && !tab.classList.contains("active")) {
+						tab.classList.add("d-none");
+					}
+				});
+				
+				tabList.forEach(function(tab){
+					tab.addEventListener("shown.bs.tab", function(e){
+						tabList.forEach(function(tab1){
+							tab1.classList.remove("prev");
+							tab1.classList.remove("next");
+							tab1.classList.add("d-none");
+						});
+						e.target.classList.remove("d-none","next");
+						if( e.target.parentElement.previousElementSibling ) {
+							e.target.parentElement.previousElementSibling.firstElementChild.classList.remove("d-none");
+							e.target.parentElement.previousElementSibling.firstElementChild.classList.add("prev");
+						}
+						if( e.target.parentElement.nextElementSibling ) {
+							e.target.parentElement.nextElementSibling.firstElementChild.classList.remove("d-none");
+							e.target.parentElement.nextElementSibling.firstElementChild.classList.add("next");
+						}
+					});
+				});
+			}
+		}
+		// Register event listener
+		mediaQuery.addListener(handleTabletChange);
+		handleTabletChange(mediaQuery);
+	});
 </script>

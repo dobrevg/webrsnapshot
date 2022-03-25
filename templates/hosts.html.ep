@@ -11,9 +11,7 @@
 		<tr>
 			<td><a href="host?h=<%= @$hosts[$host_ptr] %>"><%= @$hosts[$host_ptr] %></a></td>
 			<td>
-				<center>
-					<%= sprintf("%.1f",(time - @$last_bkp[$host_ptr])/86400)." Days" if (@$last_bkp[$host_ptr] != 0) %>  
-				</center> 
+				<%= sprintf("%.1f",(time - @$last_bkp[$host_ptr])/86400)." Days" if (@$last_bkp[$host_ptr] != 0) %>  
 			</td>
 		</tr>
 		<% $host_ptr++; %>
