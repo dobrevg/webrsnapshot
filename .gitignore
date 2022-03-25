@@ -1,2 +1,7 @@
 /webrsnapshot.conf
 /hypnotoad.pid
+
+# Ignore eclipse specific files
+.includepath
+.project
+.settings
