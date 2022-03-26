@@ -20,7 +20,8 @@ use Webrsnapshot::SystemInfo;
 
 my $config				= plugin 'Config';
 my $rs_config			= $config->{rs_config}? $config->{rs_config}: '/etc/rsnapshot.conf';
-my $default_template	= $config->{template}? $config->{template}:'default';
+my $rs_cron				= $config->{rs_cron}? 	$config->{rs_cron}: '/etc/cron.d/rsnapshot';
+my $default_template	= $config->{template}? 	$config->{template}:'default';
 
 plugin 'authentication', {
 	autoload_user => 0,
@@ -221,7 +222,7 @@ get '/cron' => sub {
 		eval {
 			# User defined template
 			$self->stash( default_template	=> $default_template );
-			$self->stash( retains			=> [ CronHandler::getCronContent($rs_config)  ]);
+			$self->stash( retains			=> [ CronHandler::getCronContent($rs_config, $rs_cron) ]);
 			$self->stash( retainnames		=> [ Webrsnapshot::getRetainings($rs_config) ]);
 			$self->stash( rs_config			=> $rs_config );
 
@@ -256,8 +257,8 @@ post '/cron' => sub {
 
 		# And send everything to the CronHandler to save
 		$saveResult = CronHandler::writeCronContent(
-			scalar @cronjobs,
-			@cronjobs? @cronjobs : (""),
+			$rs_cron,
+			@cronjobs,
 		);
 
 		# 0 - Ok

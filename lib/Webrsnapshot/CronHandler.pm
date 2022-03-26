@@ -7,11 +7,9 @@ use Webrsnapshot::Webrsnapshot;
 
 # $_[0] config file
 # @result: mailto[0], cronjob[1], cronjob[2], cronjob[3]
-sub getCronContent
-{
-	my $configfile = $_[0];
-	# TODO: Put the file in the Config
-	my $cronfile	= "/etc/cron.d/rsnapshot";
+sub getCronContent {
+	my $configfile = $_[0];		# /etc/rsnapshot.conf
+	my $cronfile	= $_[1];	# /etc/cron.d/rsnapshot
 	my @retainsTMP	= Webrsnapshot::getRetainings($configfile);
 	my $retainSize	= scalar(@retainsTMP);
 	my @retains		= "";
@@ -46,18 +44,20 @@ sub getCronContent
 
 # $_[0] cronfile inhalt
 sub writeCronContent {
-	# TODO: Put the file in the Config
-	my $cronfile   = "/etc/cron.d/rsnapshot";
+	my($cronfile, @cronArray) = @_;
+	print "Configfile: ".$cronfile."\n";
+	print "Array Count: ".scalar @cronArray."\n";
 
 	# Open the config file for writing
 	open (CRONFILE, ">$cronfile") || return $!;  
-	print CRONFILE ("# Copyright© (2013-2022) Georgi Dobrev\n");
+	print CRONFILE ("# Copyright© (2013-2022) Webrsnapshot\n");
 	print CRONFILE ("# ----------------------------------------------------------------------------\n");
 	print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n");
 	print CRONFILE ("# If you use Webrsnapshot, don't edit this file manually. It can be overwritten\n\n");
 
-	for (my $i=1; $i<=$_[0];$i++) {
-		if ($_[$i] ne "") { printf CRONFILE ("$_[$i]\n"); }
+	foreach (@cronArray) {
+		if (index($_, "MAILTO") != -1) { printf CRONFILE ("$_\n\n\n"); } # two empty lines after Mailto
+		elsif ($_ ne "") { printf CRONFILE ("$_\n"); }
 	}
 
 	print CRONFILE ("\n# <EOF>-----------------------------------------------------------------------\n");
