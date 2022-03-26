@@ -1,5 +1,6 @@
 [Unit]
 Description=Web based graphical interface for rsnapshot
+After=network.target
 
 [Service]
 Type=simple
