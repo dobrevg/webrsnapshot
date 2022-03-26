@@ -234,3 +234,15 @@ function disableCronEmail() {
 		document.getElementById('cron_email').readOnly = false;
 	}
 }
+
+// Disable all cronjobs at once
+function disbaleAllCronjobs() {
+	var cronjobsInput 	 = document.querySelectorAll('[id^="cronjob_"]');
+	var cronjobsCheckbox = document.querySelectorAll('[id^="cronCheck_"]');
+	for(var i = 0; i < cronjobsInput.length; i++){
+		cronjobsInput[i].readOnly = true;
+	}
+	for(var i = 0; i < cronjobsCheckbox.length; i++){
+		cronjobsCheckbox[i].checked = true;
+	}
+}

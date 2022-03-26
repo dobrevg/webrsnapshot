@@ -46,6 +46,26 @@
 				<% $cron_ptr++; %>
 			<% } %>
 		</div>
+		<div class="d-flex">
+<!-- Add new cronjob Button -->
+		<div class="input-group mt-3 w-auto me-auto">
+			<span class="border-radius input-group-text">
+				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+					title="Create here a new cron job"></i>
+			</span>
+			<button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_cron_modal">
+				Add Cron
+			</button>
+		</div>
+<!-- Disable all cron jobs -->
+		<div class="input-group mt-3 w-auto ms-auto">
+			<button class="btn btn-outline-warning" type="button" onclick="disbaleAllCronjobs();">Disable all</button>
+			<span class="border-radius input-group-text">
+				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
+					title="Disable all cron jobs at once."></i>
+			</span>
+		</div>
+		</div>
 
 <!-- Hidden field for cronjobs count -->
 		<input type="hidden" id="newcronid" name="newcron" value="<%= $cron_ptr; %>">
@@ -61,16 +81,7 @@
 			<label class="form-check-label pt-1 mt-2 ms-2 d-none" >Disable</label>
 		</div>
 		<hr>
-<!-- Add new cronjob Button -->
-		<div class="input-group">
-			<span class="border-radius input-group-text">
-				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-					title="Create here a new cron job"></i>
-			</span>
-			<button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_cron_modal">
-				Add Cron
-			</button>
-		</div>
+
 <!-- Add new cronjob Modal -->
 		<div class="modal fade" id="add_cron_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
