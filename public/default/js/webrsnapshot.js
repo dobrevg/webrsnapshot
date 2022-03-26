@@ -219,13 +219,10 @@ function deleteCronjob(id) {
 
 // Enable/Disable Crontab
 function disbaleCronjob(id) {
-	var cronvalue = document.getElementById('cronjob_'+id).value;
 	if (document.getElementById("cronCheck_"+id).checked) {
-		document.getElementById('cronjob_'+id).value = "#"+cronvalue;
-		document.getElementById('cronjob_'+id).disabled = true;
+		document.getElementById('cronjob_'+id).readOnly = true;
 	} else {
-		document.getElementById('cronjob_'+id).value = cronvalue.slice(1);
-		document.getElementById('cronjob_'+id).disabled = false;
+		document.getElementById('cronjob_'+id).readOnly = false;
 	}
 }
 

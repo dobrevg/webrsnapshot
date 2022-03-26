@@ -244,13 +244,15 @@ post '/cron' => sub {
 		my @cronjobs	= ();
 		my $cron_count	= $self->param('newcron');
 		my $cron_email	= $self->param('cron_email');
-		my $email_dsbl	= $self->param('cron_disabled')?$self->param('cron_disabled'):"off";
+		my $email_dsbl	= $self->param('email_disabled')?$self->param('email_disabled'):"off";
 
 		if ( $email_dsbl eq "on" ) { $cronjobs[0] = "#MAILTO=\"".$cron_email."\""; }
 		else { $cronjobs[0] = "MAILTO=\"".$cron_email."\""; }
 
-		for (my $k=1; $k<$cron_count; $k++) {
-			$cronjobs[$k] = $self->param('cronjob_'.$k);
+		for (my $k=1; $k<$cron_count; $k++){
+			my $cron_dsbl = $self->param('cron_disabled_'.$k)?$self->param('cron_disabled_'.$k):"off";
+			if ( $cron_dsbl eq "on" ) { $cronjobs[$k] = "#".$self->param('cronjob_'.$k); }
+			else { $cronjobs[$k] = $self->param('cronjob_'.$k); }
 		}
 
 		my $saveResult = "";
@@ -342,7 +344,6 @@ post '/config' => sub {
 		# Retain loop to get all configured intervals from the post data
 		my @retain = ();
 		my $retain_count_postdata = $self->param('retain_count');
-		printf ("[%s] Retain post count: $retain_count_postdata\n",scalar localtime);
 		my $retain_count = 0;
 		for (my $r=0; $r<$retain_count_postdata; $r++) {
 			my $retain_name = $self->param('retain_'.$r.'_name');

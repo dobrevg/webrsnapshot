@@ -18,7 +18,7 @@
 			<% @$retains[0] =~ /"(.*)"/; %>
 			<input type="text" class="form-control" placeholder="email" name="cron_email" id="cron_email" 
 				value="<%= $1 %>" <%= $mailreadonly %>>
-			<input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled" id="cron_email_checkbox"
+			<input type="checkbox" class="form-check-input mt-3 ms-3" name="email_disabled" id="cron_email_checkbox"
 				onclick="disableCronEmail()" <%= $mailchecked %>>
 			<label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
 		</div>
@@ -26,21 +26,22 @@
 		<div id="cronjobs">
 			<% my $cron_ptr = 1; %>
 			<% while ( @$retains > $cron_ptr) { %>
-				<% my $cron = @$retains[$cron_ptr]; %>
 				<div class="input-group" id="cron_<%= $cron_ptr %>">
 					<span class="border-radius input-group-text">
 						<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 							title="Cron job for the specific retain."></i>
 					</span>
 					<% my $checked; %>
-					<% my $disabled; %>
-					<% if ( $cron =~ m/^#/ ) { $checked = "checked"; $disabled = "disabled"; } %>
+					<% my $readonly; %>
+					<% if ( @$retains[$cron_ptr] =~ m/^#/ ) { $checked = "checked"; $readonly = "readonly"; %>
+						<% @$retains[$cron_ptr] =~ s/^.//; %>
+					<% } %>
 					<input type="text" class="form-control" name="cronjob_<%= $cron_ptr %>" 
-						id="cronjob_<%= $cron_ptr %>" value="<%= $cron %>" <%= $disabled %>>
+						id="cronjob_<%= $cron_ptr %>" value="<%= @$retains[$cron_ptr] %>" <%= $readonly %>>
 					<button class="btn btn-outline-danger" type="button" onclick="deleteCronjob(<%= $cron_ptr %>);">Delete</button>
-					<input type="checkbox" class="form-check-input mt-3 ms-3 d-none" name="cron_disabled" id="cronCheck_<%= $cron_ptr %>"
+					<input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled_<%= $cron_ptr %>" id="cronCheck_<%= $cron_ptr %>"
 						onclick="disbaleCronjob(<%= $cron_ptr %>);" <%= $checked %>>
-					<label class="form-check-label pt-1 mt-2 ms-2 d-none" >Disable</label>
+					<label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
 				</div>
 				<% $cron_ptr++; %>
 			<% } %>
