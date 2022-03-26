@@ -599,8 +599,8 @@
 									per line."></i>
 							</span>
 							<input type="text" class="form-control" name="include_<%= $include_ptr %>"
-								class="configfield" value="<%= @$include[$include_ptr++] %>">
-							<button class="btn btn-outline-danger" type="button" onclick="delInclExclEntry('include_<%= $include_ptr %>');">Delete</button>
+								class="configfield" value="<%= @$include[$include_ptr] %>">
+							<button class="btn btn-outline-danger" type="button" onclick="delInclExclEntry('include_<%= $include_ptr++ %>');">Delete</button>
 						</div>
 					<% } %>
 				<% } %>
@@ -645,9 +645,9 @@
 									per line."></i>
 							</span>
 							<input type="text" class="form-control" name="exclude_<%= $exclude_ptr %>"
-								class="configfield" value="<%= @$exclude[$exclude_ptr++] %>">
+								class="configfield" value="<%= @$exclude[$exclude_ptr] %>">
 							<button class="btn btn-outline-danger" type="button" 
-								onclick="delInclExclPtr('exclude_<%= $exclude_ptr %>');">
+								onclick="delInclExclEntry('exclude_<%= $exclude_ptr++ %>');">
 								Delete
 							</button>
 						</div>
