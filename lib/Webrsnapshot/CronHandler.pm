@@ -45,9 +45,7 @@ sub getCronContent {
 # $_[0] cronfile inhalt
 sub writeCronContent {
 	my($cronfile, @cronArray) = @_;
-	print "Configfile: ".$cronfile."\n";
-	print "Array Count: ".scalar @cronArray."\n";
-
+	
 	# Open the config file for writing
 	open (CRONFILE, ">$cronfile") || return $!;  
 	print CRONFILE ("# Copyright© (2013-2022) Webrsnapshot\n");
