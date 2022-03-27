@@ -545,7 +545,7 @@
 						<div id="retainNumber_<%= $retainNumber %>" class="input-group my-2">
 							<span class="input-group-text">
 								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-									title="<div class='text-start my-3'><b>retain/backup</b><hr>The number of snapshots
+									title="<div class='text-start my-3'><b>retain/interval</b><hr>The number of snapshots
 									that will be retained for <%= $retainArray->[0] %> backups.</div>"></i>
 							</span>
 							<input type="text" class="form-control"  name="retain_<%= $retainNumber %>_name"
@@ -572,7 +572,7 @@
 			<div id="retain_to_add" class="input-group my-2 d-none">
 				<span class="input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'><b>retain/backup</b><hr>The number of snapshots that will
+						title="<div class='text-start my-3'><b>retain/interval</b><hr>The number of snapshots that will
 						be retained.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder ="retain name" class="configfield">
