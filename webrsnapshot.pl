@@ -255,23 +255,25 @@ post '/cron' => sub {
 			else { $cronjobs[$k] = $self->param('cronjob_'.$k); }
 		}
 
-		my $saveResult = "";
+		my @saveResult = ();
 
 		# And send everything to the CronHandler to save
-		$saveResult = CronHandler::writeCronContent(
+		@saveResult = CronHandler::writeCronContent(
 			$rs_cron,
 			@cronjobs,
 		);
 
 		# 0 - Ok
-		# -1 - Error
+		# 1 - error in the rsnapshot cron file
+		# 3 - error while copying the rsnapshot file
 		# If returns diferent then 0, then we have a problem
-		if ($saveResult != 0) {
-			$self->flash(message_text=>"$!");
-		} else {
+		$self->flash(saved=>$saveResult[-1]);
+		if ($saveResult[-1] eq "0") {
 			$self->flash(message_text=>"Cron sucessfully saved.");
+		} else {
+			splice(@saveResult,-1,1);
+			$self->flash(message_text=>"@saveResult");
 		}
-		$self->flash(saved=>$saveResult);
 
 		$self->redirect_to('/cron');
 	} else {

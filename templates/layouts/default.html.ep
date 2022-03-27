@@ -80,6 +80,7 @@
 						break;
 					case -1:
 					case 2:
+					case 3:
 						document.getElementById("alert-message").classList.add("alert-danger");
 						break;
 					default:

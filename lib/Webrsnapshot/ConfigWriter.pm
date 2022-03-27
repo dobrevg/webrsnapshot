@@ -160,17 +160,19 @@ sub saveConfig {
 			$configtest[-1] = 1 if (scalar (@configtest) > 1);
 		}
 	}
+
 	push (@configtest, "2") if ( $configtest[-1] ne "1" && scalar (@configtest) > 1 );
 	# Save the tested config file on the real place only if Syntax OK
 	if ($configtest[-1] ne "2") {
 		system ("cp", $config_to_test, $configfile) == 0 or $configtest[-1] = 3;
-		if ($configtest[-1] == 3) {
+		if ($configtest[-1] eq 3) {
 			# Create an error message in case that the file can not be copied
-			$configtest[0] = "Error: The file $config_to_test can not be copyied";
+			$configtest[0] = "Error: The file $config_to_test can not be copied";
 			$configtest[1] = "to $configfile";
 			$configtest[2] = 3;
 		}
 	}
+
 	system ("rm", "-f",$config_to_test);
 	return @configtest;
 }
