@@ -741,7 +741,8 @@
 												<span class="border-radius input-group-text">
 													<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
 														data-bs-html="true" data-bs-placement="right"
-														title="Directory to backup"></i>
+														title="<div class='text-start my-3'><b>backup</b><hr>Directory 
+														to backup</div>"></i>
 												</span>
 												<input type="text" id="server_<%= $serverid %>_dir_<%= $newdirid %>_dir"
 													name="server_<%= $serverid %>_dir_<%= $newdirid %>_dir" placeholder="directory"
@@ -805,7 +806,7 @@
 			<div class="input-group  mt-3">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="Add new host for backup."></i>
+						title="<div class='text-start my-3'>backup<hr>Add new host for backup.</div>"></i>
 				</span>
 				<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal_add_host">
 					Add Host
@@ -899,6 +900,10 @@
 							</span>
 							<input type="text" class="form-control" value="<%= $script->[0] %>" 
 								name="bkp_script_<%= $bkp_script_ptr %>_script">
+							<span class="border-radius input-group-text">
+								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+									title="<div class='text-start my-3'>Destination directory</div>"></i>
+							</span>
 							<input type="text" class="form-control" value="<%= $script->[1] %>" 
 								name="bkp_script_<%= $bkp_script_ptr %>_target">
 							<button class="btn btn-outline-danger" type="button" onclick="delBkpScript(<%= $bkp_script_ptr %>);">
@@ -913,7 +918,7 @@
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'>Add new backup script<hr><b>backup_script</b><hr>This script
+						title="<div class='text-start my-3'><b>backup_script</b><hr>Add new backup script<hr>This script
 						should simply create files and/or directories in its current working directory.<b>rsnapshot
 						</b> will then take that output and move it into the directory specified in the
 						third column.<br/>Please note that whatever is in the destination directory will be
@@ -939,6 +944,10 @@
 						<b>backup_script</b> that will clobber other backups."></i>
 				</span>
 				<input type="text" class="form-control">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Destination directory</div>"></i>
+				</span>
 				<input type="text" class="form-control">
 				<button class="btn btn-outline-danger" type="button">Delete</button>
 			</div>
