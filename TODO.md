@@ -1,27 +1,8 @@
-Webrsnapshot TODO List
-
-
-Feature Request
+Whishlist
 ---------------------------------------------------------------------------------------------------
-
-**Proirity High**
 
 * Restore function over the web
-
-
-**Priority Normal**
-
-* Add custom user and assign them to server (dirs ?!)
-* Editing included files
-
-
-**Priority Low**
-
-* Internationalisation
-
-
-
-External Modules
----------------------------------------------------------------------------------------------------
-
-* File::ReadBackwards
+* Add custom user and assign them to backup (dirs ?!)
+* Editing external scripts used in rsnapshot.conf
+* I18N
+* Support for multiply rsnapshot instances (with multiply config files)

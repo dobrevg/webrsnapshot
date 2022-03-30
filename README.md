@@ -3,29 +3,17 @@
 
 Webrsnapshot is web based graphical interface for editing the configuration file of rsnapshot via browser. This software is still in development. Please make a backup of your rnsapshot configuration file `/etc/rsnapshot.conf` before using Webrsnapshot. At this point not all features are implemented and only essential options are enabled. You can find a list with the missing options in the TODO file provided with this installation.
 
-## Warning
-============
-
-Backuping servers supports at this time only root@my-target-server.com option. If you are using something like rsync://my-target-server.org or my-user@my-target-server.com you have to edit the server settings after adding a new server.
-
 
 ## Quick start
 ============
 
-* Download [Webrsnapshot](https://github.com/dobrevg/webrsnapshot) whenever you want `git clone https://github.com/dobrevg/webrsnapshot.git`
-* Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
-* Run `./bin/appStart.sh` to start the server (see the requirements below)
-* Run `./bin/appStop.sh` to stop the server
-* Access the application via http(s)://mySecretIP:8080
-* For development run `./bin/development.pl`
+* See [INSTALL](INSTALL.md)
 
 
 ## Requirements
 ============
 
-* /etc/rsnapshot.conf have to be readable and writable for the user running this web application
-* rsnapshot log file have to be readable for the user running this web application
-* perl-IO-Socket-SSL 1.75 or better (optional) if you plan to use HTTPS
+* See [Requirements](INSTALL.md#requirements)
 
 
 ## Bug tracker
