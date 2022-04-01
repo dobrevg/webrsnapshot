@@ -880,6 +880,7 @@
 	Tab: Scripts executed while backuping 
 	##########################################################
 	-->
+<!-- backup_script -->
 		<div id="tabs-8" class="container-fluid tab-pane fade pt-4">
 			<div id="bkp_scripts">
 				<% my $bkp_script_ptr = 0; %>
@@ -949,6 +950,51 @@
 						title="<div class='text-start my-3'>Destination directory</div>"></i>
 				</span>
 				<input type="text" class="form-control">
+				<button class="btn btn-outline-danger" type="button">Delete</button>
+			</div>
+			<hr>
+<!-- backup_exec -->
+
+			<div id="bkp_execs">
+			</div>
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>backup_exec</b><hr>Add new exec command<hr>backup_exec 
+						simply runs the command listed. The second argument is not required and	defaults to a value of
+						'optional'. It specifies the importance that the command return 0. Valid values are 'optional'
+						and 'required'. If the command is specified as optional, a non-zero exit status from the command
+						will result in a warning message being output. If the command is specified as 'required', a 
+						non-zero exit status from the command will result in an error message being output and rsnapshot
+						itself will	exit with a non-zero exit status.</div>"></i>
+				</span>
+				<input type="hidden" id="bkp_exec_count" name="bkp_exec_count" value="0">
+				<button class="btn btn-outline-primary" type="button" id="add_bkp_exec_btn" 
+					onclick="addBkpExec(1);">
+					Add
+				</button>
+			</div>
+
+			<div id="add_bkp_exec" class="input-group my-2 d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>backup_exec</b><hr>Add new exec command<hr><b>backup_exec</b> 
+						simply runs the command listed. The second argument is not required and	defaults to a value of
+						'optional'. It specifies the importance that the command return 0. Valid values are 'optional'
+						and 'required'. If the command is specified as optional, a non-zero exit status from the command
+						will result in a warning message being output. If the command is specified as 'required', a 
+						non-zero exit status from the command will result in an error message being output and rsnapshot
+						itself will	exit with a non-zero exit status.</div>"></i>
+				</span>
+				<input type="text" class="form-control">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Choose the importance. Optional or required.</div>"></i>
+				</span>
+				<select class="form-select">
+					<option value="optional" selected>Optional</option>
+					<option value="required">Required</option>
+				</select>
 				<button class="btn btn-outline-danger" type="button">Delete</button>
 			</div>
 			<hr>

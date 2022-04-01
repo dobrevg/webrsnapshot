@@ -246,3 +246,23 @@ function disbaleAllCronjobs() {
 		cronjobsCheckbox[i].checked = true;
 	}
 }
+
+// Add new backip_exec line
+function addBkpExec(id) {
+	var backupExecElement = document.getElementById("add_bkp_exec");
+	var backupExecClone = backupExecElement.cloneNode(true);
+	// Change the ids in the element to be add
+	backupExecClone.classList.remove('d-none');
+	backupExecClone.id = "bkp_exec_"+id+"_info";
+	backupExecClone.getElementsByTagName("input")[0].name ="bkp_exec_"+id+"_command";
+	backupExecClone.getElementsByTagName("select")[0].name ="bkp_exec_"+id+"_option";
+	backupExecClone.getElementsByTagName("select")[0].id ="bkp_exec_"+id+"_option";
+	backupExecClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpExec("+id+");");
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
+	document.getElementById("add_bkp_exec_btn").setAttribute("onclick","addBkpExec("+nextid+");");
+	document.getElementById("bkp_exec_count").value = nextid;
+	
+	// Add element to the page
+	document.getElementById("bkp_execs").append(backupExecClone);
+}

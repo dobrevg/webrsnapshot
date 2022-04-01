@@ -294,7 +294,7 @@ post '/config' => sub {
 		for (my $c=0; $c<$include_count;$c++ ) {
 			my $i=0;
 			while ( $self->param('include_'.$c) ) {
-				$include[$i++] = $self->param('include_'.$c++);
+				push( @include, $self->param('include_'.$c++) );
 			}
 		}
 
@@ -304,42 +304,53 @@ post '/config' => sub {
 		for (my $c=0; $c<$exclude_count;$c++ ) {
 			my $i=0;
 			while ( $self->param('exclude_'.$c) ) {
-				$exclude[$i++] = $self->param('exclude_'.$c++);
+				push( @exclude, $self->param('exclude_'.$c++));
 			}
 		}
 
-		# Servers loop to get all configured server lines from the post data
-		my @servers = ();
+		# Backup loop to get all configured server lines from the post data
+		my @backup = ();
 		my $servers_count = $self->param('servers_count');
-		my $count = 0;
+
 		my $servers_line_count = 0;
 		for (my $c=0; $c<$servers_count;$c++) {
-			my $server_label = $self->param('server_label_'.$c);
+			my %backup_entry = ();
+			$backup_entry{'hostname'} = $self->param('server_label_'.$c);
 			# If server_label is defined, we have valid server
-			if (defined $server_label) {
+			if (defined $backup_entry{'hostname'}) {
 				my $server_dir_count = $self->param('server_'.$c.'_dircount');
 				for (my $i=0; $i<$server_dir_count; $i++) {
-					my $server_dir = $self->param('server_'.$c.'_dir_'.$i.'_dir');
+					$backup_entry{'source'} = $self->param('server_'.$c.'_dir_'.$i.'_dir');
 					# If the directory String is empty, we don't have it anymore and
 					# this line must not be recorded
-					if (defined $server_dir ne "") {
-						my $server_dir_args = $self->param('server_'.$c.'_dir_'.$i.'_args')?
-							"\t\t".$self->param('server_'.$c.'_dir_'.$i.'_args') : "";
-						$servers[$servers_line_count++] =
-							$self->param('server_'.$c.'_dir_'.$i.'_dir')."\t\t".$server_label."/".$server_dir_args;
+					if (defined $backup_entry{'source'} ne "") {
+						$backup_entry{'args'} = $self->param('server_'.$c.'_dir_'.$i.'_args');
+						push( @backup, \%backup_entry);
 					}
 				}
 			}
 		}
 
 		# backup_script loop to get all configured scripts from the post data
-		my @scripts = ();
+		my @backup_script = ();
 		my $scripts_count_postdata = $self->param('bkp_script_count');
 		my $scripts_count = 0;
 		for (my $c=0; $c<$scripts_count_postdata; $c++) {
-			my $scriptname = $self->param('bkp_script_'.$c.'_script');
- 			if ($scriptname) {
-				$scripts[$scripts_count++] = $scriptname."\t\t".$self->param('bkp_script_'.$c.'_target');
+			my %backup_script_entry = ();
+			$backup_script_entry{'name'}   = $self->param('bkp_script_'.$c.'_script');
+ 			if ($backup_script_entry{'name'}) {
+				$backup_script_entry{'target'} = $self->param('bkp_script_'.$c.'_target');
+				push( @backup_script, \%backup_script_entry);
+			}
+		}
+
+		# backup_exec loop to get all exclude patterns from the post data
+		my @backup_exec = ();
+		my $backup_exec_count = $self->param('backup_exec_count');
+		for (my $c=0; $c<$backup_exec_count;$c++ ) {
+			my $i=0;
+			while ( $self->param('backup_exec_'.$c) ) {
+				push( @backup_exec, $self->param('backup_exec_'.$c++));
 			}
 		}
 
@@ -348,97 +359,77 @@ post '/config' => sub {
 		my $retain_count_postdata = $self->param('retain_count');
 		my $retain_count = 0;
 		for (my $r=0; $r<$retain_count_postdata; $r++) {
-			my $retain_name = $self->param('retain_'.$r.'_name');
-			if ($retain_name) {
-				$retain[$retain_count++] = $retain_name."\t\t".$self->param('retain_'.$r.'_count');
+			my %retain_entry = ();
+			if ($self->param('retain_'.$r.'_name')) {
+				$retain_entry{'name'}  = $self->param('retain_'.$r.'_name');
+				$retain_entry{'count'} = $self->param('retain_'.$r.'_count');
 			}
+			push( @retain, \%retain_entry );
 		}
 
-		my @saveResult = {};
-
-		# And send everything to the ConfigWriter
-		@saveResult = ConfigWriter::saveConfig(
-			# Extra Parameter
-			scalar @include,		# 00
-			scalar @exclude,		# 01
-			$servers_line_count,	# 02
-			$scripts_count,			# 03
-			$rs_config,				# 04
-			scalar @retain,			# 05
-			# Tab - Root
-			$self->param('config_version'),
-			$self->param('snapshot_root' ),
-			$self->param('include_conf' ),
-			$self->param('no_create_root')?			$self->param('no_create_root')			: "off",
-			# Tab - Commands
-			$self->param('cmd_cp')?					$self->param('cmd_cp')					: "",
-			$self->param('cmd_rm')?					$self->param('cmd_rm')					: "",
-			$self->param('cmd_rsync'),
-			$self->param('cmd_ssh')?				$self->param('cmd_ssh')					: "",
-			$self->param('cmd_logger')?				$self->param('cmd_logger')				: "",
-			$self->param('cmd_du')?					$self->param('cmd_du')					: "",
-			$self->param('cmd_rsnapshot_diff')?		$self->param('cmd_rsnapshot_diff')		: "",
-			$self->param('cmd_preexec')?			$self->param('cmd_preexec')				: "",
-			$self->param('cmd_postexec')?			$self->param('cmd_postexec')			: "",
+		# Build config hash
+		my %config = (
+			# Root
+			'config_version' => $self->param('config_version'),
+			'snapshot_root'	 => $self->param('snapshot_root' ),
+			'include_conf'	 => $self->param('include_conf' ),
+			'no_create_root' => $self->param('no_create_root')?$self->param('no_create_root'):"off",
+			'one_fs'		 => $self->param('one_fs')?$self->param('one_fs'):"off",
+			# Commands
+			'cmd_rsync' 		 => $self->param('cmd_rsync'),
+			'cmd_cp'			 => $self->param('cmd_cp')?$self->param('cmd_cp'):"",
+			'cmd_rm'			 => $self->param('cmd_rm')?$self->param('cmd_rm'):"",
+			'cmd_ssh'			 => $self->param('cmd_ssh')?$self->param('cmd_ssh'):"",
+			'cmd_logger'		 => $self->param('cmd_logger')?$self->param('cmd_logger'):"",
+			'cmd_du'			 => $self->param('cmd_du')?$self->param('cmd_du'):"",
+			'cmd_rsnapshot_diff' => $self->param('cmd_rsnapshot_diff')?$self->param('cmd_rsnapshot_diff'):"",
+			'cmd_preexec'		 => $self->param('cmd_preexec')?$self->param('cmd_preexec'):"",
+			'cmd_postexec'		 => $self->param('cmd_postexec')?$self->param('cmd_postexec'):"",
 			# Tab - LVM Config
-			$self->param('linux_lvm_cmd_lvcreate')?	$self->param('linux_lvm_cmd_lvcreate')	: "",
-			$self->param('linux_lvm_cmd_lvremove')?	$self->param('linux_lvm_cmd_lvremove')	: "",
-			$self->param('linux_lvm_cmd_mount')?	$self->param('linux_lvm_cmd_mount')		: "",
-			$self->param('linux_lvm_cmd_umount')?	$self->param('linux_lvm_cmd_umount')	: "",
-			$self->param('linux_lvm_snapshotsize')?	$self->param('linux_lvm_snapshotsize')	: "",
-			$self->param('linux_lvm_snapshotname')?	$self->param('linux_lvm_snapshotname')	: "",
-			$self->param('linux_lvm_vgpath')?		$self->param('linux_lvm_vgpath')		: "",
-			$self->param('linux_lvm_mountpath')?	$self->param('linux_lvm_mountpath')		: "",
-			# Tab - Global Config
-			$self->param('verbose')?				$self->param('verbose')					: "",
-			$self->param('loglevel')?				$self->param('loglevel')				: "",
-			$self->param('logfile')?				$self->param('logfile')					: "",
-			$self->param('lockfile')?				$self->param('lockfile')				: "",
-			$self->param('stop_on_stale_lockfile')?	$self->param('stop_on_stale_lockfile')	: "off",
-			$self->param('rsync_short_args')?		$self->param('rsync_short_args')		: "",
-			$self->param('rsync_long_args')?		$self->param('rsync_long_args')			: "",
-			$self->param('ssh_args')?				$self->param('ssh_args')				: "",
-			$self->param('du_args')?				$self->param('du_args')					: "",
-			$self->param('one_fs')?					$self->param('one_fs')					: "off",
-			$self->param('link_dest')?				$self->param('link_dest')				: "off",
-			$self->param('sync_first')?				$self->param('sync_first')				: "off",
-			$self->param('use_lazy_deletes')?		$self->param('use_lazy_deletes')		: "off",
-			$self->param('rsync_numtries')?			$self->param('rsync_numtries')			: "",
-			# Tab - Backup Intervals
-			@retain? @retain : (""),
-			# Tab - Include/Exclude
-			$self->param('include_file')? $self->param('include_file') : "",
-			$self->param('exclude_file')? $self->param('exclude_file') : "",
-			@include? @include : (""),
-			@exclude? @exclude : (""),
-			# Tab - Servers
-			@servers? @servers : (""),
-			# Tab - Scripts
-			@scripts? @scripts : (""),
+			'linux_lvm_cmd_lvcreate' => $self->param('linux_lvm_cmd_lvcreate')?$self->param('linux_lvm_cmd_lvcreate'):"",
+			'linux_lvm_cmd_lvremove' => $self->param('linux_lvm_cmd_lvremove')?$self->param('linux_lvm_cmd_lvremove'):"",
+			'linux_lvm_cmd_mount'	 => $self->param('linux_lvm_cmd_mount')?$self->param('linux_lvm_cmd_mount'):"",
+			'linux_lvm_cmd_umount'	 => $self->param('linux_lvm_cmd_umount')?$self->param('linux_lvm_cmd_umount'):"",
+			'linux_lvm_vgpath'		 => $self->param('linux_lvm_vgpath')?$self->param('linux_lvm_vgpath'):"",
+			'linux_lvm_snapshotname' => $self->param('linux_lvm_snapshotname')?$self->param('linux_lvm_snapshotname'):"",
+			'linux_lvm_snapshotsize' => $self->param('linux_lvm_snapshotsize')?$self->param('linux_lvm_snapshotsize'):"",
+			'linux_lvm_mountpath'	 => $self->param('linux_lvm_mountpath')?$self->param('linux_lvm_mountpath'):"",
+			# Global Config
+			'rsync_numtries'		 => $self->param('rsync_numtries')?$self->param('rsync_numtries'):"",
+			'verbose'				 => $self->param('verbose')?$self->param('verbose'):"",
+			'loglevel'				 => $self->param('loglevel')?$self->param('loglevel'):"",
+			'logfile'				 => $self->param('logfile')?$self->param('logfile'):"",
+			'lockfile'				 => $self->param('lockfile')?$self->param('lockfile'):"",
+			'rsync_short_args' 		 => $self->param('rsync_short_args')?$self->param('rsync_short_args'):"",
+			'rsync_long_args'		 => $self->param('rsync_long_args')?$self->param('rsync_long_args'):"",
+			'ssh_args'				 => $self->param('ssh_args')?$self->param('ssh_args'):"",
+			'du_args'				 => $self->param('du_args')?$self->param('du_args'):"",
+			'stop_on_stale_lockfile' => $self->param('stop_on_stale_lockfile')?$self->param('stop_on_stale_lockfile'):"off",
+			'link_dest'				 => $self->param('link_dest')?$self->param('link_dest'):"off",
+			'sync_first'			 => $self->param('sync_first')?$self->param('sync_first'):"off",
+			'use_lazy_deletes'		 => $self->param('use_lazy_deletes')?$self->param('use_lazy_deletes'):"off",
+			# Intervals
+			'retain'		=> \@retain,
+			# Include/Exclude
+			'include_file' 	=> $self->param('include_file')?$self->param('include_file'):"",
+			'exclude_file' 	=> $self->param('exclude_file')?$self->param('exclude_file'):"",
+			'include'		=> \@include,
+			'exclude'		=> \@exclude,
+			# Backup / Hosts 
+			'backup'		=> \@backup,
+			# Scripts
+			'backup_script'	=> \@backup_script,
+			'backup_exec'	=> \@backup_exec,
 		);
 
-		# Shrink the message size to not get oversized Cookies
-		# Cookie "mojolicious" is bigger than 4096 bytes.
-		my $savelinescount = scalar @saveResult;
-		while ($savelinescount > 29) {
-			my $lastLine = pop(@saveResult);
-			pop(@saveResult);
-			push(@saveResult, $lastLine);
-			$savelinescount = scalar @saveResult;
-		}
+		# And send everything to the ConfigWriter
+		my $saveResult = ConfigWriter::saveConfig(
+			$rs_config,
+			\%config,
+		);
 
-		# 0 - Ok
-		# 1 - warning but successfull save
-		# 2 - error in the rsnapshot.conf file
-		# 3 - error while copying the rsnapshot file
-		# If returns 0, then we have successfull save
-		$self->flash(saved=>$saveResult[-1]);
-		if ($saveResult[-1] eq "0") {
-			$self->flash(message_text=>"Config sucessfully saved.");
-		} else {
-			splice(@saveResult,-1,1);
-			$self->flash(message_text=>"@saveResult");
-		}
+		$self->flash(saved=>$saveResult->{'exit_code'});
+		$self->flash(message_text=>"$saveResult->{'message'}");
 
 		$self->redirect_to('/config');
 	} else {
