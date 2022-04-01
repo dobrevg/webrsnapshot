@@ -422,8 +422,8 @@ post '/config' => sub {
 			'backup_exec'	=> \@backup_exec,
 		);
 
-		# And send everything to the ConfigWriter
-		my $saveResult = ConfigWriter::saveConfig(
+		# And send everything to the ConfigHandler::saveConfig
+		my $saveResult = ConfigHandler::saveConfig(
 			$rs_config,
 			\%config,
 		);
