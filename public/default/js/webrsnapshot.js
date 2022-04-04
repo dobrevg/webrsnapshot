@@ -129,8 +129,8 @@ function addBkpScript(id) {
 	// Change the ids in the element to be add
 	backupScriptClone.classList.remove('d-none');
 	backupScriptClone.id = "bkp_script_"+id+"_info";
-	backupScriptClone.getElementsByTagName("input")[0].name ="bkp_script_"+id+"_script";
-	backupScriptClone.getElementsByTagName("input")[1].name ="bkp_script_"+id+"_target";
+	backupScriptClone.getElementsByTagName("input")[0].name ="bkp_script_name_"+id;
+	backupScriptClone.getElementsByTagName("input")[1].name ="bkp_script_target_"+id;
 	backupScriptClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpScript("+id+");");
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
@@ -143,7 +143,7 @@ function addBkpScript(id) {
 
 //Delete line from backup_script 
 function delBkpScript(id) {
-	document.getElementById("bkp_script_"+id+"_info").remove();
+	document.getElementById("bkp_script_"+id).remove();
 }
 
 // Add line to retain
@@ -152,9 +152,9 @@ function addRetain(id) {
 	var retainClone = retainElement.cloneNode(true);
 	// Change the ids in the element to be add
 	retainClone.classList.remove('d-none');
-	retainClone.id = "retainNumber_"+id;
-	retainClone.getElementsByTagName("input")[0].name ="retain_"+id+"_name";
-	retainClone.getElementsByTagName("input")[1].name ="retain_"+id+"_count";
+	retainClone.id = "retain_"+id;
+	retainClone.getElementsByTagName("input")[0].name ="retainname_"+id;
+	retainClone.getElementsByTagName("input")[1].name ="retaincount_"+id;
 	retainClone.getElementsByTagName("input")[1].value = 1;
 	retainClone.getElementsByTagName("button")[0].setAttribute("onclick","delRetain('"+id+"');");
 	// Increase the id for the next add
@@ -248,21 +248,26 @@ function disbaleAllCronjobs() {
 }
 
 // Add new backip_exec line
-function addBkpExec(id) {
-	var backupExecElement = document.getElementById("add_bkp_exec");
+function addBackupExec(id) {
+	var backupExecElement = document.getElementById("add_backup_exec");
 	var backupExecClone = backupExecElement.cloneNode(true);
 	// Change the ids in the element to be add
 	backupExecClone.classList.remove('d-none');
-	backupExecClone.id = "bkp_exec_"+id+"_info";
-	backupExecClone.getElementsByTagName("input")[0].name ="bkp_exec_"+id+"_command";
-	backupExecClone.getElementsByTagName("select")[0].name ="bkp_exec_"+id+"_option";
-	backupExecClone.getElementsByTagName("select")[0].id ="bkp_exec_"+id+"_option";
-	backupExecClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpExec("+id+");");
+	backupExecClone.id = "backup_exec_"+id;
+	backupExecClone.getElementsByTagName("input")[0].name ="backup_exec_command_"+id;
+	backupExecClone.getElementsByTagName("select")[0].name ="backup_exec_importance_"+id;
+	backupExecClone.getElementsByTagName("select")[0].id ="backup_exec_importance_"+id;
+	backupExecClone.getElementsByTagName("button")[0].setAttribute("onclick","delBackupExec("+id+");");
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
-	document.getElementById("add_bkp_exec_btn").setAttribute("onclick","addBkpExec("+nextid+");");
-	document.getElementById("bkp_exec_count").value = nextid;
-	
+	document.getElementById("add_backup_exec_btn").setAttribute("onclick","addBackupExec("+nextid+");");
+	document.getElementById("backup_exec_count").value = nextid;
+
 	// Add element to the page
-	document.getElementById("bkp_execs").append(backupExecClone);
+	document.getElementById("backup_execs").append(backupExecClone);
+}
+
+// Delete backup_exec entry
+function delBkpExec(id) {
+	document.getElementById("backup_exec_"+id).remove();
 }

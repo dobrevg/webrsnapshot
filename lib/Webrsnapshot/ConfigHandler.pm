@@ -1,7 +1,8 @@
-package ConfigWriter;
+package ConfigHandler;
 
 use strict;
 use warnings;
+use open ':locale';
 
 # and save the config File
 # Parameters is all post data from config
@@ -330,6 +331,148 @@ sub saveConfig {
 
 	system ("rm", "-f",$config_to_test);
 	return \%configtest;
+}
+
+sub readConfig {
+	my $configfile = shift(@_);
+
+	my %config;
+	my @retain;
+	my %backup;
+	my @include;
+	my @exclude;
+	my @backup_script;
+	my @backup_exec;
+
+	# Check if rsync and rsnapshot are installed
+	# ToDo: move this checks to webrsnapshot.pl
+	system ("which rsync > /dev/null")		== 0 or die "Rsync not found on this server!";
+	system ("which rsnapshot > /dev/null")	== 0 or die "Rsnapshot not found on this server!";
+	die "$configfile is missing.\n" unless (-e $configfile);
+
+	# Open rsnapshot config file for reading
+	open (CONFIG, $configfile) || die $!;
+	while (<CONFIG>) {
+		next if /^#/;	# Ignore every comment 
+		chop;			# Remove the new line character
+
+		# and start parsing the config file
+		# Root
+		if ("$_" =~ /^config_version\t+(.*)/)	{ $config{'config_version'}	= $1; }
+		if ("$_" =~ /^snapshot_root\t+(.*)/ )	{ $config{'snapshot_root'}	= $1; }
+		if ("$_" =~ /^include_conf\t+(.*)/ )	{ $config{'include_conf'}	= $1; }
+		if ("$_" =~ /^no_create_root\t+(.*)/)	{ $config{'no_create_root'}	= ($1 ne 1)?'':'checked'; }
+		if ("$_" =~ /^one_fs\t+(.*)/)			{ $config{'one_fs'}			= ($1 ne 1)?'':'checked'; }
+
+		# Commands
+		if ("$_" =~ /^cmd_rsync\t+(.*)/)			{ $config{'cmd_rsync'}			= $1; }
+		if ("$_" =~ /^cmd_cp\t+(.*)/)				{ $config{'cmd_cp'}				= $1; }
+		if ("$_" =~ /^cmd_rm\t+(.*)/)				{ $config{'cmd_rm'}				= $1; }
+		if ("$_" =~ /^cmd_ssh\t+(.*)/)				{ $config{'cmd_ssh'}			= $1; }
+		if ("$_" =~ /^cmd_logger\t+(.*)/)			{ $config{'cmd_logger'}			= $1; }
+		if ("$_" =~ /^cmd_du\t+(.*)/)				{ $config{'cmd_du'}				= $1; }
+		if ("$_" =~ /^cmd_rsnapshot_diff\t+(.*)/)	{ $config{'cmd_rsnapshot_diff'}	= $1; }
+		if ("$_" =~ /^cmd_preexec\t+(.*)/)			{ $config{'cmd_preexec'}		= $1; }
+		if ("$_" =~ /^cmd_postexec\t+(.*)/)			{ $config{'cmd_postexec'}		= $1; }
+
+		# LVM Config
+		if ("$_" =~ /^linux_lvm_cmd_lvcreate\t+(.*)/)	{ $config{'linux_lvm_cmd_lvcreate'}	= $1; }
+		if ("$_" =~ /^linux_lvm_cmd_lvremove\t+(.*)/)	{ $config{'linux_lvm_cmd_lvremove'}	= $1; }
+		if ("$_" =~ /^linux_lvm_cmd_mount\t+(.*)/)		{ $config{'linux_lvm_cmd_mount'}	= $1; }
+		if ("$_" =~ /^linux_lvm_cmd_umount\t+(.*)/)		{ $config{'linux_lvm_cmd_umount'}	= $1; }
+		if ("$_" =~ /^linux_lvm_vgpath\t+(.*)/)			{ $config{'linux_lvm_vgpath'}		= $1; }
+		if ("$_" =~ /^linux_lvm_snapshotname\t+(.*)/)	{ $config{'linux_lvm_snapshotname'}	= $1; }
+		if ("$_" =~ /^linux_lvm_snapshotsize\t+(.*)/)	{ $config{'linux_lvm_snapshotsize'}	= $1; }
+		if ("$_" =~ /^linux_lvm_mountpath\t+(.*)/)		{ $config{'linux_lvm_mountpath'}	= $1; }
+
+		# Global config
+		if ("$_" =~ /^rsync_numtries\t+(.*)/)			{ $config{'rsync_numtries'}			= $1; }
+		if ("$_" =~ /^verbose\t+(.*)/)					{ $config{'verbose'}				= $1; }
+		if ("$_" =~ /^loglevel\t+(.*)/)					{ $config{'loglevel'}				= $1; }
+		if ("$_" =~ /^logfile\t+(.*)/)					{ $config{'logfile'}				= $1; }
+		if ("$_" =~ /^lockfile\t+(.*)/)					{ $config{'lockfile'}				= $1; }
+		if ("$_" =~ /^rsync_short_args\t+(.*)/)			{ $config{'rsync_short_args'}		= $1; }
+		if ("$_" =~ /^rsync_long_args\t+(.*)/)			{ $config{'rsync_long_args'}		= $1; }
+		if ("$_" =~ /^ssh_args\t+(.*)/)					{ $config{'ssh_args'}				= $1; }
+		if ("$_" =~ /^du_args\t+(.*)/)					{ $config{'du_args'}				= $1; }
+		if ("$_" =~ /^stop_on_stale_lockfile\t+(.*)/)	{ $config{'stop_on_stale_lockfile'}	= ($1 ne 1)?'':'checked'; }
+		if ("$_" =~ /^link_dest\t+(.*)/)				{ $config{'link_dest'}				= ($1 ne 1)?'':'checked'; }
+		if ("$_" =~ /^sync_first\t+(.*)/)				{ $config{'sync_first'}				= ($1 ne 1)?'':'checked'; }
+		if ("$_" =~ /^use_lazy_deletes\t+(.*)/)			{ $config{'use_lazy_deletes'}		= ($1 ne 1)?'':'checked'; }
+
+		# Intervals
+		if ("$_" =~ /^interval\t+(.*?[^\t+])\t+(.*)/ || "$_" =~ /^retain\t+(.*?[^\t+])\t+(.*)/) {
+			# ToDo: build hash and push to array
+			my %retain_entry;
+			$retain_entry{'name'}  = $1;
+			$retain_entry{'count'} = $2;
+			push( @retain, \%retain_entry);
+		}
+
+		# Include/Exclude
+		if ("$_" =~ /^include_file\t+(.*)/)	{ $config{'include_file'}	= $1; }
+		if ("$_" =~ /^exclude_file\t+(.*)/)	{ $config{'exclude_file'}	= $1; }
+		# ToDo: push to array
+		if ("$_" =~ /^include\t+(.*)/)		{ push( @include, $1 ); }
+		if ("$_" =~ /^exclude\t+(.*)/)		{ push( @exclude, $1 ); }
+
+		# Hosts
+		# ToDo: create hash and push to @backup
+		# if ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/) {
+		# 	my %bakup_entry;
+		# 	$bakup_entry{'source'}  	= $1;
+		# 	$bakup_entry{'hostname'}	= $2;
+		# 	$bakup_entry{'args'}		= $3;
+		# 	push( @backup, \%bakup_entry );
+		# }
+		my %dir1 = (
+			'source'	=> '/etc/',
+			'args'		=> '',
+		);
+		my %dir2 = (
+			'source'	=> '/opt/',
+			'args'		=> '',
+		);
+		my %dir3 = (
+			'source'	=> '/export/',
+			'args'		=> '',
+		);
+		my @host1array = (\%dir1, \%dir2);
+		my @host2array = (\%dir1, \%dir2, \%dir3);
+		%backup = (
+			'localhost' => \@host1array,
+			't470' => \@host2array
+		);
+
+		# Scripts
+		# ToDo: create hash and push to array
+		if ("$_" =~ /^backup_script\t+(.*?[^\t+])\t+(.*)/) {
+			my %backup_script_entry;
+			$backup_script_entry{'name'} 	= $1;
+			$backup_script_entry{'target'} 	= $2;
+			push( @backup_script, \%backup_script_entry );
+		}
+
+		# ToDo: create hash and push to array
+		if ("$_" =~ /^backup_exec\t+(.*?[^\t+])\t+(.*)/) {
+			my %backup_exec_entry;
+			$backup_exec_entry{'command'} 		= $1;
+			$backup_exec_entry{'importance'} 	= $2;
+			push( @backup_exec, \%backup_exec_entry );
+		}
+	}
+	# And close the file
+	close CONFIG;
+
+	# Add all missing arraya
+	$config{'retain'} 		 = \@retain;
+	$config{'backup'} 		 = \%backup;
+	$config{'include'}		 = \@include;
+	$config{'exclude'}		 = \@exclude;
+	$config{'backup_script'} = \@backup_script;
+	$config{'backup_exec'}	 = \@backup_exec;
+
+	return  \%config;
 }
 
 1;

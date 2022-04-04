@@ -73,18 +73,12 @@
 			});
 			var x;
 			if("<%= flash 'saved' %>" != "") {
-				
 				switch (x = parseInt(<%= flash 'saved' %>)) {
-					case 1:
-						document.getElementById("alert-message").classList.add("alert-warning");
-						break;
-					case -1:
-					case 2:
-					case 3:
-						document.getElementById("alert-message").classList.add("alert-danger");
+					case 0:
+						document.getElementById("alert-message").classList.add("alert-success");
 						break;
 					default:
-						document.getElementById("alert-message").classList.add("alert-success");
+						document.getElementById("alert-message").classList.add("alert-danger");
 				}
 				document.getElementById("alert-message").classList.add("show");
 			}

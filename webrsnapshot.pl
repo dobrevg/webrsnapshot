@@ -10,8 +10,7 @@ use Mojolicious::Lite;
 use Mojolicious::Plugin::Authentication;
 use Mojolicious::Plugin::Config;
 use Mojolicious::Sessions;
-use Webrsnapshot::ConfigReader;
-use Webrsnapshot::ConfigWriter;
+use Webrsnapshot::ConfigHandler;
 use Webrsnapshot::CronHandler;
 use Webrsnapshot::HostSummary;
 use Webrsnapshot::LogReader;
@@ -446,61 +445,68 @@ get '/config' => sub {
 	if ( $self->authenticate( $username, $password ) ) {
 		# User defined template
 		$self->stash( default_template	=> $default_template );
-		# Create object from the Config File
-		my $parser = new ConfigReader($rs_config);
-		# Tab - Root
-		$self->stash(config_version	=> $parser->getConfigVersion());
-		$self->stash(snapshot_root	=> $parser->getSnapshotRoot());
-		$self->stash(include_conf	=> $parser->getIncludeConf());
-		$self->stash(no_create_root	=> $parser->getNoCreateRoot());
-		# Tab - Commands
-		$self->stash(cmd_cp				=> $parser->getCmCp());
-		$self->stash(cmd_rm				=> $parser->getCmRm());
-		$self->stash(cmd_rsync			=> $parser->getCmRsync());
-		$self->stash(cmd_ssh			=> $parser->getCmSsh());
-		$self->stash(cmd_logger			=> $parser->getCmLogger());
-		$self->stash(cmd_du				=> $parser->getCmDu());
-		$self->stash(cmd_rsnapshot_diff	=> $parser->getCmDiff());
-		$self->stash(cmd_preexec		=> $parser->getPreExec());
-		$self->stash(cmd_postexec		=> $parser->getPostExec());
-		# Tab - LVM Config
-		$self->stash(linux_lvm_cmd_lvcreate	=> $parser->getLinuxLvmCmdLvcreate());
-		$self->stash(linux_lvm_cmd_lvremove	=> $parser->getLinuxLvmCmdLvremove());
-		$self->stash(linux_lvm_cmd_mount	=> $parser->getLinuxLvmCmdMount());
-		$self->stash(linux_lvm_cmd_umount	=> $parser->getLinuxLvmCmdUmount());
-		$self->stash(linux_lvm_snapshotsize	=> $parser->getLinuxLvmSnapshotsize());
-		$self->stash(linux_lvm_snapshotname	=> $parser->getLinuxLvmSnapshotname());
-		$self->stash(linux_lvm_vgpath		=> $parser->getLinuxLvmVgpath());
-		$self->stash(linux_lvm_mountpath	=> $parser->getLinuxLvmMountpath());
-		# Tab - Global Config
-		$self->stash(verbose				=> $parser->getVerbose());
-		$self->stash(loglevel				=> $parser->getLogLevel());
-		$self->stash(logfile				=> $parser->getLogFile());
-		$self->stash(lockfile				=> $parser->getLockFile());
-		$self->stash(stop_on_stale_lockfile	=> $parser->getStopOnStaleLockfile());
-		$self->stash(rsync_short_args		=> $parser->getRsyncShortArgs());
-		$self->stash(rsync_long_args		=> $parser->getRsyncLongArgs());
-		$self->stash(ssh_args				=> $parser->getSshArgs());
-		$self->stash(du_args				=> $parser->getDuArgs());
-		$self->stash(one_fs					=> $parser->getOneFs());
-		$self->stash(link_dest				=> $parser->getLinkDest());
-		$self->stash(sync_first				=> $parser->getSyncFirst());
-		$self->stash(use_lazy_deletes		=> $parser->getUseLazyDeletes());
-		$self->stash(rsync_numtries			=> $parser->getRsyncNumtries());
-		# Tab - Backup Intervals
-		$self->stash(retain					=> [ $parser->getRetains()]);
-		# Tab - Include/Exclude
-		$self->stash(include_file	=> $parser->getIncludeFile());
-		$self->stash(exclude_file	=> $parser->getExcludeFile());
-		$self->stash(include		=> [ $parser->getInclude() ]);
-		$self->stash(exclude		=> [ $parser->getExclude() ]);
-		# Tab - Servers
-		$self->stash(backup_servers	=> [ $parser->getServers() ]);
-		# Tab - Scripts
-		$self->stash(backup_scripts	=> [ $parser->getScripts() ]);
 
-		# Object have to be destroyed, to not show the config from the first read
-		$parser->DESTROY();
+		# Get the current configuration from the config file
+		my $config = ConfigHandler::readConfig($rs_config);
+
+		# Root
+		$self->stash(config_version	=> $config->{'config_version'});
+		$self->stash(snapshot_root	=> $config->{'snapshot_root'});
+		$self->stash(include_conf	=> $config->{'include_conf'});
+		$self->stash(no_create_root	=> $config->{'no_create_root'});
+		$self->stash(one_fs			=> $config->{'one_fs'});
+
+		# Commands
+		$self->stash(cmd_rsync			=> $config->{'cmd_rsync'});
+		$self->stash(cmd_cp				=> $config->{'cmd_cp'});
+		$self->stash(cmd_rm				=> $config->{'cmd_rm'});
+		$self->stash(cmd_ssh			=> $config->{'cmd_ssh'});
+		$self->stash(cmd_logger			=> $config->{'cmd_logger'});
+		$self->stash(cmd_du				=> $config->{'cmd_du'});
+		$self->stash(cmd_rsnapshot_diff	=> $config->{'cmd_rsnapshot_diff'});
+		$self->stash(cmd_preexec		=> $config->{'cmd_preexec'});
+		$self->stash(cmd_postexec		=> $config->{'cmd_postexec'});
+
+		# LVM Config
+		$self->stash(linux_lvm_cmd_lvcreate	=> $config->{'linux_lvm_cmd_lvcreate'});
+		$self->stash(linux_lvm_cmd_lvremove	=> $config->{'linux_lvm_cmd_lvremove'});
+		$self->stash(linux_lvm_cmd_mount	=> $config->{'linux_lvm_cmd_mount'});
+		$self->stash(linux_lvm_cmd_umount	=> $config->{'linux_lvm_cmd_umount'});
+		$self->stash(linux_lvm_vgpath		=> $config->{'linux_lvm_vgpath'});
+		$self->stash(linux_lvm_snapshotname	=> $config->{'linux_lvm_snapshotname'});
+		$self->stash(linux_lvm_snapshotsize	=> $config->{'linux_lvm_snapshotsize'});
+		$self->stash(linux_lvm_mountpath	=> $config->{'linux_lvm_mountpath'});
+
+		# Global Config
+		$self->stash(rsync_numtries			=> $config->{'rsync_numtries'});
+		$self->stash(verbose				=> $config->{'verbose'});
+		$self->stash(loglevel				=> $config->{'loglevel'});
+		$self->stash(logfile				=> $config->{'logfile'});
+		$self->stash(lockfile				=> $config->{'lockfile'});
+		$self->stash(rsync_short_args		=> $config->{'rsync_short_args'});
+		$self->stash(rsync_long_args		=> $config->{'rsync_long_args'});
+		$self->stash(ssh_args				=> $config->{'ssh_args'});
+		$self->stash(du_args				=> $config->{'du_args'});
+		$self->stash(stop_on_stale_lockfile	=> $config->{'stop_on_stale_lockfile'});
+		$self->stash(link_dest				=> $config->{'link_dest'});
+		$self->stash(sync_first				=> $config->{'sync_first'});
+		$self->stash(use_lazy_deletes		=> $config->{'use_lazy_deletes'});
+		
+		# Intervals
+		$self->stash(retains				=> $config->{'retain'});
+
+		# Include/Exclude
+		$self->stash(include_file	=> $config->{'include_file'});
+		$self->stash(exclude_file	=> $config->{'exclude_file'});
+		$self->stash(includes		=> $config->{'include'});
+		$self->stash(excludes		=> $config->{'exclude'});
+
+		# Hosts
+		$self->stash(backups		=> $config->{'backup'});
+
+		# Tab - Scripts
+		$self->stash(backup_scripts	=> $config->{'backup_script'});
+		$self->stash(backup_execs	=> $config->{'backup_exec'});
 
 		# And render the web interface
 		$self->render('config');
