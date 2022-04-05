@@ -418,31 +418,31 @@ sub readConfig {
 
 		# Hosts
 		# ToDo: create hash and push to @backup
-		# if ("$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/) {
-		# 	my %bakup_entry;
-		# 	$bakup_entry{'source'}  	= $1;
-		# 	$bakup_entry{'hostname'}	= $2;
-		# 	$bakup_entry{'args'}		= $3;
-		# 	push( @backup, \%bakup_entry );
-		# }
-		my %dir1 = (
-			'source'	=> '/etc/',
-			'args'		=> '',
-		);
-		my %dir2 = (
-			'source'	=> '/opt/',
-			'args'		=> '',
-		);
-		my %dir3 = (
-			'source'	=> '/export/',
-			'args'		=> '',
-		);
-		my @host1array = (\%dir1, \%dir2);
-		my @host2array = (\%dir1, \%dir2, \%dir3);
-		%backup = (
-			'localhost' => \@host1array,
-			't470' => \@host2array
-		);
+		if ( "$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/ ) {
+			my $source	 = $1;
+			my $hostname = $2;
+			my $args 	 = $3;
+
+			# Remove tha trailing slash
+			$hostname =~ s|/$||;
+
+			# create the source entry
+			my %dirEntry;
+			$dirEntry{'source'}	= $source;
+			$dirEntry{'args'}	= $args;
+
+			# If the host entry exists, just add the new source
+			if ( $backup{$hostname} ) {
+				my @hostArray = @{ $backup{$hostname} };
+				push( @hostArray, \%dirEntry );
+				$backup{$hostname} = \@hostArray;
+			} 
+			# Otherwise create a new host entry with the first source
+			else {
+				my @hostArray = ( \%dirEntry );
+				$backup{$hostname} = \@hostArray;
+			}
+		}
 
 		# Scripts
 		# ToDo: create hash and push to array
@@ -464,7 +464,7 @@ sub readConfig {
 	# And close the file
 	close CONFIG;
 
-	# Add all missing arraya
+	# Add all missing arrays
 	$config{'retain'} 		 = \@retain;
 	$config{'backup'} 		 = \%backup;
 	$config{'include'}		 = \@include;
