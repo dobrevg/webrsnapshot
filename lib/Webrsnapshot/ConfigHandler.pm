@@ -29,7 +29,6 @@ sub saveConfig {
 	}
 
 	# no_create_root (optional)
-	# ToDo: remove default value
 	if ( $config->{'no_create_root'} ne '' ) {
 		if ( $config->{'no_create_root'} eq 'on' ) {
 			printf CONFIG ("no_create_root\t\t\t1\n");
@@ -40,14 +39,8 @@ sub saveConfig {
 	}
 
 	# one_fs (optional)
-	# ToDo: remove default value
-	if ( $config->{'one_fs'} ne '' ) {
-		if ( $config->{'one_fs'} eq 'on' ) {
-			printf CONFIG ("one_fs\t\t\t\t\t1\n");
-		}
-		if ( $config->{'one_fs'} eq 'off' ) {
-			printf CONFIG ("one_fs\t\t\t\t\t0\n");
-		}
+	if ( $config->{'one_fs'} eq 'on' ) {
+		printf CONFIG ("one_fs\t\t\t\t\t1\n");
 	}
 
 	# Commands ################
@@ -137,139 +130,112 @@ sub saveConfig {
 
 	# Global Config ###########
 	# rsync_numtries (optional)
-	# ToDo: remove default value
-	if ( $config->{'rsync_numtries'} ne '' ) {
-		printf CONFIG ("rsync_numtries\t\t\t$config->{'rsync_numtries'}\n");
+	if ( $config->{'rsync_numtries'} ne "" ) {
+		if ( $config->{'rsync_numtries'} > 1 ) {
+			printf CONFIG ("rsync_numtries\t\t\t$config->{'rsync_numtries'}\n");
+		}
 	}
 
 	# verbose (optional)
-	# ToDo: remove default value
-	if ( $config->{'verbose'} ne '' ) {
-		printf CONFIG ("verbose\t\t\t\t\t$config->{'verbose'}\n");
+	if ( $config->{'verbose'} ne "" ) {
+		if ( $config->{'verbose'} != 2 ) {
+			printf CONFIG ("verbose\t\t\t\t\t$config->{'verbose'}\n");
+		}
 	}
 
 	# loglevel (optional)
-	# ToDo: remove default value
 	if ( $config->{'loglevel'} ne '' ) {
-		printf CONFIG ("loglevel\t\t\t\t$config->{'loglevel'}\n");
+		if ( $config->{'loglevel'} != 3 ) {
+			printf CONFIG ("loglevel\t\t\t\t$config->{'loglevel'}\n");
+		}
 	}
 
 	# logfile (optional)
-	# ToDo: remove default value
 	if ( $config->{'logfile'} ne '' ) {
 		printf CONFIG ("logfile\t\t\t\t\t$config->{'logfile'}\n");
 	}
 
 	# lockfile (optional)
-	# ToDo: remove default value
 	if ( $config->{'lockfile'} ne '' ) {
 		printf CONFIG ("lockfile\t\t\t\t$config->{'lockfile'}\n");
 	}
 
 	# rsync_short_args (optional)
-	# ToDo: remove default value
 	if ( $config->{'rsync_short_args'} ne '' ) {
 		printf CONFIG ("rsync_short_args\t\t$config->{'rsync_short_args'}\n");
 	}
 
 	# rsync_long_args (optional)
-	# ToDo: remove default value
 	if ( $config->{'rsync_long_args'} ne '' ) {
 		printf CONFIG ("rsync_long_args\t\t\t$config->{'rsync_long_args'}\n");
 	}
 
 	# ssh_args (optional)
-	# ToDo: remove default value
 	if ( $config->{'ssh_args'} ne '' ) {
 		printf CONFIG ("ssh_args\t\t\t\t$config->{'ssh_args'}\n");
 	}
 
 	# du_args (optional)
-	# ToDo: remove default value
 	if ( $config->{'du_args'} ne '' ) {
 		printf CONFIG ("du_args\t\t\t\t\t$config->{'du_args'}\n");
 	}
 
 	# stop_on_stale_lockfile (optional)
-	# ToDo: remove default value
 	if ( $config->{'stop_on_stale_lockfile'} ne '' ) {
 		if ( $config->{'stop_on_stale_lockfile'} eq 'on' ) {
 			printf CONFIG ("stop_on_stale_lockfile\t1\n");
 		}
-		if ( $config->{'stop_on_stale_lockfile'} eq 'off' ) {
-			printf CONFIG ("stop_on_stale_lockfile\t0\n");
-		}
 	}
 
 	# link_dest (optional)
-	# ToDo: remove default value
 	if ( $config->{'link_dest'} ne '' ) {
 		if ( $config->{'link_dest'} eq 'on' ) {
 			printf CONFIG ("link_dest\t\t\t\t1\n");
 		}
-		if ( $config->{'link_dest'} eq 'off' ) {
-			printf CONFIG ("link_dest\t\t\t\t0\n");
-		}
 	}
 
 	# sync_first (optional)
-	# ToDo: remove default value
 	if ( $config->{'sync_first'} ne '' ) {
 		if ( $config->{'sync_first'} eq 'on' ) {
 			printf CONFIG ("sync_first\t\t\t\t1\n");
 		}
-		if ( $config->{'sync_first'} eq 'off' ) {
-			printf CONFIG ("sync_first\t\t\t\t0\n");
-		}
 	}
 
 	# use_lazy_deletes (optional)
-	# ToDo: remove default value
 	if ( $config->{'use_lazy_deletes'} ne '' ) {
 		if ( $config->{'use_lazy_deletes'} eq 'on' ) {
 			printf CONFIG ("use_lazy_deletes\t\t1\n");
 		}
-		if ( $config->{'use_lazy_deletes'} eq 'off' ) {
-			printf CONFIG ("use_lazy_deletes\t\t0\n");
-		}
 	}
 
-	# Intervals ###############
-	if ( @{ $config->{'retain'} } ) {
-		foreach ( @{ $config->{'retain'} } ) {
-			my %retain = %$_;
-			printf CONFIG ("retain\t\t\t\t\t$retain{'name'}\t$retain{'count'}\n");
-		}
+	# Retain ###############
+	# ToDo: support for first read interval
+	foreach my $retain_ref ( @{ $config->{'retain'} } ) {
+		printf CONFIG ("retain\t\t\t\t\t$retain_ref->{'name'}\t$retain_ref->{'count'}\n");
 	}
 
 	# Include/exclude #########
 	# include_file (optional)
-	# ToDo: remove default value
 	if ( $config->{'include_file'} ne '' ) {
 		printf CONFIG ("include_file\t\t\t$config->{'include_file'}\n");
 	}
 
 	# exclude_file (optional)
-	# ToDo: remove default value
 	if ( $config->{'exclude_file'} ne '' ) {
 		printf CONFIG ("exclude_file\t\t\t$config->{'exclude_file'}\n");
 	}
 
 	# include (optional)
-	# ToDo: remove default value
-	my $include = $config->{'include'};
-	if ( @$include ) {
-		foreach ( @$include ) {
+	foreach ( @{ $config->{'include'} } ) {
+		if( defined $_ and $_ ne '' ) {
 			printf CONFIG ("include\t\t\t\t\t$_\n");
 		}
 	}
+	
 
 	# exclude (optional)
-	# ToDo: create it
-	# ToDo: remove default value
-	my $exclude = $config->{'exclude'};
-	if ( @$exclude ) {
-		foreach ( @$exclude ) {
+	foreach ( @{ $config->{'exclude'} } ) {
+		if( defined $_ and $_ ne '' ) {
 			printf CONFIG ("exclude\t\t\t\t\t$_\n");
 		}
 	}
@@ -287,24 +253,22 @@ sub saveConfig {
 
 	# Scripts #################
 	# backup_script (optional)
-	# ToDo: create it
-	# ToDo: remove default value
-	if ( @{ $config->{'backup_script'} } ) {
-		foreach ( @{ $config->{'backup_script'} } ) {
-			my %backup_script = %$_;
-			printf CONFIG ("backup_script\t\t\t$backup_script{'name'}\t$backup_script{'target'}\n");
+	foreach my $backup_script_ref ( @{ $config->{'backup_script'} } ) {
+		if( $backup_script_ref->{'name'} ne '' and $backup_script_ref->{'target'} ne '' ) {
+			printf CONFIG ("backup_script\t\t\t$backup_script_ref->{'name'}\t$backup_script_ref->{'target'}\n");
 		}
 	}
-	
+
 	# Scripts #################
 	# backup_exec (optional)
-	# ToDo: create it
-	# ToDo: remove default value
-	my $backup_exec = $config->{'backup_exec'};
-	if ( @$backup_exec ) {
-		foreach ( @$backup_exec ) {
-			printf CONFIG ("backup_exec\t\t\t\t\t$_\n");
-		}
+	foreach my $backup_exec_ref ( @{ $config->{'backup_exec'} } ) {
+		if( $backup_exec_ref->{'command'} ne '' ) {
+			if( $backup_exec_ref->{'importance'} eq 'required' ) {
+				printf CONFIG ("backup_exec\t\t\t\t$backup_exec_ref->{'command'}\t$backup_exec_ref->{'importance'}\n");
+			} else {
+				printf CONFIG ("backup_exec\t\t\t\t$backup_exec_ref->{'command'}\n");
+			}
+		} 
 	}
 
 	# Close the config file
@@ -329,7 +293,7 @@ sub saveConfig {
 		}
 	}
 
-	system ("rm", "-f",$config_to_test);
+	#system ("rm", "-f",$config_to_test);
 	return \%configtest;
 }
 
@@ -356,72 +320,74 @@ sub readConfig {
 		next if /^#/;	# Ignore every comment 
 		chop;			# Remove the new line character
 
-		# and start parsing the config file
+		# parse line
+		my ($key, $value1, $value2, $value3) = split(/\t+/, $_, 4);
+
 		# Root
-		if ("$_" =~ /^config_version\t+(.*)/)	{ $config{'config_version'}	= $1; }
-		if ("$_" =~ /^snapshot_root\t+(.*)/ )	{ $config{'snapshot_root'}	= $1; }
-		if ("$_" =~ /^include_conf\t+(.*)/ )	{ $config{'include_conf'}	= $1; }
-		if ("$_" =~ /^no_create_root\t+(.*)/)	{ $config{'no_create_root'}	= ($1 ne 1)?'':'checked'; }
-		if ("$_" =~ /^one_fs\t+(.*)/)			{ $config{'one_fs'}			= ($1 ne 1)?'':'checked'; }
+		if( $key eq 'config_version' ) { $config{'config_version'} = $value1; }
+		if( $key eq 'snapshot_root'  ) { $config{'snapshot_root'}  = $value1; }
+		if( $key eq 'include_conf' )   { $config{'include_conf'}   = $value1; }
+		if( $key eq 'no_create_root' ) { $config{'no_create_root'} = ($value1 ne 1)?'':'checked'; }
+		if( $key eq 'one_fs' )         { $config{'one_fs'}         = ($value1 ne 1)?'':'checked'; }
 
 		# Commands
-		if ("$_" =~ /^cmd_rsync\t+(.*)/)			{ $config{'cmd_rsync'}			= $1; }
-		if ("$_" =~ /^cmd_cp\t+(.*)/)				{ $config{'cmd_cp'}				= $1; }
-		if ("$_" =~ /^cmd_rm\t+(.*)/)				{ $config{'cmd_rm'}				= $1; }
-		if ("$_" =~ /^cmd_ssh\t+(.*)/)				{ $config{'cmd_ssh'}			= $1; }
-		if ("$_" =~ /^cmd_logger\t+(.*)/)			{ $config{'cmd_logger'}			= $1; }
-		if ("$_" =~ /^cmd_du\t+(.*)/)				{ $config{'cmd_du'}				= $1; }
-		if ("$_" =~ /^cmd_rsnapshot_diff\t+(.*)/)	{ $config{'cmd_rsnapshot_diff'}	= $1; }
-		if ("$_" =~ /^cmd_preexec\t+(.*)/)			{ $config{'cmd_preexec'}		= $1; }
-		if ("$_" =~ /^cmd_postexec\t+(.*)/)			{ $config{'cmd_postexec'}		= $1; }
+		if( $key eq 'cmd_rsync' )          { $config{'cmd_rsync'}          = $value1; }
+		if( $key eq 'cmd_cp' )             { $config{'cmd_cp'}             = $value1; }
+		if( $key eq 'cmd_rm' )             { $config{'cmd_rm'}             = $value1; }
+		if( $key eq 'cmd_ssh' )            { $config{'cmd_ssh'}            = $value1; }
+		if( $key eq 'cmd_logger' )         { $config{'cmd_logger'}         = $value1; }
+		if( $key eq 'cmd_du' )             { $config{'cmd_du'}             = $value1; }
+		if( $key eq 'cmd_rsnapshot_diff' ) { $config{'cmd_rsnapshot_diff'} = $value1; }
+		if( $key eq 'cmd_preexec' )        { $config{'cmd_preexec'}        = $value1; }
+		if( $key eq 'cmd_postexec' )       { $config{'cmd_postexec'}       = $value1; }
 
 		# LVM Config
-		if ("$_" =~ /^linux_lvm_cmd_lvcreate\t+(.*)/)	{ $config{'linux_lvm_cmd_lvcreate'}	= $1; }
-		if ("$_" =~ /^linux_lvm_cmd_lvremove\t+(.*)/)	{ $config{'linux_lvm_cmd_lvremove'}	= $1; }
-		if ("$_" =~ /^linux_lvm_cmd_mount\t+(.*)/)		{ $config{'linux_lvm_cmd_mount'}	= $1; }
-		if ("$_" =~ /^linux_lvm_cmd_umount\t+(.*)/)		{ $config{'linux_lvm_cmd_umount'}	= $1; }
-		if ("$_" =~ /^linux_lvm_vgpath\t+(.*)/)			{ $config{'linux_lvm_vgpath'}		= $1; }
-		if ("$_" =~ /^linux_lvm_snapshotname\t+(.*)/)	{ $config{'linux_lvm_snapshotname'}	= $1; }
-		if ("$_" =~ /^linux_lvm_snapshotsize\t+(.*)/)	{ $config{'linux_lvm_snapshotsize'}	= $1; }
-		if ("$_" =~ /^linux_lvm_mountpath\t+(.*)/)		{ $config{'linux_lvm_mountpath'}	= $1; }
+		if( $key eq 'linux_lvm_cmd_lvcreate' ) { $config{'linux_lvm_cmd_lvcreate'} = $value1; }
+		if( $key eq 'linux_lvm_cmd_lvremove' ) { $config{'linux_lvm_cmd_lvremove'} = $value1; }
+		if( $key eq 'linux_lvm_cmd_mount' )    { $config{'linux_lvm_cmd_mount'}    = $value1; }
+		if( $key eq 'linux_lvm_cmd_umount' )   { $config{'linux_lvm_cmd_umount'}   = $value1; }
+		if( $key eq 'linux_lvm_vgpath' )       { $config{'linux_lvm_vgpath'}       = $value1; }
+		if( $key eq 'linux_lvm_snapshotname' ) { $config{'linux_lvm_snapshotname'} = $value1; }
+		if( $key eq 'linux_lvm_snapshotsize' ) { $config{'linux_lvm_snapshotsize'} = $value1; }
+		if( $key eq 'linux_lvm_mountpath' )    { $config{'linux_lvm_mountpath'}    = $value1; }
 
 		# Global config
-		if ("$_" =~ /^rsync_numtries\t+(.*)/)			{ $config{'rsync_numtries'}			= $1; }
-		if ("$_" =~ /^verbose\t+(.*)/)					{ $config{'verbose'}				= $1; }
-		if ("$_" =~ /^loglevel\t+(.*)/)					{ $config{'loglevel'}				= $1; }
-		if ("$_" =~ /^logfile\t+(.*)/)					{ $config{'logfile'}				= $1; }
-		if ("$_" =~ /^lockfile\t+(.*)/)					{ $config{'lockfile'}				= $1; }
-		if ("$_" =~ /^rsync_short_args\t+(.*)/)			{ $config{'rsync_short_args'}		= $1; }
-		if ("$_" =~ /^rsync_long_args\t+(.*)/)			{ $config{'rsync_long_args'}		= $1; }
-		if ("$_" =~ /^ssh_args\t+(.*)/)					{ $config{'ssh_args'}				= $1; }
-		if ("$_" =~ /^du_args\t+(.*)/)					{ $config{'du_args'}				= $1; }
-		if ("$_" =~ /^stop_on_stale_lockfile\t+(.*)/)	{ $config{'stop_on_stale_lockfile'}	= ($1 ne 1)?'':'checked'; }
-		if ("$_" =~ /^link_dest\t+(.*)/)				{ $config{'link_dest'}				= ($1 ne 1)?'':'checked'; }
-		if ("$_" =~ /^sync_first\t+(.*)/)				{ $config{'sync_first'}				= ($1 ne 1)?'':'checked'; }
-		if ("$_" =~ /^use_lazy_deletes\t+(.*)/)			{ $config{'use_lazy_deletes'}		= ($1 ne 1)?'':'checked'; }
+		if( $key eq 'rsync_numtries' )         { $config{'rsync_numtries'}         = $value1; }
+		if( $key eq 'verbose' )                { $config{'verbose'}                = $value1; }
+		if( $key eq 'loglevel' )               { $config{'loglevel'}               = $value1; }
+		if( $key eq 'logfile' )                { $config{'logfile'}                = $value1; }
+		if( $key eq 'lockfile' )               { $config{'lockfile'}               = $value1; }
+		if( $key eq 'rsync_short_args' )       { $config{'rsync_short_args'}       = $value1; }
+		if( $key eq 'rsync_long_args' )        { $config{'rsync_long_args'}        = $value1; }
+		if( $key eq 'ssh_args' )               { $config{'ssh_args'}               = $value1; }
+		if( $key eq 'du_args' )                { $config{'du_args'}                = $value1; }
+		if( $key eq 'stop_on_stale_lockfile' ) { $config{'stop_on_stale_lockfile'} = ($value1 ne 1)?'':'checked'; }
+		if( $key eq 'link_dest' )              { $config{'link_dest'}              = ($value1 ne 1)?'':'checked'; }
+		if( $key eq 'sync_first' )             { $config{'sync_first'}             = ($value1 ne 1)?'':'checked'; }
+		if( $key eq 'use_lazy_deletes' )       { $config{'use_lazy_deletes'}       = ($value1 ne 1)?'':'checked'; }
 
 		# Intervals
-		if ("$_" =~ /^interval\t+(.*?[^\t+])\t+(.*)/ || "$_" =~ /^retain\t+(.*?[^\t+])\t+(.*)/) {
+		if( $key eq 'interval' || $key eq 'retain' ) {
 			# ToDo: build hash and push to array
 			my %retain_entry;
-			$retain_entry{'name'}  = $1;
-			$retain_entry{'count'} = $2;
+			$retain_entry{'name'}  = $value1;
+			$retain_entry{'count'} = $value2;
 			push( @retain, \%retain_entry);
 		}
 
 		# Include/Exclude
-		if ("$_" =~ /^include_file\t+(.*)/)	{ $config{'include_file'}	= $1; }
-		if ("$_" =~ /^exclude_file\t+(.*)/)	{ $config{'exclude_file'}	= $1; }
+		if( $key eq 'include_file' ) { $config{'include_file'} = $value1; }
+		if( $key eq 'exclude_file' ) { $config{'exclude_file'} = $value1; }
 		# ToDo: push to array
-		if ("$_" =~ /^include\t+(.*)/)		{ push( @include, $1 ); }
-		if ("$_" =~ /^exclude\t+(.*)/)		{ push( @exclude, $1 ); }
+		if( $key eq 'include' ) { push( @include, $value1 ); }
+		if( $key eq 'exclude' ) { push( @exclude, $value1 ); }
 
 		# Hosts
 		# ToDo: create hash and push to @backup
-		if ( "$_" =~ /^backup\t+(.*[^\t+])\t+(.*?[^\t+])\t+(.*)/ ) {
-			my $source	 = $1;
-			my $hostname = $2;
-			my $args 	 = $3;
+		if( $key eq 'backup' ) {
+			my $source	 = $value1;
+			my $hostname = $value2;
+			my $args 	 = $value3;
 
 			# Remove tha trailing slash
 			$hostname =~ s|/$||;
@@ -446,18 +412,18 @@ sub readConfig {
 
 		# Scripts
 		# ToDo: create hash and push to array
-		if ("$_" =~ /^backup_script\t+(.*?[^\t+])\t+(.*)/) {
+		if( $key eq 'backup_script' ) {
 			my %backup_script_entry;
-			$backup_script_entry{'name'} 	= $1;
-			$backup_script_entry{'target'} 	= $2;
+			$backup_script_entry{'name'} 	= $value1;
+			$backup_script_entry{'target'} 	= $value2;
 			push( @backup_script, \%backup_script_entry );
 		}
 
 		# ToDo: create hash and push to array
-		if ("$_" =~ /^backup_exec\t+(.*?[^\t+])\t+(.*)/) {
+		if( $key eq 'backup_exec' ) {
 			my %backup_exec_entry;
-			$backup_exec_entry{'command'} 		= $1;
-			$backup_exec_entry{'importance'} 	= $2;
+			$backup_exec_entry{'command'} 		= $value1;
+			$backup_exec_entry{'importance'} 	= $value2;
 			push( @backup_exec, \%backup_exec_entry );
 		}
 	}

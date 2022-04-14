@@ -335,31 +335,44 @@
 	##########################################################
 	-->
 		<div id="tabs-4" class="container-fluid tab-pane fade pt-4">
+			<!?-- rsync_numtries --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>rsync_numtries</b><hr><b>Default: 1</b><br>Number of rsync re-tries. If you
+						experience any network problems or network card issues that tend to cause ssh to crap-out with
+						<b>'Corrupted MAC on input'</b> errors, for example, set this to a non-zero value to have the
+						rsync operation re-tried.</div>"></i>
+				</span>
+				<input type="number" min="1" class="form-control" placeholder="rsync_numtries" name="rsync_numtries"
+					class="configfield" value="<%= $rsync_numtries %>">
+			</div>
+
 			<!?-- verbose --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'><b>verbose</b><hr>Verbose level, 1 through 5.<br/><br/><b>
+						title="<div class='text-start my-3'><b>verbose</b><hr><b>default: 2</b><br>Verbose level, 1 through 5.<br/><br/><b>
 						1 Quiet</b> - Print fatal errors only<br/><b>2 Normal</b>(default) - Print errors and warnings 
 						only<br/><b>3 Verbose</b> - Show equivalent shell commands being executed<br/><b>4 Extra 
 						Verbose</b> - Show extra verbose information<br/><b>5 Debug mode</b> - Everything</div>"></i>
 				</span>
-				<input type="number" min="1" max="5" class="form-control" name="verbose"
-					class="configfield" value="<%= $verbose %>">
+				<input type="number" min="1" max="5" class="form-control" name="verbose" placeholder="verbose" 
+					value="<%= $verbose %>">
 			</div>
 
 			<!?-- loglevel --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'><b>loglevel</b><hr>Same as <b>'verbose'</b> above, but
+						title="<div class='text-start my-3'><b>loglevel</b><hr><b>default: 3</b><br>Same as <b>'verbose'</b> above, but
 						controls the amount of data sent to the logfile, if one is being used.<br/><br/><b>1 Quiet</b> -
 						Print fatal errors only<br/><b>2 Normal</b> - Print errors and warnings only<br/><b>3 Verbose
 						</b>(default) - Show equivalent shell commands being executed<br/><b>4 Extra Verbose</b> - Show
 						extra verbose information<br/><b>5 Debug mode</b> - Everything"></i>
 				</span>
-				<input type="number" min="1" max="5" class="form-control" name="loglevel"
-					class="configfield" value="<%= $loglevel %>">
+				<input type="number" min="1" max="5" class="form-control" name="loglevel" placeholder="loglevel" 
+					value="<%= $loglevel %>">
 			</div>
 
 			<!?-- logfile --->
@@ -370,8 +383,7 @@
 						to the file you specify. The amount of data written is controlled by the <b>'loglevel'</b>
 						parameter.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="logfile" name="logfile"
-					class="configfield" value="<%= $logfile %>">
+				<input type="text" class="form-control" placeholder="logfile" name="logfile" value="<%= $logfile %>">
 			</div>
 
 			<!?-- lockfile --->
@@ -383,24 +395,7 @@
 						If you enable this, make sure the lockfile directory is not world writable. Otherwise anyone can
 						prevent the program from running.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="lockfile" name="lockfile"
-					class="configfield" value="<%= $lockfile %>">
-			</div>
-
-			<!?-- stop_on_stale_lockfile --->
-			<div class="input-group my-2">
-				<span class="border-radius input-group-text">
-					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'><b>stop_on_stale_lockfile</b><hr><b>Default is 0 (not
-						selected)</b><br/><br/>If a lockfile exists when rsnapshot starts, it will try to read the file
-						and stop with an error if it can't. If it *can* read the file, it sees if a process exists with
-						the PID noted in the file. If it does, rsnapshot stops with an error message. If there is no
-						process with that PID, then we assume that the lockfile is stale and ignore it *unless*
-						stop_on_stale_lockfile is set to 1 in which case we stop.</div>"></i>
-				</span>
-				<input type="checkbox" class="form-check-input mt-3 ms-3" 
-					name="stop_on_stale_lockfile" class="configfield" <%= $stop_on_stale_lockfile %>>
-				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">stop_on_stale_lockfile</label>
+				<input type="text" class="form-control" placeholder="lockfile" name="lockfile" value="<%= $lockfile %>">
 			</div>
 
 			<!?-- rsync_short_args --->
@@ -416,7 +411,7 @@
 						preserve hard links in your backups, then add 'H' to this.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="rsync_short_args" name="rsync_short_args"
-					class="configfield" value="<%= $rsync_short_args %>">
+					value="<%= $rsync_short_args %>">
 			</div>
 
 			<!?-- rsync_long_args --->
@@ -432,7 +427,7 @@
 						per-backup-point rsync_long_args.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="rsync_long_args" name="rsync_long_args"
-					class="configfield" value="<%= $rsync_long_args %>">
+					value="<%= $rsync_long_args %>">
 			</div>
 
 			<!?-- ssh_args --->
@@ -442,8 +437,7 @@
 						title="<div class='text-start my-3'><b>ssh_args</b><hr>ssh has no args passed by default, but
 						you can specify some here.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="ssh_args" name="ssh_args"
-					class="configfield" value="<%= $ssh_args %>">
+				<input type="text" class="form-control" placeholder="ssh_args" name="ssh_args" value="<%= $ssh_args %>">
 			</div>
 
 			<!?-- du_args --->
@@ -455,8 +449,22 @@
 						Solaris du doesn't support <b>-c</b> at all. The GNU version is recommended, since it offers
 						the most features.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="du_args" name="du_args"
-					class="configfield" value="<%= $du_args %>">
+				<input type="text" class="form-control" placeholder="du_args" name="du_args" value="<%= $du_args %>">
+			</div>
+
+			<!?-- stop_on_stale_lockfile --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>stop_on_stale_lockfile</b><hr><b>Default is 0 (not
+						selected)</b><br/><br/>If a lockfile exists when rsnapshot starts, it will try to read the file
+						and stop with an error if it can't. If it *can* read the file, it sees if a process exists with
+						the PID noted in the file. If it does, rsnapshot stops with an error message. If there is no
+						process with that PID, then we assume that the lockfile is stale and ignore it *unless*
+						stop_on_stale_lockfile is set to 1 in which case we stop.</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3"  name="stop_on_stale_lockfile" <%= $stop_on_stale_lockfile %>>
+				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">stop_on_stale_lockfile</label>
 			</div>
 
 			<!?-- link_dest --->
@@ -469,8 +477,7 @@
 						slightly more complicated code branch, but it's the best way to support special files on
 						non-Linux systems.</div>"></i>
 				</span>
-				<input type="checkbox" class="form-check-input mt-3 ms-3" 
-					name="link_dest" class="configfield" <%= $link_dest %>>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="link_dest" <%= $link_dest %>>
 				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">link_dest</label>
 			</div>
 
@@ -488,8 +495,7 @@
 						directories to rotate up. This benefit comes at the cost of one more snapshot worth of disk
 						space. The default is 0 (unchecked).</div>"></i>
 				</span>
-				<input type="checkbox" class="form-check-input mt-3 ms-3" 
-					name="sync_first" class="configfield" <%= $sync_first %>>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="sync_first" <%= $sync_first %>>
 				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">sync_first</label>
 			</div>
 
@@ -509,22 +515,8 @@
 						next (eg) hourly backup kicks off while the previous one is still doing a lazy delete you may
 						temporarily have extra <b>_delete</b> directories hanging around. "></i>
 				</span>
-				<input type="checkbox" class="form-check-input mt-3 ms-3" 
-					name="use_lazy_deletes" class="configfield" <%= $use_lazy_deletes %>>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="use_lazy_deletes" <%= $use_lazy_deletes %>>
 				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">use_lazy_deletes</label>
-			</div>
-
-			<!?-- rsync_numtries --->
-			<div class="input-group my-2">
-				<span class="border-radius input-group-text">
-					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-						title="<div class='text-start my-3'><b>rsync_numtries</b><hr>Number of rsync re-tries. If you
-						experience any network problems or network card issues that tend to cause ssh to crap-out with
-						<b>'Corrupted MAC on input'</b> errors, for example, set this to a non-zero value to have the
-						rsync operation re-tried</div>"></i>
-				</span>
-				<input type="text" class="form-control" placeholder="rsync_numtries" name="rsync_numtries"
-					class="configfield" value="<%= $rsync_numtries %>">
 			</div>
 			<hr>
 		</div>
@@ -557,7 +549,6 @@
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="Add new retain entry"></i>
 				</span>
-				<input type="hidden" id="retain_count" name="retain_count" value="<%= $retain_ptr %>" />
 				<button class="btn btn-outline-primary" type="button" id="retain_add_btn"
 					onclick="addRetain(<%= $retain_ptr %>);">Add</button>
 			</div>
@@ -611,16 +602,16 @@
 			<div id="include">
 				<% my $include_ptr = 0; %>
 				<% foreach my $include ( @$includes ) { %>
-					<div id="include_<%= $include_ptr %>" class="input-group my-2">
+					<div id="include-<%= $include_ptr %>" class="input-group my-2">
 						<span class="border-radius input-group-text">
 							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 								title="<div class='text-start my-3'><b>include</b><hr>This gets passed directly to
 								rsync using the <b>--include</b> directive. This parameter can be specified as many
 								times as needed, with one pattern defined per line.</div>"></i>
 						</span>
-						<input type="text" class="form-control" name="include_<%= $include_ptr %>"
+						<input type="text" class="form-control" name="include-<%= $include_ptr %>"
 							value="<%= $include %>">
-						<button class="btn btn-outline-danger" type="button" onclick="delInclExclEntry('include_<%= $include_ptr++ %>');">
+						<button class="btn btn-outline-danger" type="button" onclick="delInclExclEntry('include-<%= $include_ptr++ %>');">
 							Delete
 						</button>
 					</div>
@@ -634,21 +625,20 @@
 						directly to rsync using the <b>--include</b> directive. This parameter can be specified as many
 						times as needed, with one pattern defined per line.</div>"></i>
 				</span>
-				<input type="hidden" id="include_count" name="include_count" value="<%= $include_ptr %>">
 				<button class="btn btn-outline-primary" type="button" id="add_include_btn" 
 					onclick="addIncludeEntry(<%= $include_ptr %>);">
 					Add Include
 				</button>
 			</div>
 
-			<div id="include_" class="input-group my-2 d-none">
+			<div id="include-" class="input-group my-2 d-none">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="<div class='text-start my-3'><b>include</b><hr>This gets passed directly to
 						rsync using the <b>--include</b> directive. This parameter can be specified as many
 						times as needed, with one pattern defined per line.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="include_entry">
+				<input type="text" class="form-control" placeholder="include">
 				<button class="btn btn-outline-danger" type="button" name="include_del" disabled>Delete</button>
 			</div>
 
@@ -657,17 +647,17 @@
 			<div id="exclude">
 				<% my $exclude_ptr = 0; %>
 				<% foreach my $exclude ( @$excludes ) { %>
-					<div id="exclude_<%= $exclude_ptr %>" class="input-group my-2">
+					<div id="exclude-<%= $exclude_ptr %>" class="input-group my-2">
 						<span class="border-radius input-group-text">
 							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 								title="<div class='text-start my-3'><b>exclude</b><hr>This gets passed directly to
 								rsync using the <b>--exclude</b> directive. This parameter can be specified as many
 								times as needed, with one pattern defined per line.</div>"></i>
 						</span>
-						<input type="text" class="form-control" name="exclude_<%= $exclude_ptr %>"
+						<input type="text" class="form-control" name="exclude-<%= $exclude_ptr %>"
 							value="<%= $exclude %>">
 						<button class="btn btn-outline-danger" type="button" 
-							onclick="delInclExclEntry('exclude_<%= $exclude_ptr++ %>');">
+							onclick="delInclExclEntry('exclude-<%= $exclude_ptr++ %>');">
 							Delete
 						</button>
 					</div>
@@ -681,21 +671,20 @@
 						directly to rsync using the <b>--exclude</b> directive. This parameter can be specified as many
 						times as needed, with one pattern defined per line.</div>"></i>
 				</span>
-				<input type="hidden" id="exclude_count" name="exclude_count" value="<%= $exclude_ptr %>" />
 				<button class="btn btn-outline-primary" type="button" id="add_exclude_btn" 
 					onclick="addExcludeEntry('<%= $exclude_ptr %>');">
 					Add Exclude
 				</button>
 			</div>
 
-			<div id="exclude_" class="input-group my-2 d-none">
+			<div id="exclude-" class="input-group my-2 d-none">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="<div class='text-start my-3'><b>exclude</b><hr>This gets passed directly to
 						rsync using the <b>--exclude</b> directive. This parameter can be specified as many
 						times as needed, with one pattern defined per line.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="exclude_entry">
+				<input type="text" class="form-control" placeholder="exclude">
 				<button class="btn btn-outline-danger" type="button" name="exclude_del" disabled>Delete</button>
 			</div>
 			<hr>
@@ -717,39 +706,39 @@
 							</button>
 						</h2>
 						<div id="collapse_<%= $hostname %>" class="accordion-collapse collapse" data-bs-parent="#accordion">
-							<div class="accordion-body" id="config_<%= $hostname %>">
-								<% my $dirArrayRef = %$backups{$hostname}; %>
-								<% my $host_dir_prt; %>
-								<% for( $host_dir_prt = 0; $host_dir_prt < @$dirArrayRef; $host_dir_prt++ ) { %>
-									<div class="input-group" id="hostname_<%= $hostname %>_sourcegroup_<%= $host_dir_prt %>">
-										<span class="border-radius input-group-text">
-											<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right" 
-												title="<div class='text-start my-3'><b>backup</b><hr>Directory to backup</div>">
-											</i>
-										</span>
-										<input type="text" class="form-control" id="hostname_<%= $hostname %>_source_<%= $host_dir_prt %>"
-												name="hostname_<%= $hostname %>_source_<%= $host_dir_prt %>" placeholder="source directory"
-													value="<%= ${$dirArrayRef}[$host_dir_prt]->{'source'} %>">
-										<span class="border-radius input-group-text">
-											<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-												title="Optional directory args">
-											</i>
-										</span>
-										<input type="text" class="form-control" id="hostname_<%= $hostname %>_args_<%= $host_dir_prt %>"
-													name="hostname_<%= $hostname %>_args_<%= $host_dir_prt %>" placeholder="optional args"
-													 value="<%= ${$dirArrayRef}[$host_dir_prt]->{'args'} %>">
-										<button class="btn btn-outline-danger" type="button" onclick="hostDeleteDir(<%= $hostname %>, <%= $host_dir_prt %>)">
-											Delete
-										</button>
-									</div>
-								<% } %>
-								<input type="hidden" id="hostname_<%= $hostname %>_dircount"
-										name="hostname_<%= $hostname %>_dircount" value="<%= $host_dir_prt %>">
+							<div class="accordion-body">
+								<div id="config_<%= $hostname %>">
+									<% my $dirArrayRef = %$backups{$hostname}; %>
+									<% my $host_dir_prt; %>
+									<% for( $host_dir_prt = 0; $host_dir_prt < @$dirArrayRef; $host_dir_prt++ ) { %>
+										<div class="input-group" id="hostname_<%= $hostname %>_sourcegroup_<%= $host_dir_prt %>">
+											<span class="border-radius input-group-text">
+												<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right" 
+													title="<div class='text-start my-3'><b>backup</b><hr>Directory to backup</div>">
+												</i>
+											</span>
+											<input type="text" class="form-control" id="hostname_<%= $hostname %>__source_<%= $host_dir_prt %>"
+													name="hostname_<%= $hostname %>__source_<%= $host_dir_prt %>" placeholder="source directory"
+														value="<%= ${$dirArrayRef}[$host_dir_prt]->{'source'} %>">
+											<span class="border-radius input-group-text">
+												<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+													title="Optional directory args">
+												</i>
+											</span>
+											<input type="text" class="form-control" id="hostname_<%= $hostname %>__args_<%= $host_dir_prt %>"
+														name="hostname_<%= $hostname %>__args_<%= $host_dir_prt %>" placeholder="optional args"
+														value="<%= ${$dirArrayRef}[$host_dir_prt]->{'args'} %>">
+											<button class="btn btn-outline-danger" type="button" onclick="hostDeleteDir('<%= $hostname %>', <%= $host_dir_prt %>)">
+												Delete
+											</button>
+										</div>
+									<% } %>
+								</div>
 								<button class="btn btn-outline-primary mt-3" type="button" id="hostname_<%= $hostname %>_addsource_btn"
-									onclick="hostAddDir(<%= $hostname %>,<%= $host_dir_prt %>);">
+									onclick="hostAddDir('<%= $hostname %>',<%= $host_dir_prt %>);">
 									Add Entry
 								</button>
-								<button class="btn btn-outline-danger mt-3 float-end" type="button" onclick="hostDelete(<%= $hostname %>)">
+								<button class="btn btn-outline-danger mt-3 float-end" type="button" onclick="hostDelete('<%= $hostname %>')">
 									Delete Host
 								</button>
 							</div>
@@ -757,6 +746,22 @@
 					</div>
 				<% } %>
 			</div> <!-- End of Hosts Accordion -->
+			<div id="new_dir_entry" class="input-group d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="Directory to backup"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="directory"
+					name="new_dir_entry">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="Optional directory args"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="optional args">
+				<button class="btn btn-outline-danger" type="button" name="hostdir_del" disabled>
+					Delete
+				</button>
+			</div>
 
 <!-- Add new Host -->
 			<div class="input-group  mt-3">
@@ -768,9 +773,8 @@
 					Add Host
 				</button>
 			</div>
-			<input type="hidden" id="servers_count" name="servers_count" value="ToDo: 02">
 			<div class="modal fade" id="modal_add_host" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" 
-				aria-labelledby="staticBackdropLabel" aria-hidden="true">
+				aria-hidden="true">
 				<div class="modal-dialog">
 					<div class="modal-content">
 						<div class="modal-header">
@@ -785,7 +789,7 @@
 										hostname can be any name and is only used to better identify the server. 
 										Then enter the first directory name and immediately save the configuration."></i>
 								</span>
-								<input type="text" class="form-control" placeholder="hostname" name="new_host_entry">
+								<input type="text" class="form-control" placeholder="hostname" id="new_hostname">
 							</div>
 						</div>
 						<div class="modal-footer">
@@ -810,9 +814,9 @@
 								<span class="border-radius input-group-text">
 									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
 										data-bs-html="true" data-bs-placement="right"
-										title="Directory to backup"></i>
+										title="Source directory to backup"></i>
 								</span>
-								<input type="text" placeholder="directory" class="form-control">
+								<input type="text" placeholder="source" class="form-control">
 								<span class="border-radius input-group-text">
 									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
 										data-bs-html="true" data-bs-placement="right"
@@ -821,8 +825,6 @@
 								<input type="text" placeholder="optional args" class="form-control">
 								<button class="btn btn-outline-danger" type="button">Delete</button>
 							</div>
-							<input type="hidden">
-							<input type="hidden">
 						</div>
 						<button class="btn btn-outline-primary mt-3" type="button">Add Entry</button>
 						<button class="btn btn-outline-danger mt-3 float-end" type="button">Delete Host</button>
@@ -838,10 +840,10 @@
 	-->
 <!-- backup_script -->
 		<div id="tabs-8" class="container-fluid tab-pane fade pt-4">
-			<div id="bkp_scripts">
+			<div id="backup_script">
 				<% my $bkp_script_ptr = 0; %>
 				<% foreach my $backup_script ( @$backup_scripts ) { %>
-					<div id="bkp_script_<%= $bkp_script_ptr %>" class="input-group my-2">
+					<div id="backup_script_<%= $bkp_script_ptr %>" class="input-group my-2">
 						<span class="border-radius input-group-text">
 							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 								title="<div class='text-start my-3'><b>backup_script</b><hr>This script should 
@@ -853,13 +855,13 @@
 								other backups.</div>"></i>
 						</span>
 						<input type="text" class="form-control" value="<%= %$backup_script{'name'} %>" 
-							name="bkp_script_name<%= $bkp_script_ptr %>">
+							name="backup_script_name_<%= $bkp_script_ptr %>">
 						<span class="border-radius input-group-text">
 							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 								title="<div class='text-start my-3'>Destination directory</div>"></i>
 						</span>
 						<input type="text" class="form-control" value="<%= %$backup_script{'target'} %>" 
-							name="bkp_script_target<%= $bkp_script_ptr %>">
+							name="backup_script_target_<%= $bkp_script_ptr %>">
 						<button class="btn btn-outline-danger" type="button" onclick="delBkpScript(<%= $bkp_script_ptr++ %>);">
 							Delete
 						</button>
@@ -878,14 +880,13 @@
 						specifying a destination directory for a <b>backup_script</b> that will clobber
 						other backups.</div>"></i>
 				</span>
-				<input type="hidden" id="bkp_script_count" name="bkp_script_count" value="<%= $bkp_script_ptr %>">
-				<button class="btn btn-outline-primary" type="button" id="add_bkp_script_btn" 
+				<button class="btn btn-outline-primary" type="button" id="add_backup_script_btn" 
 					onclick="addBkpScript(<%= $bkp_script_ptr %>);">
 					Add
 				</button>
 			</div>
 
-			<div id="add_bkp_script" class="input-group my-2 d-none">
+			<div id="add_backup_script" class="input-group my-2 d-none">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="This script should simply create files and/or directories in its current working directory.
@@ -906,7 +907,7 @@
 			<hr>
 
 <!-- backup_exec -->
-			<div id="backup_execs">
+			<div id="backup_exec">
 				<% my $backup_exec_ptr = 0; %>
 				<% foreach my $backup_exec ( @$backup_execs ) { %>
 					<div id="backup_exec_<%= $backup_exec_ptr %>" class="input-group my-2">
@@ -926,8 +927,8 @@
 							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 								title="<div class='text-start my-3'>Importance</div>"></i>
 						</span>
-						<select class="form-select" name="backup_script_importance_<%= $backup_exec_ptr %>" 
-							id="backup_script_importance_<%= $backup_exec_ptr %>">
+						<select class="form-select" name="backup_exec_importance_<%= $backup_exec_ptr %>" 
+							id="backup_exec_importance_<%= $backup_exec_ptr %>">
 							<option value="optional" selected>Optional</option>
 							<option value="required">Required</option>
 						</select>
@@ -948,7 +949,6 @@
 						non-zero exit status from the command will result in an error message being output and rsnapshot
 						itself will	exit with a non-zero exit status.</div>"></i>
 				</span>
-				<input type="hidden" id="backup_exec_count" name="backup_exec_count" value="0">
 				<button class="btn btn-outline-primary" type="button" id="add_backup_exec_btn" 
 					onclick="addBackupExec(<%= $backup_exec_ptr %>);">
 					Add
@@ -966,7 +966,7 @@
 						non-zero exit status from the command will result in an error message being output and rsnapshot
 						itself will	exit with a non-zero exit status.</div>"></i>
 				</span>
-				<input type="text" class="form-control">
+				<input type="text" class="form-control" placeholder="command">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="<div class='text-start my-3'>Choose the importance. Optional or required.</div>"></i>

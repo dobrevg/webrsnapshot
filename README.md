@@ -1,7 +1,8 @@
 # [Webrsnapshot v0.7](https://github.com/dobrevg/webrsnapshot)
 ============
 
-Webrsnapshot is web based graphical interface for editing the configuration file of rsnapshot via browser. This software is still in development. Please make a backup of your rnsapshot configuration file `/etc/rsnapshot.conf` before using Webrsnapshot. At this point not all features are implemented and only essential options are enabled. You can find a list with the missing options in the TODO file provided with this installation.
+Webrsnapshot is web based graphical interface for editing the configuration file and the cronjob of rsnapshot via web browser. 
+Webrsnapshot comes with ABSOLUTELY NO WARRANTY.
 
 
 ## Quick start

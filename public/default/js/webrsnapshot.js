@@ -6,17 +6,16 @@ function delInclExclEntry(id) {
 //Add field to include config
 function addIncludeEntry(id) {
 	// Clone the element
-	var includeEntryElement = document.getElementById("include_");
+	var includeEntryElement = document.getElementById("include-");
 	var includeEntryClone = includeEntryElement.cloneNode(true);
 	// Change the ids in the element to be add
 	includeEntryClone.classList.remove('d-none');
-	includeEntryClone.id = "include_"+id;
-	includeEntryClone.getElementsByTagName("input")[0].name = "include_"+id;
-	includeEntryClone.getElementsByTagName("button").include_del.setAttribute("onclick","delInclExclEntry('include_" + id + "');");
+	includeEntryClone.id = "include-"+id;
+	includeEntryClone.getElementsByTagName("input")[0].name = "include-"+id;
+	includeEntryClone.getElementsByTagName("button").include_del.setAttribute("onclick","delInclExclEntry('include-" + id + "');");
 	includeEntryClone.getElementsByTagName("button").include_del.disabled = false;
 	// Create the next id
 	var next_id = parseInt(id)+1;
-	document.getElementById("include_count").value = next_id;
 	document.getElementById("add_include_btn").setAttribute("onclick","addIncludeEntry('"+next_id+"');");
 	// Add element to the page
 	document.getElementById("include").append(includeEntryClone);
@@ -25,125 +24,103 @@ function addIncludeEntry(id) {
 //Add field to exclude config
 function addExcludeEntry(id) {
 	// Clone the element
-	var excludeEntryElement = document.getElementById("exclude_");
+	var excludeEntryElement = document.getElementById("exclude-");
 	var excludeEntryClone = excludeEntryElement.cloneNode(true);
 	// Change the ids in the element to be add
 	excludeEntryClone.classList.remove('d-none');
-	excludeEntryClone.id = "exclude_"+id;
-	excludeEntryClone.getElementsByTagName("input")[0].name = "exclude_"+id;
-	excludeEntryClone.getElementsByTagName("button").exclude_del.setAttribute("onclick","delInclExclEntry('exclude_" + id + "');");
+	excludeEntryClone.id = "exclude-"+id;
+	excludeEntryClone.getElementsByTagName("input")[0].name = "exclude-"+id;
+	excludeEntryClone.getElementsByTagName("button").exclude_del.setAttribute("onclick","delInclExclEntry('exclude-" + id + "');");
 	excludeEntryClone.getElementsByTagName("button").exclude_del.disabled = false;
 	// Create the next id
 	var next_id = parseInt(id)+1;
-	document.getElementById("exclude_count").value = next_id;
 	document.getElementById("add_exclude_btn").setAttribute("onclick","addExcludeEntry('"+next_id+"');");
 	// Add element to the page
 	document.getElementById("exclude").append(excludeEntryClone);
 }
 
 // Delete Host Config
-function hostDelete(id) {
-	document.getElementById("host_item_"+id).remove();
+function hostDelete(hostname) {
+	document.getElementById("hostname_"+hostname).remove();
 }
 
 // Delete specific directory from backuped host
-function hostDeleteDir(serverid, dirid) {
-	document.getElementById("server_"+serverid+"_dir_"+dirid+"_entryGroup").remove();
+function hostDeleteDir(hostname, dirid) {
+	document.getElementById("hostname_"+hostname+"_sourcegroup_"+dirid).remove();
 }
 
 //Add another directory for backup on specific host
-function hostAddDir(serverid, dirid) {
-	console.log("hostAddDir serverid: "+serverid);
-	console.log("hostAddDir dirid: "+dirid);
+function hostAddDir(hostname, dirid) {
 	// Clone the element
 	var newDirEntryElement = document.getElementById("new_dir_entry");
 	var newDirEntryClone = newDirEntryElement.cloneNode(true);
 	// Change the ids in the element to be add
 	newDirEntryClone.classList.remove('d-none');
-	newDirEntryClone.id = "server_"+serverid+"_dir_"+dirid+"_entryGroup";
-	newDirEntryClone.getElementsByTagName("input")[0].name = "server_"+serverid+"_dir_"+dirid+"_dir";
-	newDirEntryClone.getElementsByTagName("input")[0].id = "server_"+serverid+"_dir_"+dirid+"_dir";
-	newDirEntryClone.getElementsByTagName("input")[1].name = "server_"+serverid+"_dir_"+dirid+"_args";
-	newDirEntryClone.getElementsByTagName("input")[1].id = "server_"+serverid+"_dir_"+dirid+"_args";
+	newDirEntryClone.id = "hostname_"+hostname+"_sourcegroup_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[0].name = "hostname_"+hostname+"__source_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[0].id = "hostname_"+hostname+"__source_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[1].name = "hostname_"+hostname+"__args_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[1].id = "hostname_"+hostname+"__args_"+dirid;
 	newDirEntryClone.getElementsByTagName("button").hostdir_del.disabled = false;
-	newDirEntryClone.getElementsByTagName("button").hostdir_del.setAttribute("onclick","hostDeleteDir("+serverid+", "+dirid+");");
+	newDirEntryClone.getElementsByTagName("button").hostdir_del.setAttribute("onclick","hostDeleteDir('"+hostname+"', "+dirid+");");
 	// Create dir count
 	var nextid= parseInt(dirid)+1;
-	var dircount_id = "server_"+serverid+"_dircount";
-	console.log("hostAddDir nextid: "+nextid);
-	console.log("dircount id: "+dircount_id);
-	document.getElementById("srv_"+serverid+"_adddir_btn").setAttribute("onclick","hostAddDir("+serverid+","+nextid+");");
-	document.getElementById(dircount_id).value = nextid;
+	document.getElementById("hostname_"+hostname+"_addsource_btn").setAttribute("onclick","hostAddDir('"+hostname+"',"+nextid+");");
 	// Add element to the page
-	document.getElementById("server_"+serverid+"_config").append(newDirEntryClone);
+	document.getElementById("config_"+hostname).append(newDirEntryClone);
 }
 
 //Add new Host
-function addNewHost(id) {
-	var lastid = parseInt(id)-1;
+function addNewHost(hostname) {
+	var hostname = document.getElementById('new_hostname').value;
 	var lastKnownHostElement = document.getElementById("host_item_new");
 	var newHostEntryClone = lastKnownHostElement.cloneNode(true);
 	// Change the ids in the element to be add
-	newHostEntryClone.id = "host_item_"+id;
 	newHostEntryClone.classList.remove("d-none");
-	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("data-bs-target","#collapse_"+id);
-	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("aria-controls","collapse_"+id);
-	var newHostName = document.getElementById("modal_add_host").getElementsByTagName("input")[0].value;
-	newHostEntryClone.getElementsByTagName("button")[0].innerHTML = "<b>"+newHostName+"</b>";
-	newHostEntryClone.getElementsByTagName("button")[1].id = "server_"+id+"_dir_0_del"
-	newHostEntryClone.getElementsByTagName("button")[1].setAttribute("onclick","hostDeleteDir("+id+", 0);");
-	newHostEntryClone.getElementsByTagName("button")[2].setAttribute("onclick","hostAddDir("+id+",1);");
+	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("data-bs-target","#collapse_"+hostname);
+	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("aria-controls","collapse_"+hostname);
+	newHostEntryClone.getElementsByTagName("button")[0].innerHTML = "<b>"+hostname+"</b>";
+	newHostEntryClone.getElementsByTagName("button")[1].setAttribute("onclick","hostDeleteDir('"+hostname+"', 0);");
+	newHostEntryClone.getElementsByTagName("button")[2].setAttribute("onclick","hostAddDir('"+hostname+"',1);");
 	newHostEntryClone.getElementsByTagName("button")[2].disabled = true;
-	newHostEntryClone.getElementsByTagName("button")[3].setAttribute("onclick","hostDelete("+id+");");
-	newHostEntryClone.getElementsByTagName("input")[0].id = "server_"+id+"_dir_0_dir";
-	newHostEntryClone.getElementsByTagName("input")[0].name = "server_"+id+"_dir_0_dir";
+	newHostEntryClone.getElementsByTagName("button")[3].setAttribute("onclick","hostDelete('"+hostname+"');");
+	newHostEntryClone.getElementsByTagName("input")[0].id = "hostname_"+hostname+"__source_0";
+	newHostEntryClone.getElementsByTagName("input")[0].name = "hostname_"+hostname+"__source_0";
 	newHostEntryClone.getElementsByTagName("input")[0].value = "/etc/";
-	newHostEntryClone.getElementsByTagName("input")[1].id = "server_"+id+"_dir_0_args";
-	newHostEntryClone.getElementsByTagName("input")[1].name = "server_"+id+"_dir_0_args";
+	newHostEntryClone.getElementsByTagName("input")[1].id = "hostname_"+hostname+"__args_0";
+	newHostEntryClone.getElementsByTagName("input")[1].name = "hostname_"+hostname+"__args_0";
 	newHostEntryClone.getElementsByTagName("input")[1].value = "";
-	newHostEntryClone.getElementsByTagName("input")[2].id = "server_label_"+id;
-	newHostEntryClone.getElementsByTagName("input")[2].name = "server_label_"+id;
-	newHostEntryClone.getElementsByTagName("input")[2].value = newHostName;
-	newHostEntryClone.getElementsByTagName("input")[3].id = "server_"+id+"_dircount";
-	newHostEntryClone.getElementsByTagName("input")[3].name = "server_"+id+"_dircount";
-	newHostEntryClone.getElementsByTagName("input")[3].value = 1;
-	newHostEntryClone.getElementsByTagName("div")[0].id = "collapse_"+id;
-	newHostEntryClone.getElementsByTagName("div")[0].setAttribute("aria-labelledby","server_"+id+"_name");
-	newHostEntryClone.getElementsByTagName("div")[2].id = "server_"+id+"_config";
-	newHostEntryClone.getElementsByTagName("div")[3].id = "server_"+id+"_dir_0_entryGroup";
+	newHostEntryClone.getElementsByTagName("div")[0].id = "collapse_"+hostname;	 
+	newHostEntryClone.getElementsByTagName("div")[2].id = "config_"+hostname;
+	newHostEntryClone.getElementsByTagName("div")[3].id = "hostname_"+hostname+"_sourcegroup_0";
 	// Increase the id for the next add
-	var nextid = parseInt(id)+1;
-	document.getElementById("modal_add_host_btn").setAttribute("onclick","addNewHost("+nextid+");");
-	document.getElementById("servers_count").value = nextid;
+	document.getElementById("modal_add_host_btn").setAttribute("onclick","addNewHost();");
 	// Reset the input in modal
 	document.getElementById("modal_add_host").getElementsByTagName("input")[0].value = "";
 	// Add element to the page
 	document.getElementById("accordion").append(newHostEntryClone);
-	//console.log(newHostEntryClone.outerHTML);
 }
 
 //Add line to backup_script 
 function addBkpScript(id) {
-	var backupScriptElement = document.getElementById("add_bkp_script");
+	var backupScriptElement = document.getElementById("add_backup_script");
 	var backupScriptClone = backupScriptElement.cloneNode(true);
 	// Change the ids in the element to be add
 	backupScriptClone.classList.remove('d-none');
-	backupScriptClone.id = "bkp_script_"+id+"_info";
-	backupScriptClone.getElementsByTagName("input")[0].name ="bkp_script_name_"+id;
-	backupScriptClone.getElementsByTagName("input")[1].name ="bkp_script_target_"+id;
+	backupScriptClone.getElementsByTagName("input")[0].name ="backup_script_name_"+id;
+	backupScriptClone.getElementsByTagName("input")[1].name ="backup_script_target_"+id;
 	backupScriptClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpScript("+id+");");
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
-	document.getElementById("add_bkp_script_btn").setAttribute("onclick","addBkpScript("+nextid+");");
-	document.getElementById("bkp_script_count").value = nextid;
+	document.getElementById("add_backup_script_btn").setAttribute("onclick","addBkpScript("+nextid+");");
 	
 	// Add element to the page
-	document.getElementById("bkp_scripts").append(backupScriptClone);
+	document.getElementById("backup_script").append(backupScriptClone);
 }
 
 //Delete line from backup_script 
 function delBkpScript(id) {
-	document.getElementById("bkp_script_"+id).remove();
+	document.getElementById("backup_script_"+id).remove();
 }
 
 // Add line to retain
@@ -160,14 +137,13 @@ function addRetain(id) {
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
 	document.getElementById("retain_add_btn").setAttribute("onclick","addRetain('"+nextid+"');");
-	document.getElementById("retain_count").value = nextid;
 	// Add element to the page
 	document.getElementById("retains").append(retainClone);
 }
 
 // Delete line from retain
 function delRetain(id) {
-	document.getElementById("retainNumber_"+id).remove();
+	document.getElementById("retain_"+id).remove();
 }
 
 // Add Crontab, select funktionality
@@ -261,13 +237,12 @@ function addBackupExec(id) {
 	// Increase the id for the next add
 	var nextid = parseInt(id)+1;
 	document.getElementById("add_backup_exec_btn").setAttribute("onclick","addBackupExec("+nextid+");");
-	document.getElementById("backup_exec_count").value = nextid;
 
 	// Add element to the page
-	document.getElementById("backup_execs").append(backupExecClone);
+	document.getElementById("backup_exec").append(backupExecClone);
 }
 
 // Delete backup_exec entry
-function delBkpExec(id) {
+function delBackupExec(id) {
 	document.getElementById("backup_exec_"+id).remove();
 }
