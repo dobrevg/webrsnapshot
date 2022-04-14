@@ -31,7 +31,7 @@
 
 * rsnapshot.conf have to be readable and writable for the user running this web application
 * rsnapshot log file have to be readable for the user running this web application
-* cronjob file (f.e. /etc/cron.d/rsnapshot) file have to be readable for the user running this web application
+* cronjob file (f.e. /etc/cron.d/rsnapshot) file have to be readable and writable for the user running this web application
 * Mojolicious Framework (required)
 * Mojolicious::Plugin::Authentication (required)
 * File::ReadBackwards (required)
