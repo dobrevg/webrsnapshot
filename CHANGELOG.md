@@ -1,6 +1,14 @@
-Version 0.Next
+Version 0.8
 -----------
 
+* [feature]     - Add backup_exec support
+* [feature]     - Add example systemd and sysV scripts
+* [feature]     - Add rsnapshot cron file to the conf
+* [feature]     - Add option to disable each/all crons individually
+* [change]      - Replace jQuery with Bootstrap 5
+* [change]      - Add external lib dependencies as submodules
+* [improvement] - Better exit message handle on save
+* [improvement] - Web UI is responsible 
 
 
 Version 0.7

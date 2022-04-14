@@ -1,0 +1,16 @@
+.nav-tabs-responsive .nav-item a.prev .text,
+.nav-tabs-responsive .nav-item a.next .text {
+	display: none !important;
+}
+.nav-tabs-responsive .nav-item .prev:after {
+	content: "\276E";
+}
+.next:after {
+	content: "\276F";
+}
+
+
+.tooltip-inner {
+	min-width: initial;
+	max-width: 320px;
+}

@@ -1,0 +1,22 @@
+% layout $default_template;
+% title 'Webrsnapshot';
+
+<table class="table table-striped">
+	<tr>
+		<th>Hosts</th>
+		<th>Last Backup</th> 
+	</tr>
+	<% my $host_ptr = 0; %>
+	<% foreach(@$hosts) { %>
+		<tr>
+			<td><a href="host?h=<%= @$hosts[$host_ptr] %>"><%= @$hosts[$host_ptr] %></a></td>
+			<td>
+				<%= sprintf("%.1f",(time - @$last_bkp[$host_ptr])/86400)." Days" if (@$last_bkp[$host_ptr] != 0) %>  
+			</td>
+		</tr>
+		<% $host_ptr++; %>
+	<% } %>
+<table>
+<script>
+	document.getElementById("menuEntry-hosts").classList.add("active");
+</script>

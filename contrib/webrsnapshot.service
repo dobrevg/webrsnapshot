@@ -1,0 +1,12 @@
+[Unit]
+Description=Web based graphical interface for rsnapshot
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/webrsnapshot/bin/hypnotoad -f /opt/webrsnapshot/webrsnapshot.pl
+ExecStop=/opt/webrsnapshot/bin/hypnotoad -s /opt/webrsnapshot/webrsnapshot.pl
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

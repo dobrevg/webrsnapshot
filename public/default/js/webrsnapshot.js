@@ -1,320 +1,248 @@
-//#######################################################################
-//# This file is part of Webrsnapshot - The web interface for rsnapshot
-//# Copyright© (2013-2014) Georgi Dobrev (dobrev.g at gmail dot com)
-//#
-//# Webrsnapshot is free software: you can redistribute it and/or modify
-//# it under the terms of the GNU General Public License as published by
-//# the Free Software Foundation, either version 3 of the License, or
-//# (at your option) any later version.
-//#
-//# Webrsnapshot is distributed in the hope that it will be useful,
-//# but WITHOUT ANY WARRANTY; without even the implied warranty of
-//# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//# GNU General Public License for more details.
-//#
-//# You should have received a copy of the GNU General Public License
-//# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-//#######################################################################
-
-// JS to get tabs working 
-$(function() { $( "#tabs" ).tabs(); });
-
-// JS to get menu working
-$(function() { $( "#menu" ).menu(); }); 
-
-// JS to get accordion(Hosts) working
-$(function() { 
-  $( "#accordion" ).accordion({
-    collapsible: true,
-      heightStyle: "content",
-  });
-});
-
-// JS to get Tooltips working
-$(function () { 
-  $(document).tooltip({ 
-    track: true,
-    tooltipClass:'tooltip', 
-    content: function () { 
-      return $(this).prop('title'); 
-    } 
-  }); 
-});
-
-// Delete field from include
-function delExIn(id) {
-  $("#"+id+"_info").remove();
-  $("#"+id+"_label").remove();
-  $("#"+id).remove();
+// Config: Delete field from include
+function delInclExclEntry(id) {
+	document.getElementById(id).remove();
 }
 
-
-//Add field to include Config
-function addInclude(buttonid, count) {
-  var next = parseInt(count)+1;
-  document.getElementById(buttonid).name         = next;
-  document.getElementById("include_count").value = next;
-  $("#include").append('<div class="infoicon" id="include_' + count +'_info">' +
-      '<img src="default/img/info.png" ' + 
-        'title="This gets passed directly to rsync using the <b>--include</b> directive.' +
-          'This parameter can be specified as many times as needed, with one pattern defined' +
-          'per line." />'+
-    '</div>'+
-    '<div class="configlabel" id="include_' + count + '_label"><LABEL>include</LABEL></div>' +
-    '<div id="include_' + count + '">' +
-      '<INPUT type="button" value="Delete" onclick="delExIn(\'include_' + count +'\');"> ' + 
-      '<INPUT type="text" class="configfield" name="include_' + count + '" value="" />' +
-    '</div>');
+//Add field to include config
+function addIncludeEntry(id) {
+	// Clone the element
+	var includeEntryElement = document.getElementById("include-");
+	var includeEntryClone = includeEntryElement.cloneNode(true);
+	// Change the ids in the element to be add
+	includeEntryClone.classList.remove('d-none');
+	includeEntryClone.id = "include-"+id;
+	includeEntryClone.getElementsByTagName("input")[0].name = "include-"+id;
+	includeEntryClone.getElementsByTagName("button").include_del.setAttribute("onclick","delInclExclEntry('include-" + id + "');");
+	includeEntryClone.getElementsByTagName("button").include_del.disabled = false;
+	// Create the next id
+	var next_id = parseInt(id)+1;
+	document.getElementById("add_include_btn").setAttribute("onclick","addIncludeEntry('"+next_id+"');");
+	// Add element to the page
+	document.getElementById("include").append(includeEntryClone);
 }
 
-// Add field to exclude Config
-function addExclude(buttonid, count) {
-  var next = parseInt(count)+1;
-  document.getElementById(buttonid).name         = next;
-  document.getElementById("exclude_count").value = next;
-    $("#exclude").append('<div class="infoicon" id="exclude_'+ count +'_info">' +
-        '<img src="default/img/info.png" '+
-          'title="This gets passed directly to rsync using the <b>--exclude</b> directive.' + 
-          'This parameter can be specified as many times as needed, with one pattern defined' + 
-          'per line." />' +
-      '</div>' +	
-      '<div class="configlabel" id="exclude_' + count + '_label"><LABEL>exclude</LABEL></div>' +
-      '<div id="exclude_'+ count + '">' +
-        '<INPUT type="button" value="Delete" onclick="delExIn(\'exclude_' + count + '\');"/> ' +
-        '<INPUT type="text" class="configfield" name="exclude_' + count +'" value="" />' +
-      '</div>');
+//Add field to exclude config
+function addExcludeEntry(id) {
+	// Clone the element
+	var excludeEntryElement = document.getElementById("exclude-");
+	var excludeEntryClone = excludeEntryElement.cloneNode(true);
+	// Change the ids in the element to be add
+	excludeEntryClone.classList.remove('d-none');
+	excludeEntryClone.id = "exclude-"+id;
+	excludeEntryClone.getElementsByTagName("input")[0].name = "exclude-"+id;
+	excludeEntryClone.getElementsByTagName("button").exclude_del.setAttribute("onclick","delInclExclEntry('exclude-" + id + "');");
+	excludeEntryClone.getElementsByTagName("button").exclude_del.disabled = false;
+	// Create the next id
+	var next_id = parseInt(id)+1;
+	document.getElementById("add_exclude_btn").setAttribute("onclick","addExcludeEntry('"+next_id+"');");
+	// Add element to the page
+	document.getElementById("exclude").append(excludeEntryClone);
 }
 
 // Delete Host Config
-function serverDelete(id) {
-  $( "#server_"+id+"_name" ).remove();
-  $( "#server_"+id+"_config" ).remove();
+function hostDelete(hostname) {
+	document.getElementById("hostname_"+hostname).remove();
 }
 
-// And Delete specific directory from backuped host
-function srvDelDir(serverid, dirid) {
-  $( "#server_"+serverid+"_dir_"+dirid        ).remove();
+// Delete specific directory from backuped host
+function hostDeleteDir(hostname, dirid) {
+	document.getElementById("hostname_"+hostname+"_sourcegroup_"+dirid).remove();
 }
 
 //Add another directory for backup on specific host
-function srvAddDir(buttonid, dir_id, serverid) {
-  // alert("Servername: " + name + "\nServerid: " + serverid);
-  var next = parseInt(dir_id)+1;
-  document.getElementById(buttonid).name = next;
-  document.getElementById("server_" + serverid + "_dircount").value = next;
-  $("#server_" + serverid + "_dirs").append('<div id="server_' + serverid + '_dir_' + dir_id + '">' +
-      '<INPUT type="button" value="Delete" id="server_' + serverid + '_dir_' + dir_id + '_del" ' +
-              'onclick="srvDelDir(' + serverid + ', ' + dir_id + ')" /> ' + 
-      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_dir" class="configfield"' +
-              'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /> ' +
-      '<INPUT type="text" id="server_' + serverid + '_dir_' + dir_id + '_args" class="configfield"' +
-              'name="server_' + serverid + '_dir_' + dir_id + '_dir" value="" /><br/></div>');
+function hostAddDir(hostname, dirid) {
+	// Clone the element
+	var newDirEntryElement = document.getElementById("new_dir_entry");
+	var newDirEntryClone = newDirEntryElement.cloneNode(true);
+	// Change the ids in the element to be add
+	newDirEntryClone.classList.remove('d-none');
+	newDirEntryClone.id = "hostname_"+hostname+"_sourcegroup_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[0].name = "hostname_"+hostname+"__source_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[0].id = "hostname_"+hostname+"__source_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[1].name = "hostname_"+hostname+"__args_"+dirid;
+	newDirEntryClone.getElementsByTagName("input")[1].id = "hostname_"+hostname+"__args_"+dirid;
+	newDirEntryClone.getElementsByTagName("button").hostdir_del.disabled = false;
+	newDirEntryClone.getElementsByTagName("button").hostdir_del.setAttribute("onclick","hostDeleteDir('"+hostname+"', "+dirid+");");
+	// Create dir count
+	var nextid= parseInt(dirid)+1;
+	document.getElementById("hostname_"+hostname+"_addsource_btn").setAttribute("onclick","hostAddDir('"+hostname+"',"+nextid+");");
+	// Add element to the page
+	document.getElementById("config_"+hostname).append(newDirEntryClone);
 }
 
 //Add new Host
-$(function() {
-  var newservername = $( "#newservername" ),
-      newserverip   = $( "#fqdn" );
-      newserverid   = $( "#servers_count" ).val();
-
-  function checkInput( inputValue ) {
-    if ( inputValue ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  $( "#add-server-form" ).dialog({
-    autoOpen: false,
-    height: 320,
-    width: 400,
-    modal: true,
-    buttons: 
-    {
-      "Append host": function()
-      {
-        var inputValid = true;
-        inputValid     = inputValid && checkInput( newservername.val() );
-        inputValid     = inputValid && checkInput( newserverip.val() );
-
-        var serverdir  = "root@" + newserverip.val() + ":";
-        var newserverstring = '<div id="server_' + newserverid + '_config">' +
-        '<INPUT type="hidden" id="server_label_' + newserverid + '"' +
-        'name="server_label_' + newserverid + '" value="' + newservername.val() + '"/>' +
-      '<div id="server_' + newserverid + '_dirs">' +
-        '<div id="server_' + newserverid + '_dir_0">' +
-          '<INPUT type="hidden" id="server_' + newserverid + '_dir_0_dir"' +
-            'name="server_' + newserverid + '_dir_0_dir"' +
-            'class="configfield" value="' + serverdir + '/etc/" />' +
-          '<INPUT type="hidden" id="server_' + newserverid + '_dir_0_args"' +
-            'name="server_' + newserverid + '_dir_0_args"' +
-            'class="configfield" value="" />' +
-          '<br/>' +
-        '</div>' +
-    '</div>' +
-    '<INPUT type="hidden" id="server_' + newserverid + '_dircount"' +
-        'name="server_' + newserverid + '_dircount" value="1" />' +
-  '</div>';
-
-        if ( inputValid )
-        {
-          $("#accordion").append(newserverstring);
-          // VERY IMPORTANT. Increate the Host count so the new server can be parsed
-          document.getElementById('servers_count').value = parseInt(newserverid) + 1;
-          document.rsnapshotconfform.submit();
-        }
-      },
-      Cancel: function() { 
-        $( this ).dialog( "close" );
-      }
-    },
-    close: function() 
-    {
-      allFields.val( "" ).removeClass( "ui-state-error" );
-    }
-  });
-  
-  $( "#serverAdd" ).button().click(function() 
-  {
-    $( "#add-server-form" ).dialog( "open" );
-  });
-});
-
-
-
-//Delete line from backup_script 
-function delBkpScript(id) {
-	$("#bkp_script_"+id+"_info").remove();
-	$("#bkp_script_"+id+"_label").remove();
-	$("#bkp_script_"+id).remove();
+function addNewHost(hostname) {
+	var hostname = document.getElementById('new_hostname').value;
+	var lastKnownHostElement = document.getElementById("host_item_new");
+	var newHostEntryClone = lastKnownHostElement.cloneNode(true);
+	// Change the ids in the element to be add
+	newHostEntryClone.classList.remove("d-none");
+	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("data-bs-target","#collapse_"+hostname);
+	newHostEntryClone.getElementsByTagName("button")[0].setAttribute("aria-controls","collapse_"+hostname);
+	newHostEntryClone.getElementsByTagName("button")[0].innerHTML = "<b>"+hostname+"</b>";
+	newHostEntryClone.getElementsByTagName("button")[1].setAttribute("onclick","hostDeleteDir('"+hostname+"', 0);");
+	newHostEntryClone.getElementsByTagName("button")[2].setAttribute("onclick","hostAddDir('"+hostname+"',1);");
+	newHostEntryClone.getElementsByTagName("button")[2].disabled = true;
+	newHostEntryClone.getElementsByTagName("button")[3].setAttribute("onclick","hostDelete('"+hostname+"');");
+	newHostEntryClone.getElementsByTagName("input")[0].id = "hostname_"+hostname+"__source_0";
+	newHostEntryClone.getElementsByTagName("input")[0].name = "hostname_"+hostname+"__source_0";
+	newHostEntryClone.getElementsByTagName("input")[0].value = "/etc/";
+	newHostEntryClone.getElementsByTagName("input")[1].id = "hostname_"+hostname+"__args_0";
+	newHostEntryClone.getElementsByTagName("input")[1].name = "hostname_"+hostname+"__args_0";
+	newHostEntryClone.getElementsByTagName("input")[1].value = "";
+	newHostEntryClone.getElementsByTagName("div")[0].id = "collapse_"+hostname;	 
+	newHostEntryClone.getElementsByTagName("div")[2].id = "config_"+hostname;
+	newHostEntryClone.getElementsByTagName("div")[3].id = "hostname_"+hostname+"_sourcegroup_0";
+	// Increase the id for the next add
+	document.getElementById("modal_add_host_btn").setAttribute("onclick","addNewHost();");
+	// Reset the input in modal
+	document.getElementById("modal_add_host").getElementsByTagName("input")[0].value = "";
+	// Add element to the page
+	document.getElementById("accordion").append(newHostEntryClone);
 }
 
 //Add line to backup_script 
-function addBkpScript(buttonid,count) {
-  var next = parseInt(count)+1;
-  document.getElementById(buttonid).name            = next;
-  document.getElementById("bkp_script_count").value = next;
-  $("#bkp_scripts").append('<div class="infoicon" id="bkp_script_' + count + '_info">' +
-      '<img src="default/img/info.png"' +
-        'title="This script should simply create files and/or directories in its current working directory.' +
-        '<b>rsnapshot</b> will then take that output and move it into the directory specified in the third' +
-        'column.<br/>' +
-        'Please note that whatever is in the destination directory will be completely deleted and recreated.' +
-        'For this reason, rsnapshot prevents you from specifying a destination directory for a ' +
-        '<b>backup_script</b> that will clobber other backups." />' +
-    '</div>' +
-    '<div class="configlabel" id="bkp_script_' + count + '_label"><LABEL>backup_script</LABEL></div>' +
-    '<div id="bkp_script_' + count + '">' +
-      '<INPUT type="button" value="Delete" onclick="delBkpScript(' + count + ');"> ' +
-      '<INPUT type="text" class="configfieldsmall" value="" name="bkp_script_' + count + '_script"/> ' +
-      '<INPUT type="text" class="configfieldsmall" value="" name="bkp_script_' + count + '_target"/> ' +
-    '</div>');
+function addBkpScript(id) {
+	var backupScriptElement = document.getElementById("add_backup_script");
+	var backupScriptClone = backupScriptElement.cloneNode(true);
+	// Change the ids in the element to be add
+	backupScriptClone.classList.remove('d-none');
+	backupScriptClone.getElementsByTagName("input")[0].name ="backup_script_name_"+id;
+	backupScriptClone.getElementsByTagName("input")[1].name ="backup_script_target_"+id;
+	backupScriptClone.getElementsByTagName("button")[0].setAttribute("onclick","delBkpScript("+id+");");
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
+	document.getElementById("add_backup_script_btn").setAttribute("onclick","addBkpScript("+nextid+");");
+	
+	// Add element to the page
+	document.getElementById("backup_script").append(backupScriptClone);
+}
+
+//Delete line from backup_script 
+function delBkpScript(id) {
+	document.getElementById("backup_script_"+id).remove();
+}
+
+// Add line to retain
+function addRetain(id) {
+	var retainElement = document.getElementById("retain_to_add");
+	var retainClone = retainElement.cloneNode(true);
+	// Change the ids in the element to be add
+	retainClone.classList.remove('d-none');
+	retainClone.id = "retain_"+id;
+	retainClone.getElementsByTagName("input")[0].name ="retainname_"+id;
+	retainClone.getElementsByTagName("input")[1].name ="retaincount_"+id;
+	retainClone.getElementsByTagName("input")[1].value = 1;
+	retainClone.getElementsByTagName("button")[0].setAttribute("onclick","delRetain('"+id+"');");
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
+	document.getElementById("retain_add_btn").setAttribute("onclick","addRetain('"+nextid+"');");
+	// Add element to the page
+	document.getElementById("retains").append(retainClone);
 }
 
 // Delete line from retain
 function delRetain(id) {
-	$("#retainNumber_"+id).remove();
+	document.getElementById("retain_"+id).remove();
 }
 
-// Add line to retain
-function addRetain(buttonid, current_number) {
-  var next = parseInt(current_number)+1;
-  document.getElementById(buttonid).name        = next;
-  document.getElementById("retain_count").value = next;
-  $("#retains").append('<div id="retainNumber_' + current_number + '">' +
-      '<div class="infoicon">' +
-        '<img src="default/img/info.png" title="The number of snapshots that will be retained for new backups." />' +
-      '</div>' +
-      '<div class="configlabel">Retain ' +
-        '<INPUT type="text" name="retain_' + current_number + '_name" class="configfieldtiny" value="" />' +
-      '</div>' +
-      '<div>' +
-        '<INPUT type="text" name="retain_' + current_number + '_count" class="configfieldtiny" value="" /> ' +
-        '<INPUT type="button" value="Delete" onclick="delRetain(' + current_number + ');"></div><br/></div>');
+// Add Crontab, select funktionality
+function changeCronSelect(id) {
+	document.getElementById(id+'_text').value = document.getElementById(id).value;
 }
 
 // Add Crontab
-$(function() {
-  var newcronid = $( "#newcronid" ).val();
-
-  $( "#add-cronjob-form" ).dialog({
-    autoOpen: false,
-    height: 400,
-    width: 640,
-    modal: true,
-    buttons:
-    {
-      "Append cronjob": function(){
-        var cron  = document.getElementById('cron_minute_text').value;
-            cron += " " + document.getElementById('cron_hour_text').value;
-            cron += " " + document.getElementById('cron_day_text').value;
-            cron += " " + document.getElementById('cron_month_text').value;
-            cron += " " + document.getElementById('cron_week_text').value;
-            cron += " " + document.getElementById('cron_user').value;
-            cron += " " + document.getElementById('cron_command_text').value;
-        var newcronstring = '<div id="cron_' + newcronid + '">' +
-	    '<INPUT type="text" name="cronjob_' + newcronid + '" id="cronjob_' + 
-            newcronid + '" class="configfieldbig"' + 'value="' + cron + '" readonly />' +
-	    ' <INPUT type="button" id="cron_edit_' + newcronid + '" value="Edit" />' +
-	    ' <INPUT type="button" value="Delete" onclick="deleteCronjob(' + newcronid + ')" />' +
-	    ' <INPUT type="checkbox" id="cronCheck_' + newcronid + 
-            '"  onclick="disbaleCronjob(this.id,' + newcronid + ')" />Disabled<br/></div>';
-        $("#cronjobs").append(newcronstring);
-	// VERY IMPORTANT. Increate the count so the new cronjob can be parsed
-        document.getElementById('newcronid').value = parseInt(newcronid) + 1;
-        document.cronform.submit();
-      },
-      Cancel: function() {
-        $( this ).dialog( "close" );
-      }
-
-    },
-    close: function()
-    {
-      allFields.val( "" ).removeClass( "ui-state-error" );
-    }
-  });
-
-  $( "#add_cron" ).button().click(function()
-  {
-    $( "#add-cronjob-form" ).dialog( "open" );
-  });
-});
-
-// Add Crontab, select funktionality
-function changeCronSelect(id)
-{
-  document.getElementById(id+'_text').value = document.getElementById(id).value;
+function addCronjob(id) {
+	// Gather all infos about the cron and build the cron line
+	var newcronjob  = document.getElementById('cron_minute_text').value;
+		newcronjob += " " + document.getElementById('cron_hour_text').value;
+		newcronjob += " " + document.getElementById('cron_day_text').value;
+		newcronjob += " " + document.getElementById('cron_month_text').value;
+		newcronjob += " " + document.getElementById('cron_week_text').value;
+		newcronjob += " " + document.getElementById('cron_user').value;
+		newcronjob += " " + document.getElementById('cron_command_text').value;
+	// Get the hidden element and create a copy of it
+	var cronElement = document.getElementById("cron_new");
+	var cronClone = cronElement.cloneNode(true);
+	// Change the element to be add
+	cronClone.classList.remove('d-none');
+	cronClone.id = "cron_"+id;
+	cronClone.getElementsByTagName("input")[0].name="cronjob_"+id;
+	cronClone.getElementsByTagName("input")[0].id="cronjob_"+id
+	cronClone.getElementsByTagName("input")[0].value=newcronjob;
+	cronClone.getElementsByTagName("button")[0].setAttribute("onclick","deleteCronjob("+id+");");
+	cronClone.getElementsByTagName("input")[1].id="cronCheck_"+id;
+	cronClone.getElementsByTagName("input")[1].setAttribute("onclick","disbaleCronjob(this.id,"+id+");");
+	// Increase the id for the next run
+	var nextid = parseInt(id)+1;
+	document.getElementById("addNextCronjob_btn").setAttribute("onclick","addCronjob("+nextid+");");
+	document.getElementById("newcronid").value = nextid;
+	// Add element to the page
+	document.getElementById("cronjobs").append(cronClone);
+	// Empty the modal
+	document.getElementById("cron_command_text").value = "";
+	document.getElementById("cron_minute_text").value = "";
+	document.getElementById("cron_hour_text").value = "";
+	document.getElementById("cron_day_text").value = "";
+	document.getElementById("cron_month_text").value = "";
+	document.getElementById("cron_week_text").value = "";
 }
 
-
 // Delete Crontab
-function deleteCronjob(id)
-{
-  $("#cron_"+id).remove();
+function deleteCronjob(id) {
+	document.getElementById("cron_"+id).remove();
 }
 
 // Enable/Disable Crontab
-function disbaleCronjob(btnid,id)
-{
-  var cronvalue = document.getElementById('cronjob_'+id).value;
-  if (document.getElementById(btnid).checked)
-  {
-    document.getElementById('cronjob_'+id).value = "#"+cronvalue;
-  }else{
-    document.getElementById('cronjob_'+id).value = cronvalue.slice(1);
-  }
+function disbaleCronjob(id) {
+	if (document.getElementById("cronCheck_"+id).checked) {
+		document.getElementById('cronjob_'+id).readOnly = true;
+	} else {
+		document.getElementById('cronjob_'+id).readOnly = false;
+	}
 }
 
 // Enable/Disable Crontab email
-function disableCronEmail(btnid) 
-{
-  if (document.getElementById(btnid).checked)
-  {
-    document.getElementById('cron_email').readOnly = true;
-  }else{
-    document.getElementById('cron_email').readOnly = false;
-  }  
+function disableCronEmail() {
+	if (document.getElementById("cron_email_checkbox").checked) {
+		document.getElementById('cron_email').readOnly = true;
+	} else {
+		document.getElementById('cron_email').readOnly = false;
+	}
 }
 
+// Disable all cronjobs at once
+function disbaleAllCronjobs() {
+	var cronjobsInput 	 = document.querySelectorAll('[id^="cronjob_"]');
+	var cronjobsCheckbox = document.querySelectorAll('[id^="cronCheck_"]');
+	for(var i = 0; i < cronjobsInput.length; i++){
+		cronjobsInput[i].readOnly = true;
+	}
+	for(var i = 0; i < cronjobsCheckbox.length; i++){
+		cronjobsCheckbox[i].checked = true;
+	}
+}
+
+// Add new backip_exec line
+function addBackupExec(id) {
+	var backupExecElement = document.getElementById("add_backup_exec");
+	var backupExecClone = backupExecElement.cloneNode(true);
+	// Change the ids in the element to be add
+	backupExecClone.classList.remove('d-none');
+	backupExecClone.id = "backup_exec_"+id;
+	backupExecClone.getElementsByTagName("input")[0].name ="backup_exec_command_"+id;
+	backupExecClone.getElementsByTagName("select")[0].name ="backup_exec_importance_"+id;
+	backupExecClone.getElementsByTagName("select")[0].id ="backup_exec_importance_"+id;
+	backupExecClone.getElementsByTagName("button")[0].setAttribute("onclick","delBackupExec("+id+");");
+	// Increase the id for the next add
+	var nextid = parseInt(id)+1;
+	document.getElementById("add_backup_exec_btn").setAttribute("onclick","addBackupExec("+nextid+");");
+
+	// Add element to the page
+	document.getElementById("backup_exec").append(backupExecClone);
+}
+
+// Delete backup_exec entry
+function delBackupExec(id) {
+	document.getElementById("backup_exec_"+id).remove();
+}
