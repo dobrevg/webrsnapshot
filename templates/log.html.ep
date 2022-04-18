@@ -1,9 +1,0 @@
-% layout $default_template;
-% title 'Webrsnapshot';
-
-<h3 class="ms-3">Log</h3>
-<div class="form-floating">
-	<textarea class="form-control" id="logtextarea" readonly style="height: 75vh;">
-<%= $log_content %>
-	</textarea>
-</div>

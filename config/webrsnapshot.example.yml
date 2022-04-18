@@ -1,0 +1,11 @@
+---
+# template: Defines the template to use. 
+#
+# Default value 
+# template: default
+template: default
+
+# Application secret
+secrets:
+  - c04271b394aebcf2b81f2cff7e93a2963aecde64
+...
