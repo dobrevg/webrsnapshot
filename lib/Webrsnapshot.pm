@@ -1,5 +1,7 @@
 package Webrsnapshot;
+
 use Mojo::Base 'Mojolicious', -signatures;
+
 
 # This method will run once at server start
 sub startup ($self) {
@@ -15,7 +17,8 @@ sub startup ($self) {
     $config = $self->plugin('NotYAMLConfig', {file => "config/webrsnapshot.example.yml"});
     $self->log->info("Loaded config file: config/webrsnapshot.example.yml");
   }
-  
+
+  $self->sessions->default_expiration(3600); # set expiry to 1 hour
 
   # Configure the application
   $self->secrets($config->{secrets});
@@ -26,8 +29,14 @@ sub startup ($self) {
   # Router
   my $r = $self->routes;
 
-  # Normal route to controller
-  $r->get('/')->to('Home#index');
+  # Login route to controler
+  $r->get('/login')->to('Authorize#index');
+  $r->post('/login')->to('Authorize#user_login');
+  $r->get('/logout')->to('Authorize#user_logout');
+
+  # And everything else only for signed user
+  my $authorized = $r->under('/')->to('Authorize#is_signed');
+  $authorized->get('/')->to('Home#index');
 }
 
 1;

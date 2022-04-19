@@ -5,6 +5,13 @@
 # template: default
 template: default
 
+# rootuser: Root user, who can access webrsnapshot
+rootuser: root
+
+# rootpass: The password for the root user
+rootpass: pass
+
+
 # Application secret
 secrets:
   - c04271b394aebcf2b81f2cff7e93a2963aecde64

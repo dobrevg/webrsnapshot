@@ -2,3 +2,4 @@
 % title "Webrsnapshot";
 <h3 class="ms-3">General Information</h3>
 <h2><%= $msg %></h2>
+<p><a href="/logout">Logout</a></p>

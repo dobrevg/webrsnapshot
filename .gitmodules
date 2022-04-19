@@ -1,0 +1,6 @@
+[submodule "submodules/mojo"]
+	path = submodules/mojo
+	url = https://github.com/mojolicious/mojo.git
+[submodule "submodules/Mojolicious-Plugin-Authentication"]
+	path = submodules/Mojolicious-Plugin-Authentication
+	url = https://github.com/benvanstaveren/Mojolicious-Plugin-Authentication.git

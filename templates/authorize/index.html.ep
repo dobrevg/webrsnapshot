@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html class="h-100">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Webrsnapshot</title>
+	<!--	<link rel="shortcut icon" href="<%= $tmpl %>/img/favicon.ico" /> -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+			rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+			crossorigin="anonymous">
+		<!-- <link rel="stylesheet" type="text/css" href="<%= $tmpl %>/css/login.css" /> -->
+	</head>
+	<body class="justify-content-center align-items-center py-5 d-flex h-100">
+		<div class="col-12 col-md-8 col-lg-5 col-xl-3">
+			<div class="card" style="border: 0">
+				<div class="card-body text-center">
+						<form method="post" action="/login">
+							<h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+							<p class="mb-3">Please enter your login and password!</p>
+
+							<div class="form-outline form-white mb-4">
+								<input type="text" class="form-control" name="username" placeholder="Username">
+							</div>
+
+							<div class="form-outline form-white mb-4">
+								<input type="password" class="form-control" name="password" placeholder="Password">
+							</div>
+
+							<button class="btn btn-primary btn-lg px-5" type="submit">Login</button>
+						</form>
+						<div class="alert alert-danger d-flex align-items-center alert-dismissible fade show mt-3 invisible"
+							id="error-alert" role="alert">
+							<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img"
+								aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/>
+							</svg>
+							<div><%= flash 'login_failed' %></div>
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+						</div>
+				</div>
+			</div>
+		</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+		crossorigin="anonymous">
+	</script>
+	<script>
+		if ("<%= flash 'login_failed' %>" != "") {
+			document.getElementById("error-alert").classList.remove("invisible");
+		}
+	</script>
+</body>
+</html>
