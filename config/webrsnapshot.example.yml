@@ -1,16 +1,41 @@
 ---
-# template: Defines the template to use. 
+# rs_config_file: </full/path/to/file>
+# Defines which file we should use for as rsnapshot config file. 
 #
-# Default value 
-# template: default
+# Default: /etc/rsnapshot.conf
+rs_config_file: /etc/rsnapshot.conf
+
+# rs_cron_file: </full/path/to/file>
+# Defines which file we should use for cronjobs.
+#
+# Default: /etc/cron.d/rsnapshot
+rs_cron_file: /etc/cron.d/rsnapshot
+
+# template: <string>
+# Defines the template to use. 
+#
+# Default: default 
 template: default
 
-# rootuser: Root user, who can access webrsnapshot
+# rootuser: <username string>
+# Root user, who can access webrsnapshot
+# 
+# Default: root
 rootuser: root
 
-# rootpass: The password for the root user
+# rootpass: <password string>
+# The password for the root user
+# 
+# Default: pass
 rootpass: pass
 
+# session_timeout: <integer>
+# The Timeout specifies the timeout period assigned to the Session for the 
+# application in seconds. If the user does not refresh or request a page 
+# within the timeout period, the session ends.
+# 
+# Default: 600
+session_timeout: 600
 
 # Application secret
 secrets:

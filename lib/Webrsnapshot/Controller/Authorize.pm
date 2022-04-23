@@ -16,8 +16,8 @@ sub index {
 sub user_login {
 	my $self = shift;
 
-	my $username = $self->param('username');                               # From the form
-	my $password = $self->param('password');                               # From the form
+	my $username = $self->param('username');   # From the login form
+	my $password = $self->param('password');   # From the login form
 
 	$self->app->plugin('authentication' => {
 		autoload_user   => 1,
@@ -31,7 +31,7 @@ sub user_login {
 			if ( $user_key ) {
 				$self->session(user => $user_key);
 				$self->session(signed => 1);
-				$self->session(expiration => 600);   # Expires this sesison in sec
+				$self->session(expiration => $self->config->{session_timeout});   # Expires this sesison in sec
 				return $user_key;
 			}
 			else {
@@ -55,7 +55,10 @@ sub user_login {
 sub validate_user_login {
 	my ($self, $username, $password) = @_;
 	my $user = $self->config->{rootuser};
-	return ( validate_password( $self->config->{rootpass}, $password ) ) ? $self->config->{rootuser}:0;
+	if ( $username eq $user ) {
+		return ( validate_password( $self->config->{rootpass}, $password ) ) ? $username:0;
+	}
+	return 0;
 }
 
 # To validate the Password

@@ -1,5 +1,21 @@
 % layout $tmpl;
 % title "Webrsnapshot";
+
 <h3 class="ms-3">General Information</h3>
-<h2><%= $msg %></h2>
-<p><a href="/logout">Logout</a></p>
+<ul>
+	<li>Rsnapshot config file: <strong><%= $rs_config_file %></strong></li>
+	<li>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></li>
+	<li>
+		Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong>
+		with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong>
+	</li>
+	<li>
+		Allocation: <strong><%= $systemInfo->{partitionInfoPercent} %></strong>
+		(Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>, 
+		Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>,
+		Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)
+	</li> 
+</ul>
+<script>
+	document.getElementById("menuEntry-home").classList.add("active");
+</script>
