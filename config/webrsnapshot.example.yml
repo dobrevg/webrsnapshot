@@ -37,6 +37,15 @@ rootpass: pass
 # Default: 600
 session_timeout: 600
 
+# loglines: <integer>
+# This defines how many lines from the end of
+# the rsnapshot log file should be shown. Don't put here
+# too big integer. This may cause system overload if the
+# logfile is too big.
+#
+# Default: 100
+loglines: 100
+
 # Application secret
 secrets:
   - c04271b394aebcf2b81f2cff7e93a2963aecde64
