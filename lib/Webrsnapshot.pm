@@ -31,6 +31,7 @@ sub startup ($self) {
   # And everything else only for signed user
   my $authorized = $r->under('/')->to('Authorize#is_signed');
   $authorized->get('/')->to('Home#index');
+  $authorized->get('/hosts')->to('Hosts#index');
 }
 
 1;
