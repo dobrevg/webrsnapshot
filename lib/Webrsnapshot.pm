@@ -33,6 +33,7 @@ sub startup ($self) {
   $authorized->get('/')->to('Home#index');
   $authorized->get('/hosts')->to('Hosts#index');
   $authorized->get('/log')->to('Log#index');
+  $authorized->get('/cron')->to('Cron#index');
 }
 
 1;
