@@ -34,6 +34,8 @@ sub startup ($self) {
   $authorized->get('/hosts')->to('Hosts#index');
   $authorized->get('/log')->to('Log#index');
   $authorized->get('/cron')->to('Cron#index');
+  $authorized->post('/cron')->to('Cron#save');
+  $authorized->get('/config')->to('Config#index');
 }
 
 1;

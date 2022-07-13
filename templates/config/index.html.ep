@@ -1,0 +1,983 @@
+% layout $tmpl;
+% title "Webrsnapshot";
+
+<form method="post" action="/config" name="rsnapshotconfform">
+	<div>
+		<ul class="nav nav-tabs nav-tabs-responsive">
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link active" href="#tabs-1" data-toggle="tab" aria-controls="home" aria-expanded="true">
+					<span class="text">Root</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-2" data-toggle="tab" aria-controls="commands">
+					<span class="text">Commands</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-3" data-toggle="tab" aria-controls="lvm_config">
+					<span class="text">LVM Config</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-4" data-toggle="tab" aria-controls="global_config">
+					<span class="text">Global Config</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-5" data-toggle="tab" aria-controls="backup_interval">
+					<span class="text">Backup Interval</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-6" data-toggle="tab" aria-controls="include_exclude">
+					<span class="text">Include/Exclude</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-7" data-toggle="tab" aria-controls="hosts">
+					<span class="text">Hosts</span>
+				</a>
+			</li>
+			<li class="nav-item">
+				<a data-bs-toggle="tab" class="nav-link" href="#tabs-8" data-toggle="tab" aria-controls="scripts">
+					<span class="text">Scripts</span>
+				</a>
+			</li>
+		</ul>
+	</div>
+ 
+	<div class="tab-content">
+	<!--##########################################################
+		Tab: Root config
+		##########################################################-->
+		<div id="tabs-1" class="container-fluid tab-pane active pt-4">
+
+			<!-- config_version -->
+			<div class="input-group my-2">
+				<span class="input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>config_version</b><hr><b>Default (required): 1.2</b><br/>
+						Config file version<br/>You should not change this!!!</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="config_version"  name="config_version"
+					value="<%= $config_version %>">
+			</div>
+
+			<!-- snapshot_root -->
+			<div class="input-group my-2">
+				<span class="input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>snapshot_root</b><hr>Local filesystem path to save all 
+						snapshots.<br><b>Don't forget the trailing slash!!!</b></div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="snapshot_root" name="snapshot_root"
+					value="<%= $snapshot_root %>">
+			</div>
+
+			<!-- TODO: include_conf check multiply includes -->
+			<!-- include_conf --->
+			<div class="input-group my-2">
+				<span class="input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>include_conf</b><hr>Include another file in the configuration
+						at this point.<br/><br/>
+						This is recursive, but you may need to be careful about paths when specifying which file
+						to include. We check to see if the file you have specified is readable, and will yell an error
+						if it isn't. We recommend using a full path. As a special case, include_conf's value may be
+						enclosed in 'backticks' in which case it will be executed and whatever it spits to STDOUT
+						will be included in the configuration. Note that shell meta-characters may be interpreted.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="include_conf" name="include_conf"
+					value="<%= $include_conf %>">
+			</div>
+
+			<!-- no_create_root --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>no_create_root</b><hr>If no_create_root is enabled (checked),
+						rsnapshot will not automatically create the
+						<b>snapshot_root</b> directory. This is particularly useful if you are backing up to removable
+						media, such as a FireWire or USB drive.</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="no_create_root" <%= $no_create_root %>>
+				<label class="form-check-label pt-1 mt-2 ms-2">no_create_root</label>
+			</div>
+
+			<!-- one_fs --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>one_fs</b><hr>Prevents rsync from crossing filesystem
+						partitions. Setting this to a value of 1 enables this feature. 0 turns it off. This parameter
+						is optional. The default is 0 (not selected).</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="one_fs" <%= $one_fs %>>
+				<label class="form-check-label pt-1 mt-2 ms-2">one_fs</label>
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: Optional programs and scripts used
+		##########################################################-->
+		<div id="tabs-2" class="container-fluid tab-pane fade pt-4">
+
+			<!?-- cmd_rsync --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_rsync</b><hr><b>rsync</b> must be enabled for anything to
+						work. This is the only command that must be enabled.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_rsync" name="cmd_rsync" value="<%= $cmd_rsync %>">
+			</div>
+
+			<!?-- cmd_cp --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_cp</b><hr><b>LINUX USERS:</b> Be sure to use 'cmd_cp'.
+						This gives you extra features.<br/>
+						<b>EVERYONE ELSE:</b> Don't use 'cmd_cp' for compatibility.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_cp" name="cmd_cp" value="<%= $cmd_cp %>">
+			</div>
+
+			<!?-- cmd_rm --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_rm</b><hr>Use the <b>rm</b> program instead of the
+						built-in perl routine.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_rm" name="cmd_rm" value="<%= $cmd_rm %>">
+			</div>
+
+			<!?-- cmd_ssh --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_ssh</b><hr>Full path to <b>ssh</b> (optional)<br/>
+						Use this to enable remote ssh backups over rsync.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_ssh" name="cmd_ssh" value="<%= $cmd_ssh %>">
+			</div>
+
+			<!?-- cmd_logger --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_logger</b><hr>Disable this if you don't want
+						syslog support.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_logger" name="cmd_logger" value="<%= $cmd_logger %>">
+			</div>
+
+			<!?-- cmd_du --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_du</b><hr>Use this to specify the path to <b>du</b>
+						for disk usage checks. If you have an older
+						version of <b>du</b>, you may also want to check the <b>du_args</b> parameter.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_du" name="cmd_du" value="<%= $cmd_du %>">
+			</div>
+
+			<!?-- cmd_rsnapshot_diff --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_rsnapshot_diff</b><hr>Fill out this to specify the
+						path to <b>rsnapshot-diff</b>.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_rsnapshot_diff" name="cmd_rsnapshot_diff"
+					value="<%= $cmd_rsnapshot_diff %>">
+			</div>
+
+			<!?-- cmd_preexec --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_preexec</b><hr>Specify the path to a script
+						(and any optional arguments) to run right before rsnapshot syncs files.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_preexec" name="cmd_preexec"
+					value="<%= $cmd_preexec %>">
+			</div>
+
+			<!?-- cmd_postexec --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>cmd_postexec</b><hr>Specify the path to a script 
+						(and any optional arguments) to run right after rsnapshot syncs files.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="cmd_postexec" name="cmd_postexec"
+					value="<%= $cmd_postexec %>">
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: LVM Options 
+		##########################################################-->
+		<div id="tabs-3" class="container-fluid tab-pane fade pt-4">
+
+			<!?-- linux_lvm_cmd_lvcreate --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_cmd_lvcreate</b><hr>Path to lvcreate for use with
+						Linux LVMs. The lvcreate command is required for managing snapshots of LVM volumes and are
+						otherwise optional.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_cmd_lvcreate" name="linux_lvm_cmd_lvcreate"
+					value="<%= $linux_lvm_cmd_lvcreate %>">
+			</div>
+
+			<!?-- linux_lvm_cmd_lvremove --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_cmd_lvremove</b><hr>Path to lvremove for use with
+						Linux LVMs. The lvremove command is required for managing snapshots of LVM volumes and are
+						otherwise optional.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_cmd_lvremove" name="linux_lvm_cmd_lvremove"
+					value="<%= $linux_lvm_cmd_lvremove %>">
+			</div>
+
+			<!?-- linux_lvm_cmd_mount --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_cmd_mount</b><hr>Path to mount command for use 
+						with Linux LVMs. The mount command is required for managing snapshots of LVM volumes and are
+						otherwise optional.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_cmd_mount" name="linux_lvm_cmd_mount"
+					value="<%= $linux_lvm_cmd_mount %>">
+			</div>
+
+			<!?-- linux_lvm_cmd_umount --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_cmd_umount</b><hr>Path to umont command for use with
+						Linux LVMs. The umount command is required for managing snapshots of LVM volumes and are
+						otherwise optional.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_cmd_umount" name="linux_lvm_cmd_umount"
+					value="<%= $linux_lvm_cmd_umount %>">
+			</div>
+
+			<!?-- linux_lvm_snapshotsize --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_snapshotsize</b><hr><b>Example: 2G</b><br/><br/>
+						LVM snapshot(s) size (lvcreate --size option). This size depends also on the free space in your
+						Volume Group. A size suffix of B for bytes, S for sectors as 512 bytes, K for kilobytes, 
+						M for megabytes, G for gigabytes, T for terabytes, P for  petabytes  or  E for exabytes is 
+						optional. <b>Default unit is megabytes</b></div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_snapshotsize" name="linux_lvm_snapshotsize"
+					value="<%= $linux_lvm_snapshotsize %>">
+			</div>
+
+			<!?-- linux_lvm_snapshotname --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_snapshotname</b><hr>Name to be used when creating
+						the LVM logical volume snapshot(s) (lvcreate --name option)</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_snapshotname" name="linux_lvm_snapshotname"
+					value="<%= $linux_lvm_snapshotname %>">
+			</div>
+
+			<!?-- linux_lvm_vgpath --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_vgpath</b><hr><b>Default: /dev</b><br/><br/>
+						Path to the LVM Volume Groups.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_vgpath" name="linux_lvm_vgpath"
+					value="<%= $linux_lvm_vgpath %>">
+			</div>
+
+			<!?-- linux_lvm_mountpath --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>linux_lvm_mountpath</b><hr>Mount point to use to temporarily
+						mount the snapshot(s).<br/><br/><b>Example: /mnt/lvm-snapshot</b></div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="linux_lvm_mountpath" name="linux_lvm_mountpath"
+					value="<%= $linux_lvm_mountpath %>">
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: Global Options
+		##########################################################-->
+		<div id="tabs-4" class="container-fluid tab-pane fade pt-4">
+
+			<!?-- rsync_numtries --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>rsync_numtries</b><hr><b>Default: 1</b><br>Number of rsync re-tries. If you
+						experience any network problems or network card issues that tend to cause ssh to crap-out with
+						<b>'Corrupted MAC on input'</b> errors, for example, set this to a non-zero value to have the
+						rsync operation re-tried.</div>"></i>
+				</span>
+				<input type="number" min="1" class="form-control" placeholder="rsync_numtries" name="rsync_numtries"
+					value="<%= $rsync_numtries %>">
+			</div>
+
+			<!?-- verbose --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>verbose</b><hr><b>default: 2</b><br>Verbose level, 1 through 5.<br/><br/><b>
+						1 Quiet</b> - Print fatal errors only<br/><b>2 Normal</b>(default) - Print errors and warnings 
+						only<br/><b>3 Verbose</b> - Show equivalent shell commands being executed<br/><b>4 Extra 
+						Verbose</b> - Show extra verbose information<br/><b>5 Debug mode</b> - Everything</div>"></i>
+				</span>
+				<input type="number" min="1" max="5" class="form-control" name="verbose" placeholder="verbose" 
+					value="<%= $verbose %>">
+			</div>
+
+			<!?-- loglevel --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>loglevel</b><hr><b>default: 3</b><br>Same as <b>'verbose'</b> above, but
+						controls the amount of data sent to the logfile, if one is being used.<br/><br/><b>1 Quiet</b> -
+						Print fatal errors only<br/><b>2 Normal</b> - Print errors and warnings only<br/><b>3 Verbose
+						</b>(default) - Show equivalent shell commands being executed<br/><b>4 Extra Verbose</b> - Show
+						extra verbose information<br/><b>5 Debug mode</b> - Everything"></i>
+				</span>
+				<input type="number" min="1" max="5" class="form-control" name="loglevel" placeholder="loglevel" 
+					value="<%= $loglevel %>">
+			</div>
+
+			<!?-- logfile --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>logfile</b><hr>If you enable this, data will be written
+						to the file you specify. The amount of data written is controlled by the <b>'loglevel'</b>
+						parameter.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="logfile" name="logfile" value="<%= $logfile %>">
+			</div>
+
+			<!?-- lockfile --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>lockfile</b><hr>If enabled, rsnapshot will write a
+						lockfile to prevent two instances from running simultaneously (and messing up the snapshot_root).
+						If you enable this, make sure the lockfile directory is not world writable. Otherwise anyone can
+						prevent the program from running.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="lockfile" name="lockfile" value="<%= $lockfile %>">
+			</div>
+
+			<!?-- rsync_short_args --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>rsync_short_args</b><hr>List of short arguments to pass
+						to rsync. If not specified, <b>'-a'</b> is the default. Please note that these must be all next
+						to each other. For example, <b>'-az'</b> is valid, while <b>'-a -z'</b> is not.<br/><br/>
+						<b>'-a'</b> is rsync's <b>'archive mode'</b> which tells it to copy as much of the filesystem
+						metadata as it can for each file. This specifically does *not* include information about hard
+						links, as that would greatly increase rsync's memory usage and slow it down. If you need to
+						preserve hard links in your backups, then add 'H' to this.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="rsync_short_args" name="rsync_short_args"
+					value="<%= $rsync_short_args %>">
+			</div>
+
+			<!?-- rsync_long_args --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>rsync_long_args</b><hr>List of long arguments to pass to
+						rsync. The default values are <b>--delete --numeric-ids --relative --delete-excluded</b> This
+						means that the directory structure in each backup point destination will match that in the
+						backup point source.<br/><br/>Quotes are permitted in rsync_long_args, eg <b>--rsync-path='sudo
+						/usr/bin/rsync'</b>.You may use either single (') or double (``) quotes, but nested quotes
+						(including mixed nested quotes) are not permitted. Similar quoting is also allowed in
+						per-backup-point rsync_long_args.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="rsync_long_args" name="rsync_long_args"
+					value="<%= $rsync_long_args %>">
+			</div>
+
+			<!?-- ssh_args --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>ssh_args</b><hr>ssh has no args passed by default, but
+						you can specify some here.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="ssh_args" name="ssh_args" value="<%= $ssh_args %>">
+			</div>
+
+			<!?-- du_args --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>du_args</b><hr>Arguments to be passed to du. If not
+						specified, the default is -csh. GNU du supports <b>-csh</b>, BSD du supports <b>-csk</b>,
+						Solaris du doesn't support <b>-c</b> at all. The GNU version is recommended, since it offers
+						the most features.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="du_args" name="du_args" value="<%= $du_args %>">
+			</div>
+
+			<!?-- stop_on_stale_lockfile --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>stop_on_stale_lockfile</b><hr><b>Default is 0 (not
+						selected)</b><br/><br/>If a lockfile exists when rsnapshot starts, it will try to read the file
+						and stop with an error if it can't. If it *can* read the file, it sees if a process exists with
+						the PID noted in the file. If it does, rsnapshot stops with an error message. If there is no
+						process with that PID, then we assume that the lockfile is stale and ignore it *unless*
+						stop_on_stale_lockfile is set to 1 in which case we stop.</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3"  name="stop_on_stale_lockfile" <%= $stop_on_stale_lockfile %>>
+				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">stop_on_stale_lockfile</label>
+			</div>
+
+			<!?-- link_dest --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>link_dest</b><hr>If your version of rsync supports
+						<b>--link-dest</b> (2.5.7 or newer), you can enable this to let rsync handle some things that
+						GNU cp or the built-in subroutines would otherwise do. Enabling this makes rsnapshot take a
+						slightly more complicated code branch, but it's the best way to support special files on
+						non-Linux systems.</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="link_dest" <%= $link_dest %>>
+				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">link_dest</label>
+			</div>
+
+			<!?-- sync_first --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>sync_first</b><hr><b>sync_first</b> changes the behaviour
+						of rsnapshot. When this is enabled, all calls to rsnapshot with various backup levels simply
+						rotate files. All backups are handled by calling rsnapshot with the <b>'sync'</b> argument. The
+						synced files are stored in a <b>'.sync'</b>directory under the snapshot_root.<br/><br/>
+						This allows better recovery in the event that rsnapshot is interrupted in the middle of a sync
+						operation, since the sync step and rotation steps are separated. This also means that you can
+						easily run <b>'rsnapshot sync'</b> on the command line without fear of forcing all the other
+						directories to rotate up. This benefit comes at the cost of one more snapshot worth of disk
+						space. The default is 0 (unchecked).</div>"></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="sync_first" <%= $sync_first %>>
+				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">sync_first</label>
+			</div>
+
+			<!?-- use_lazy_deletes --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>use_lazy_deletes</b><hr>Changes default behavior of
+						rsnapshot and does not initially remove the oldest snapshot. Instead it moves that directory to
+						<b>_delete.[processid]</b> and continues as normal. Once the backup has been completed, the
+						lockfile will be removed before rsnapshot starts deleting the directory.<br/><br/>
+						Enabling this means that snapshots get taken sooner (since the delete doesn't come first), and
+						any other rsnapshot processes are allowed to start while the final delete is happening. This
+						benefit comes at the cost of using more disk space. The default is 0 (uncheckd).<br/><br/>
+						The details of how this works have changed in rsnapshot version 1.3.1. Originally you could
+						only ever have one <b>.delete</b> directory per backup level. Now you can have many, so if your
+						next (eg) hourly backup kicks off while the previous one is still doing a lazy delete you may
+						temporarily have extra <b>_delete</b> directories hanging around. "></i>
+				</span>
+				<input type="checkbox" class="form-check-input mt-3 ms-3" name="use_lazy_deletes" <%= $use_lazy_deletes %>>
+				<label class="form-check-label pt-1 mt-2 ms-2" for="flexCheckDefault">use_lazy_deletes</label>
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: Backup Intervals
+		##########################################################-->
+		<div id="tabs-5" class="container-fluid tab-pane fade pt-4">
+
+			<!-- Retains -->
+			<div id="retains">
+				<% my $retain_ptr = 0; %>
+				<% foreach my $retain ( @$retains ) { %>
+					<div id="retain_<%= $retain_ptr %>" class="input-group my-2">
+						<span class="input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'><b>retain/interval</b><hr>The number of snapshots
+								that will be retained for <%= %$retain{'name'} %> backups.</div>"></i>
+						</span>
+						<input type="text" class="form-control"  name="retainname_<%= $retain_ptr %>"
+							placeholder ="retain name" value="<%= %$retain{'name'} %>">
+						<input type="number" min="1" class="form-control"  name="retaincount_<%= $retain_ptr %>"
+							value="<%= %$retain{'count'} %>">
+						<button class="btn btn-outline-danger" type="button" onclick="delRetain('<%= $retain_ptr++ %>');">Delete</button>
+					</div>
+				<% } %>
+			</div>
+
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="Add new retain entry"></i>
+				</span>
+				<button class="btn btn-outline-primary" type="button" id="retain_add_btn"
+					onclick="addRetain(<%= $retain_ptr %>);">Add</button>
+			</div>
+
+			<div id="retain_to_add" class="input-group my-2 d-none">
+				<span class="input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>retain/interval</b><hr>The number of snapshots that will
+						be retained.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder ="retain name">
+				<input type="number" min="1" class="form-control">
+				<button class="btn btn-outline-danger" type="button">Delete</button>
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: Includes/Excludes 
+		##########################################################-->
+		<div id="tabs-6" class="container-fluid tab-pane fade pt-4">
+
+			<!-- include_file --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>include_file</b><hr>This gets passed directly to rsync
+						using the <b>--include-from</b> directive.<br/><br/>This option is related to the <b>--include
+						</b> option, but it specifies a FILE that contains include patterns (one per line). Blank lines
+						in the file and lines starting with ’;’  or  ’#’ are ignored.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="include_file" name="include_file" 
+					value="<%= $include_file %>">
+			</div>
+
+			<!-- exclude_file --->
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>exclude_file</b><hr>This gets passed directly to rsync
+						using the <b>--exclude-from</b> directive.<br/><br/>This option is related to the <b>--exclude
+						</b> option, but it specifies a FILE that contains exclude patterns (one per line). Blank lines
+						in the file and lines starting with ’;’ or ’#’ are ignored.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="exclude_file" name="exclude_file"
+					value="<%= $exclude_file %>">
+			</div>
+			<hr>
+
+			<!-- ##### Include Patterns ##### -->
+			<div id="include">
+				<% my $include_ptr = 0; %>
+				<% foreach my $include ( @$includes ) { %>
+					<div id="include-<%= $include_ptr %>" class="input-group my-2">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'><b>include</b><hr>This gets passed directly to
+								rsync using the <b>--include</b> directive. This parameter can be specified as many
+								times as needed, with one pattern defined per line.</div>"></i>
+						</span>
+						<input type="text" class="form-control" name="include-<%= $include_ptr %>"
+							value="<%= $include %>">
+						<button class="btn btn-outline-danger" type="button" onclick="delInclExclEntry('include-<%= $include_ptr++ %>');">
+							Delete
+						</button>
+					</div>
+				<% } %>
+			</div>
+
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Add new include line<hr><b>include</b><hr>This gets passed
+						directly to rsync using the <b>--include</b> directive. This parameter can be specified as many
+						times as needed, with one pattern defined per line.</div>"></i>
+				</span>
+				<button class="btn btn-outline-primary" type="button" id="add_include_btn" 
+					onclick="addIncludeEntry(<%= $include_ptr %>);">
+					Add Include
+				</button>
+			</div>
+
+			<div id="include-" class="input-group my-2 d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>include</b><hr>This gets passed directly to
+						rsync using the <b>--include</b> directive. This parameter can be specified as many
+						times as needed, with one pattern defined per line.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="include">
+				<button class="btn btn-outline-danger" type="button" name="include_del" disabled>Delete</button>
+			</div>
+			<hr>
+
+			<!-- ##### Exclude Patterns ##### -->
+			<div id="exclude">
+				<% my $exclude_ptr = 0; %>
+				<% foreach my $exclude ( @$excludes ) { %>
+					<div id="exclude-<%= $exclude_ptr %>" class="input-group my-2">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'><b>exclude</b><hr>This gets passed directly to
+								rsync using the <b>--exclude</b> directive. This parameter can be specified as many
+								times as needed, with one pattern defined per line.</div>"></i>
+						</span>
+						<input type="text" class="form-control" name="exclude-<%= $exclude_ptr %>"
+							value="<%= $exclude %>">
+						<button class="btn btn-outline-danger" type="button" 
+							onclick="delInclExclEntry('exclude-<%= $exclude_ptr++ %>');">
+							Delete
+						</button>
+					</div>
+				<% } %>
+			</div>
+
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Add new exclude line<hr><b>exclude</b><hr>This gets passed 
+						directly to rsync using the <b>--exclude</b> directive. This parameter can be specified as many
+						times as needed, with one pattern defined per line.</div>"></i>
+				</span>
+				<button class="btn btn-outline-primary" type="button" id="add_exclude_btn" 
+					onclick="addExcludeEntry('<%= $exclude_ptr %>');">
+					Add Exclude
+				</button>
+			</div>
+
+			<div id="exclude-" class="input-group my-2 d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>exclude</b><hr>This gets passed directly to
+						rsync using the <b>--exclude</b> directive. This parameter can be specified as many
+						times as needed, with one pattern defined per line.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="exclude">
+				<button class="btn btn-outline-danger" type="button" name="exclude_del" disabled>Delete</button>
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: backup Hosts
+		##########################################################-->
+		<div id="tabs-7" class="container-fluid tab-pane fade pt-4">
+
+			<div id="accordion" class="accordion">
+				<% foreach my $hostname (sort keys(%$backups)){ %>
+					<div class="accordion-item" id="hostname_<%= $hostname %>">
+						<h2 class="accordion-header">
+							<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+								data-bs-target="#collapse_<%= $hostname %>" aria-expanded="false"
+								aria-controls="collapse_<%= $hostname %>">
+								<b><%= $hostname %></b>
+							</button>
+						</h2>
+						<div id="collapse_<%= $hostname %>" class="accordion-collapse collapse" data-bs-parent="#accordion">
+							<div class="accordion-body">
+								<div id="config_<%= $hostname %>">
+									<% my $dirArrayRef = %$backups{$hostname}; %>
+									<% my $host_dir_prt; %>
+									<% for( $host_dir_prt = 0; $host_dir_prt < @$dirArrayRef; $host_dir_prt++ ) { %>
+										<div class="input-group" id="hostname_<%= $hostname %>_sourcegroup_<%= $host_dir_prt %>">
+											<span class="border-radius input-group-text">
+												<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right" 
+													title="<div class='text-start my-3'><b>backup</b><hr>Directory to backup</div>">
+												</i>
+											</span>
+											<input type="text" class="form-control" id="hostname_<%= $hostname %>__source_<%= $host_dir_prt %>"
+													name="hostname_<%= $hostname %>__source_<%= $host_dir_prt %>" placeholder="source directory"
+														value="<%= ${$dirArrayRef}[$host_dir_prt]->{'source'} %>">
+											<span class="border-radius input-group-text">
+												<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+													title="Optional directory args">
+												</i>
+											</span>
+											<input type="text" class="form-control" id="hostname_<%= $hostname %>__args_<%= $host_dir_prt %>"
+														name="hostname_<%= $hostname %>__args_<%= $host_dir_prt %>" placeholder="optional args"
+														value="<%= ${$dirArrayRef}[$host_dir_prt]->{'args'} %>">
+											<button class="btn btn-outline-danger" type="button" onclick="hostDeleteDir('<%= $hostname %>', <%= $host_dir_prt %>)">
+												Delete
+											</button>
+										</div>
+									<% } %>
+								</div>
+								<button class="btn btn-outline-primary mt-3" type="button" id="hostname_<%= $hostname %>_addsource_btn"
+									onclick="hostAddDir('<%= $hostname %>',<%= $host_dir_prt %>);">
+									Add Entry
+								</button>
+								<button class="btn btn-outline-danger mt-3 float-end" type="button" onclick="hostDelete('<%= $hostname %>')">
+									Delete Host
+								</button>
+							</div>
+						</div>
+					</div>
+				<% } %>
+			</div> <!-- End of Hosts Accordion -->
+
+			<div id="new_dir_entry" class="input-group d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="Directory to backup"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="directory" name="new_dir_entry">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="Optional directory args"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="optional args">
+				<button class="btn btn-outline-danger" type="button" name="hostdir_del" disabled>Delete</button>
+			</div>
+
+			<!-- Add new Host -->
+			<div class="input-group  mt-3">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>backup<hr>Add new host for backup.</div>"></i>
+				</span>
+				<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal_add_host">
+					Add Host
+				</button>
+			</div>
+			<div class="modal fade" id="modal_add_host" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" 
+				aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" id="staticBackdropLabel">Add Host</h5>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+							<div id="new_host_entry" class="input-group">
+								<span class="border-radius input-group-text">
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+										data-bs-placement="right" title="Add new host to the configuration. This 
+										hostname can be any name and is only used to better identify the server. 
+										Then enter the first directory name and immediately save the configuration."></i>
+								</span>
+								<input type="text" class="form-control" placeholder="hostname" id="new_hostname">
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" id="modal_add_host_btn" data-bs-dismiss="modal" 
+								onclick="addNewHost()">
+								Add
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="accordion-item d-none" id="host_item_new">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" aria-expanded="false">
+					</button>
+				</h2>
+				<div class="accordion-collapse collapse" data-bs-parent="#accordion">
+					<div class="accordion-body">
+						<div>
+							<div class="input-group">
+								<span class="border-radius input-group-text">
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
+										data-bs-html="true" data-bs-placement="right"
+										title="Source directory to backup"></i>
+								</span>
+								<input type="text" placeholder="source" class="form-control">
+								<span class="border-radius input-group-text">
+									<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" 
+										data-bs-html="true" data-bs-placement="right"
+										title="Optional directory args"></i>
+								</span>
+								<input type="text" placeholder="optional args" class="form-control">
+								<button class="btn btn-outline-danger" type="button">Delete</button>
+							</div>
+						</div>
+						<button class="btn btn-outline-primary mt-3" type="button">Add Entry</button>
+						<button class="btn btn-outline-danger mt-3 float-end" type="button">Delete Host</button>
+					</div>
+				</div>
+			</div>
+			<hr>
+		</div>
+
+	<!--##########################################################
+		Tab: Scripts executed while backuping 
+		##########################################################-->
+		<div id="tabs-8" class="container-fluid tab-pane fade pt-4">
+
+			<!-- backup_script -->
+			<div id="backup_script">
+				<% my $bkp_script_ptr = 0; %>
+				<% foreach my $backup_script ( @$backup_scripts ) { %>
+					<div id="backup_script_<%= $bkp_script_ptr %>" class="input-group my-2">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'><b>backup_script</b><hr>This script should 
+								simply create files and/or directories in its current working directory.<b>rsnapshot
+								</b> will then take that output and move it into the directory specified in the
+								third column.<br/>Please note that whatever is in the destination directory will be
+								completely deleted and recreated. For this reason, rsnapshot prevents you from
+								specifying a destination directory for a <b>backup_script</b> that will clobber
+								other backups.</div>"></i>
+						</span>
+						<input type="text" class="form-control" value="<%= %$backup_script{'name'} %>" 
+							name="backup_script_name_<%= $bkp_script_ptr %>">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'>Destination directory</div>"></i>
+						</span>
+						<input type="text" class="form-control" value="<%= %$backup_script{'target'} %>" 
+							name="backup_script_target_<%= $bkp_script_ptr %>">
+						<button class="btn btn-outline-danger" type="button" onclick="delBkpScript(<%= $bkp_script_ptr++ %>);">
+							Delete
+						</button>
+					</div>
+				<% } %>
+			</div> <!-- End of Backup Scripts-->
+
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>backup_script</b><hr>Add new backup script<hr>This script
+						should simply create files and/or directories in its current working directory.<b>rsnapshot
+						</b> will then take that output and move it into the directory specified in the
+						third column.<br/>Please note that whatever is in the destination directory will be
+						completely deleted and recreated. For this reason, rsnapshot prevents you from
+						specifying a destination directory for a <b>backup_script</b> that will clobber
+						other backups.</div>"></i>
+				</span>
+				<button class="btn btn-outline-primary" type="button" id="add_backup_script_btn" 
+					onclick="addBkpScript(<%= $bkp_script_ptr %>);">
+					Add
+				</button>
+			</div>
+
+			<div id="add_backup_script" class="input-group my-2 d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="This script should simply create files and/or directories in its current working directory.
+						<b>rsnapshot</b> will then take that output and move it into the directory specified in the third
+						column.<br/>
+						Please note that whatever is in the destination directory will be completely deleted and recreated.
+						For this reason, rsnapshot prevents you from specifying a destination directory for a
+						<b>backup_script</b> that will clobber other backups."></i>
+				</span>
+				<input type="text" class="form-control">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Destination directory</div>"></i>
+				</span>
+				<input type="text" class="form-control">
+				<button class="btn btn-outline-danger" type="button">Delete</button>
+			</div>
+			<hr>
+
+			<!-- backup_exec -->
+			<div id="backup_exec">
+				<% my $backup_exec_ptr = 0; %>
+				<% foreach my $backup_exec ( @$backup_execs ) { %>
+					<div id="backup_exec_<%= $backup_exec_ptr %>" class="input-group my-2">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'><b>backup_exec</b><hr>Add new exec command<hr>backup_exec 
+								simply runs the command listed. The second argument is not required and	defaults to a value of
+								'optional'. It specifies the importance that the command return 0. Valid values are 'optional'
+								and 'required'. If the command is specified as optional, a non-zero exit status from the command
+								will result in a warning message being output. If the command is specified as 'required', a 
+								non-zero exit status from the command will result in an error message being output and rsnapshot
+								itself will	exit with a non-zero exit status.</div>"></i>
+						</span>
+						<input type="text" class="form-control" value="<%= %$backup_exec{'command'} %>" 
+							name="backup_exec_command_<%= $backup_exec_ptr %>">
+						<span class="border-radius input-group-text">
+							<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+								title="<div class='text-start my-3'>Importance</div>"></i>
+						</span>
+						<select class="form-select" name="backup_exec_importance_<%= $backup_exec_ptr %>" 
+							id="backup_exec_importance_<%= $backup_exec_ptr %>">
+							<option value="optional" selected>Optional</option>
+							<option value="required">Required</option>
+						</select>
+						<button class="btn btn-outline-danger" type="button" onclick="delBackupExec(<%= $backup_exec_ptr++ %>);">
+							Delete
+						</button>
+					</div>
+				<% } %>
+			</div>
+
+			<div class="input-group my-2">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>backup_exec</b><hr>Add new exec command<hr>backup_exec 
+						simply runs the command listed. The second argument is not required and	defaults to a value of
+						'optional'. It specifies the importance that the command return 0. Valid values are 'optional'
+						and 'required'. If the command is specified as optional, a non-zero exit status from the command
+						will result in a warning message being output. If the command is specified as 'required', a 
+						non-zero exit status from the command will result in an error message being output and rsnapshot
+						itself will	exit with a non-zero exit status.</div>"></i>
+				</span>
+				<button class="btn btn-outline-primary" type="button" id="add_backup_exec_btn" 
+					onclick="addBackupExec(<%= $backup_exec_ptr %>);">
+					Add
+				</button>
+			</div>
+
+			<div id="add_backup_exec" class="input-group my-2 d-none">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'><b>backup_exec</b><hr>Add new exec command<hr><b>backup_exec</b> 
+						simply runs the command listed. The second argument is not required and	defaults to a value of
+						'optional'. It specifies the importance that the command return 0. Valid values are 'optional'
+						and 'required'. If the command is specified as optional, a non-zero exit status from the command
+						will result in a warning message being output. If the command is specified as 'required', a 
+						non-zero exit status from the command will result in an error message being output and rsnapshot
+						itself will	exit with a non-zero exit status.</div>"></i>
+				</span>
+				<input type="text" class="form-control" placeholder="command">
+				<span class="border-radius input-group-text">
+					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+						title="<div class='text-start my-3'>Choose the importance. Optional or required.</div>"></i>
+				</span>
+				<select class="form-select">
+					<option value="optional" selected>Optional</option>
+					<option value="required">Required</option>
+				</select>
+				<button class="btn btn-outline-danger" type="button">Delete</button>
+			</div>
+			<hr>
+		</div>
+
+		<button class="btn btn-outline-primary mx-4 my-1 float-end" type="submit" data-bs-toggle="tooltip" 
+			data-bs-html="true" data-bs-placement="right" title="Save the config file">Save</button>
+	</div>
+</form>
+
+<script>
+	document.getElementById("menuEntry-config").classList.add("active");
+</script>
