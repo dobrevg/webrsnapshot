@@ -201,6 +201,8 @@ sub save {
 
 	# 0 - Ok
 	# If returns diferent then 0, then we have a problem
+	$self->flash(saved => ${$saveResult}{'exit_code'});
+	$self->flash(message_text => ${$saveResult}{'message'});
 
 	return $self->redirect_to('/config');
 }
