@@ -128,7 +128,7 @@ sub save {
 		# backup
 		if( rindex($key,'hostname_',0) == 0) {
 			my %backup_host = ();
-			$backup_host{'hostname'} = substr($key, 9, index($key,"__")-9);
+			$backup_host{'hostname'} = substr($key, 9, CORE::index($key,"__")-9);
 			# We continue analyse the param only if its a source
 			my $sourcekey      = 'hostname_'.$backup_host{'hostname'}.'__source_';
 			my $argumentskey   = 'hostname_'.$backup_host{'hostname'}.'__args_';
