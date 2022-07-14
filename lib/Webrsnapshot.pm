@@ -36,6 +36,7 @@ sub startup ($self) {
   $authorized->get('/cron')->to('Cron#index');
   $authorized->post('/cron')->to('Cron#save');
   $authorized->get('/config')->to('Config#index');
+  $authorized->post('/config')->to('Config#save');
 }
 
 1;
