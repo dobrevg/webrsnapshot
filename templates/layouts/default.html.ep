@@ -24,7 +24,7 @@
 						<span class="navbar-toggler-icon"></span>
 					</button>
 					<div class="container-fluid collapse navbar-collapse px-0" id="mainmenu">
-						<ul class="navbar-nav me-auto mb-2 mb-md-0 w-100">
+						<ul class="navbar-nav me-auto mb-2 mb-md-0 w-100 nav-pills">
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-home" href="/">Home</a>
 							</li>

@@ -7,3 +7,7 @@
 <%= $log_content %>
 	</textarea>
 </div>
+
+<script>
+	document.getElementById("menuEntry-log").classList.add("active");
+</script>
