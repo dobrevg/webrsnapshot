@@ -53,6 +53,8 @@ sub save {
 	# 1 - error in the rsnapshot cron file
 	# 3 - error while copying the rsnapshot file
 	# If returns diferent then 0, then we have a problem
+	$self->flash(saved => pop @saveResult);
+	$self->flash(message_text => join(" ",@saveResult));
 
 	return $self->redirect_to('/cron');
 }
