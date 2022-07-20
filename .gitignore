@@ -1,7 +1,8 @@
-submodules/*
-config/webrsnapshot.yml
+/submodules/*
+!/submodules
+/config/webrsnapshot.yml
 
 # Ignore eclipse specific files
-.includepath
-.project
-.settings
+/.includepath
+/.project
+/.settings
