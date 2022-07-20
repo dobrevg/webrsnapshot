@@ -1,5 +1,3 @@
-/submodules/*
-!/submodules
 /config/webrsnapshot.yml
 
 # Ignore eclipse specific files
