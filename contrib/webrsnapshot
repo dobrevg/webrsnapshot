@@ -18,7 +18,7 @@ start() {
 		return 1
 	fi
 	echo "Starting $prog: "
-	daemon $PROGROOT/submodules/mojo/script/hypnotoad $PROGROOT/script/webrsnapshot
+	$PROGROOT/submodules/mojo/script/hypnotoad $PROGROOT/script/webrsnapshot
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch $LOCKFILE
 	echo

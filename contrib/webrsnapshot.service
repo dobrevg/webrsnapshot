@@ -3,6 +3,8 @@ Description=Web based graphical interface for rsnapshot
 After=network.target
 
 [Service]
+Environment=PERL5LIB=/opt/webrsnapshot/submodules/mojo/lib
+WorkingDirectory=/opt/webrsnapshot
 Type=simple
 ExecStart=/opt/webrsnapshot/submodules/mojo/script/hypnotoad /opt/webrsnapshot/script/webrsnapshot
 ExecStop=/opt/webrsnapshot/submodules/mojo/script/hypnotoad -s /opt/webrsnapshot/script/webrsnapshot
