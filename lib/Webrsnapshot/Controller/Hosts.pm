@@ -3,6 +3,7 @@ package Webrsnapshot::Controller::Hosts;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 use List::Util 'first';
 use Webrsnapshot::ConfigHandler;
+use Data::Dumper qw(Dumper);
 
 # This action will render a template
 sub index ($self) {
@@ -19,7 +20,7 @@ sub index ($self) {
 sub getAllLastBackupTimes {
 	my ( $self, $rs_conf_file ) = @_;
 
-	my $rs_configuration = new Webrsnapshot::ConfigHandler($rs_conf_file)->readConfig();
+	our $rs_configuration = new Webrsnapshot::ConfigHandler($rs_conf_file)->readConfig();
 	my $backups = $rs_configuration->{backup};
 
 	# Sort all hostnames and assign the values to an array	
@@ -33,19 +34,16 @@ sub getAllLastBackupTimes {
 	my @retain_dirs = sort grep {!/^\./} readdir $sr;
 	closedir $sr; # and close it
 
-	foreach my $dir (@retain_dirs) {
-		opendir my($rd), $rs_configuration->{snapshot_root}."/".$dir || die "Couldn't open dir '$dir': $!";
+	foreach my $hostname (@retain_dirs) {
+		opendir my($rd), $rs_configuration->{snapshot_root}."/".$hostname || die "Couldn't open dir '$hostname': $!";
 		my @tmpHostBackups = grep { not /^\./ } readdir $rd;
 
-		foreach my $hostname (@hostnames) {	
-			my $match = first { /$hostname/ } @tmpHostBackups;
-			if ( $match ) {
-				# Read the last modified timestamp from the host backup dir
-				$result{$hostname}{$dir} = (stat($rs_configuration->{snapshot_root}."/".$dir."/".$hostname))[9];
-			}
+		foreach my $backupPath (@tmpHostBackups) {
+			$result{$hostname}{$backupPath} = (stat($rs_configuration->{snapshot_root}."/".$hostname."/".$backupPath))[9];
 		}
 		closedir $rd;
 	}
+
 	return \%result;
 }
 
