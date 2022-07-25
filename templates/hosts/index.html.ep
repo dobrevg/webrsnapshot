@@ -8,7 +8,7 @@
 	</tr>
 	<% foreach my $hostname ( sort keys (%$timestampHashRef) ) { %>
 		<tr>
-			<td><%= $hostname %></td>
+			<td><a href="/host/<%= $hostname %>"><%= $hostname %></a></td>
 			<td>
 			<% my $hostBackups = %$timestampHashRef{$hostname}; %>
 			<% foreach my $timestamp (reverse sort values %$hostBackups) { %>
