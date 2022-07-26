@@ -33,6 +33,7 @@ sub startup ($self) {
   $authorized->get('/')->to('Home#index');
   $authorized->get('/hosts')->to('Hosts#index');
   $authorized->get('/host/:name')->to('Host#index');
+  $authorized->get('/host')->to(cb => sub($c){$c->redirect_to('/hosts')});
   $authorized->get('/log')->to('Log#index');
   $authorized->get('/cron')->to('Cron#index');
   $authorized->post('/cron')->to('Cron#save');
