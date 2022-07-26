@@ -46,6 +46,16 @@ session_timeout: 600
 # Default: 100
 loglines: 100
 
+# timeformat: "<string>"
+# Here you can define the time and date format displayed on the hosts pages.
+# The FORMAT from DATE can be used here since most of the strings are valid.
+# https://man7.org/linux/man-pages/man1/date.1.html
+#
+# Default: 00:04:55
+timeformat: "%T"
+# Default: 26.07.2022
+dateformat: "%d.%m.%Y"
+
 # Application secret
 secrets:
   - c04271b394aebcf2b81f2cff7e93a2963aecde64

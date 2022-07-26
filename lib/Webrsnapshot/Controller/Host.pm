@@ -15,6 +15,8 @@ sub index ($self) {
 		hostname   => $hostname,
 		backuproot => $rs_configuration->{snapshot_root},
 		timestamps => $self->getAllLastBackupTimes($rs_configuration, $hostname),
+		timeformat => $self->config->{timeformat},
+		dateformat => $self->config->{dateformat},
 	);
 }
 
