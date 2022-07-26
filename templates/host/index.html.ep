@@ -3,7 +3,7 @@
 
 <table class="table table-striped">
 	<tr>
-		<th colspan="5" style="text-align: center;"><%= $hostname %> <%= POSIX::strftime($timeformat, localtime)%></th>
+		<th colspan="5" style="text-align: center;"><%= $hostname %></th>
 	</tr>
 	<tr>
 		<th>Backup</th>
