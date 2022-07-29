@@ -1,3 +1,10 @@
+Version 0.9
+-----------
+
+* [feature]     - Let user define the date and time format in hosts pages
+* [change]      - Convert the app from Mojo-Lite to Mojolicious
+
+
 Version 0.8
 -----------
 

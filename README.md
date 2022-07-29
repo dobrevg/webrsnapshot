@@ -1,4 +1,4 @@
-# [Webrsnapshot v0.8](https://github.com/dobrevg/webrsnapshot)
+# [Webrsnapshot v0.9](https://github.com/dobrevg/webrsnapshot)
 ============
 
 Webrsnapshot is web based graphical interface for editing the configuration file and the cronjob of rsnapshot via web browser. 

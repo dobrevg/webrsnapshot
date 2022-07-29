@@ -10,6 +10,7 @@
 * Switch to the Mojolicious Plugin directory `cd ./webrsnapshot/submodules/mojo/lib/Mojolicious/Plugin/`
 * Link the Authenticatin plugin `ln -s ../../../../Mojolicious-Plugin-Authentication/lib/Mojolicious/Plugin/Authentication.pm`
 * Copy the config file and configure it `cp config/webrsnapshot.example.yml config/webrsnapshot.yml`
+* Change the shebang to absolute path of the perl interpreter in all scripts: `./submodules/mojo/script/*`
 * Run `./webrsnapshot/submodules/mojo/script/hypnotoad ./webrsnapshot/script/webrsnapshot` to start the server (see the requirements below)
 * Run `./webrsnapshot/submodules/mojo/script/hypnotoad -s ./webrsnapshot/script/webrsnapshot` to stop the server
 * Access the application via https://myServerIP:8080
