@@ -1,0 +1,23 @@
+% layout $tmpl;
+% title 'Webrsnapshot';
+
+<table class="table table-striped">
+	<tr>
+		<th>Hosts</th>
+		<th>Last Backup</th> 
+	</tr>
+	<% foreach my $hostname ( sort keys (%$timestampHashRef) ) { %>
+		<tr>
+			<td><a href="/host/<%= $hostname %>"><%= $hostname %></a></td>
+			<td>
+			<% my $hostBackups = %$timestampHashRef{$hostname}; %>
+			<% foreach my $timestamp (reverse sort values %$hostBackups) { %>
+				<%= sprintf("%.1f",(time - $timestamp)/86400)." Days" %> 
+			<% last; } %>
+			</td>
+		</tr>
+	<% } %>
+<table>
+<script>
+	document.getElementById("menuEntry-hosts").classList.add("active");
+</script>

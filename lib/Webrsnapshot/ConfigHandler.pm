@@ -1,14 +1,22 @@
-package ConfigHandler;
+package Webrsnapshot::ConfigHandler;
 
 use strict;
 use warnings;
 use open ':locale';
 
+sub new {
+	my $class = shift;
+	my $self = {
+		_rs_config_file => shift,
+	};
+	bless $self, $class;
+	return $self;
+}
+
 # and save the config File
 # Parameters is all post data from config
 sub saveConfig {
-	my $configfile	= shift(@_);
-	my ($config) 	= shift(@_);
+	my ( $self, $config ) = @_;
 
 	# Set Timestamp for random filename
 	my $config_to_test	= "/tmp/rsnapshot_".time();
@@ -209,7 +217,6 @@ sub saveConfig {
 	}
 
 	# Retain ###############
-	# ToDo: support for first read interval
 	foreach my $retain_ref ( @{ $config->{'retain'} } ) {
 		printf CONFIG ("retain\t\t\t\t\t$retain_ref->{'name'}\t$retain_ref->{'count'}\n");
 	}
@@ -242,8 +249,6 @@ sub saveConfig {
 
 	# Hosts ###################
 	# backup (required)
-	# ToDo: create it
-	# ToDo: remove default value
 	if ( @{ $config->{'backup'} } ) {
 		foreach ( @{ $config->{'backup'} } ) {
 			my %backup = %$_;
@@ -284,7 +289,7 @@ sub saveConfig {
 
 	# if Syntax ok, then copy the temp config file to /etc
 	if ( $configtest{'exit_code'} eq 0 ) {
-		my $copyStdout = `cp -f $config_to_test $configfile`;
+		my $copyStdout = `cp -f $config_to_test $self->{_rs_config_file}`;
 		$configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
 
 		# move the Stdout from copy to return message only if the exit code is not zero
@@ -293,12 +298,12 @@ sub saveConfig {
 		}
 	}
 
-	#system ("rm", "-f",$config_to_test);
+	system ("rm", "-f",$config_to_test);
 	return \%configtest;
 }
 
 sub readConfig {
-	my $configfile = shift(@_);
+	my $self = shift;
 
 	my %config;
 	my @retain;
@@ -312,13 +317,14 @@ sub readConfig {
 	# ToDo: move this checks to webrsnapshot.pl
 	system ("which rsync > /dev/null")		== 0 or die "Rsync not found on this server!";
 	system ("which rsnapshot > /dev/null")	== 0 or die "Rsnapshot not found on this server!";
-	die "$configfile is missing.\n" unless (-e $configfile);
+	die "$self->{_rs_config_file} is missing.\n" unless (-e $self->{_rs_config_file});
 
 	# Open rsnapshot config file for reading
-	open (CONFIG, $configfile) || die $!;
+	open (CONFIG, $self->{_rs_config_file}) || die $!;
 	while (<CONFIG>) {
-		next if /^#/;	# Ignore every comment 
-		chop;			# Remove the new line character
+		next if /^#/;    # Skip comments
+		next if /^\s*$/; # Skip blank lines
+		chop;            # Remove the new line character
 
 		# parse line
 		my ($key, $value1, $value2, $value3) = split(/\t+/, $_, 4);
@@ -368,7 +374,6 @@ sub readConfig {
 
 		# Intervals
 		if( $key eq 'interval' || $key eq 'retain' ) {
-			# ToDo: build hash and push to array
 			my %retain_entry;
 			$retain_entry{'name'}  = $value1;
 			$retain_entry{'count'} = $value2;
@@ -378,12 +383,11 @@ sub readConfig {
 		# Include/Exclude
 		if( $key eq 'include_file' ) { $config{'include_file'} = $value1; }
 		if( $key eq 'exclude_file' ) { $config{'exclude_file'} = $value1; }
-		# ToDo: push to array
+
 		if( $key eq 'include' ) { push( @include, $value1 ); }
 		if( $key eq 'exclude' ) { push( @exclude, $value1 ); }
 
 		# Hosts
-		# ToDo: create hash and push to @backup
 		if( $key eq 'backup' ) {
 			my $source	 = $value1;
 			my $hostname = $value2;
@@ -410,8 +414,7 @@ sub readConfig {
 			}
 		}
 
-		# Scripts
-		# ToDo: create hash and push to array
+		# backup_script
 		if( $key eq 'backup_script' ) {
 			my %backup_script_entry;
 			$backup_script_entry{'name'} 	= $value1;
@@ -419,7 +422,7 @@ sub readConfig {
 			push( @backup_script, \%backup_script_entry );
 		}
 
-		# ToDo: create hash and push to array
+		# backup_exec
 		if( $key eq 'backup_exec' ) {
 			my %backup_exec_entry;
 			$backup_exec_entry{'command'} 		= $value1;

@@ -1,0 +1,24 @@
+% layout $tmpl;
+% title 'Webrsnapshot';
+
+<table class="table table-striped">
+	<tr>
+		<th colspan="5" style="text-align: center;"><%= $hostname %></th>
+	</tr>
+	<tr>
+		<th>Backup</th>
+		<th>Backup Age (Days)</th>
+		<th>Backup Path</th>
+		<th>Backup Time</th>
+		<th>Backup Date</th>
+	</tr>
+	<% foreach my $retainDir ( sort {%$timestamps{$b} <=> %$timestamps{$a}} keys %$timestamps ) { %>
+		<tr>
+			<td><%= $retainDir %></td>
+			<td><%= sprintf("%.1f",(time - %$timestamps{$retainDir})/86400) %></td>
+			<td><%= $backuproot.$retainDir."/".$hostname %></td>
+			<td><%= POSIX::strftime($timeformat, localtime(%$timestamps{$retainDir})) %></td>
+			<td><%= POSIX::strftime($dateformat, localtime(%$timestamps{$retainDir})) %></td>
+		</tr>
+	<% } %>
+<table>

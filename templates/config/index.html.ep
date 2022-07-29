@@ -1,4 +1,4 @@
-% layout $default_template;
+% layout $tmpl;
 % title "Webrsnapshot";
 
 <form method="post" action="/config" name="rsnapshotconfform">
@@ -46,15 +46,14 @@
 			</li>
 		</ul>
 	</div>
-
+ 
 	<div class="tab-content">
-	<!-- 
-	##########################################################
-	Tab: Root config
-	##########################################################
-	-->
+	<!--##########################################################
+		Tab: Root config
+		##########################################################-->
 		<div id="tabs-1" class="container-fluid tab-pane active pt-4">
-			<!-- config_version --->
+
+			<!-- config_version -->
 			<div class="input-group my-2">
 				<span class="input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -65,7 +64,7 @@
 					value="<%= $config_version %>">
 			</div>
 
-			<!-- snapshot_root --->
+			<!-- snapshot_root -->
 			<div class="input-group my-2">
 				<span class="input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -119,12 +118,12 @@
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: Optional programs and scripts used
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: Optional programs and scripts used
+		##########################################################-->
 		<div id="tabs-2" class="container-fluid tab-pane fade pt-4">
+
 			<!?-- cmd_rsync --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
@@ -132,8 +131,7 @@
 						title="<div class='text-start my-3'><b>cmd_rsync</b><hr><b>rsync</b> must be enabled for anything to
 						work. This is the only command that must be enabled.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_rsync" aria-label="cmd_rsync"
-						name="cmd_rsync" class="configfield" value="<%= $cmd_rsync %>">
+				<input type="text" class="form-control" placeholder="cmd_rsync" name="cmd_rsync" value="<%= $cmd_rsync %>">
 			</div>
 
 			<!?-- cmd_cp --->
@@ -144,8 +142,7 @@
 						This gives you extra features.<br/>
 						<b>EVERYONE ELSE:</b> Don't use 'cmd_cp' for compatibility.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_cp" name="cmd_cp"
-					class="configfield" value="<%= $cmd_cp %>">
+				<input type="text" class="form-control" placeholder="cmd_cp" name="cmd_cp" value="<%= $cmd_cp %>">
 			</div>
 
 			<!?-- cmd_rm --->
@@ -155,8 +152,7 @@
 						title="<div class='text-start my-3'><b>cmd_rm</b><hr>Use the <b>rm</b> program instead of the
 						built-in perl routine.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_rm" name="cmd_rm"
-					class="configfield" value="<%= $cmd_rm %>">
+				<input type="text" class="form-control" placeholder="cmd_rm" name="cmd_rm" value="<%= $cmd_rm %>">
 			</div>
 
 			<!?-- cmd_ssh --->
@@ -166,8 +162,7 @@
 						title="<div class='text-start my-3'><b>cmd_ssh</b><hr>Full path to <b>ssh</b> (optional)<br/>
 						Use this to enable remote ssh backups over rsync.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_ssh" name="cmd_ssh"
-					class="configfield" value="<%= $cmd_ssh %>">
+				<input type="text" class="form-control" placeholder="cmd_ssh" name="cmd_ssh" value="<%= $cmd_ssh %>">
 			</div>
 
 			<!?-- cmd_logger --->
@@ -177,8 +172,7 @@
 						title="<div class='text-start my-3'><b>cmd_logger</b><hr>Disable this if you don't want
 						syslog support.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_logger" name="cmd_logger"
-					class="configfield" value="<%= $cmd_logger %>">
+				<input type="text" class="form-control" placeholder="cmd_logger" name="cmd_logger" value="<%= $cmd_logger %>">
 			</div>
 
 			<!?-- cmd_du --->
@@ -189,8 +183,7 @@
 						for disk usage checks. If you have an older
 						version of <b>du</b>, you may also want to check the <b>du_args</b> parameter.</div>"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="cmd_du" name="cmd_du"
-					class="configfield" value="<%= $cmd_du %>">
+				<input type="text" class="form-control" placeholder="cmd_du" name="cmd_du" value="<%= $cmd_du %>">
 			</div>
 
 			<!?-- cmd_rsnapshot_diff --->
@@ -201,7 +194,7 @@
 						path to <b>rsnapshot-diff</b>.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="cmd_rsnapshot_diff" name="cmd_rsnapshot_diff"
-					class="configfield" value="<%= $cmd_rsnapshot_diff %>">
+					value="<%= $cmd_rsnapshot_diff %>">
 			</div>
 
 			<!?-- cmd_preexec --->
@@ -212,7 +205,7 @@
 						(and any optional arguments) to run right before rsnapshot syncs files.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="cmd_preexec" name="cmd_preexec"
-					class="configfield" value="<%= $cmd_preexec %>">
+					value="<%= $cmd_preexec %>">
 			</div>
 
 			<!?-- cmd_postexec --->
@@ -223,16 +216,16 @@
 						(and any optional arguments) to run right after rsnapshot syncs files.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="cmd_postexec" name="cmd_postexec"
-					class="configfield" value="<%= $cmd_postexec %>">
+					value="<%= $cmd_postexec %>">
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: LVM Options 
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: LVM Options 
+		##########################################################-->
 		<div id="tabs-3" class="container-fluid tab-pane fade pt-4">
+
 			<!?-- linux_lvm_cmd_lvcreate --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
@@ -242,7 +235,7 @@
 						otherwise optional.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_cmd_lvcreate" name="linux_lvm_cmd_lvcreate"
-					class="configfield" value="<%= $linux_lvm_cmd_lvcreate %>">
+					value="<%= $linux_lvm_cmd_lvcreate %>">
 			</div>
 
 			<!?-- linux_lvm_cmd_lvremove --->
@@ -254,7 +247,7 @@
 						otherwise optional.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_cmd_lvremove" name="linux_lvm_cmd_lvremove"
-					class="configfield" value="<%= $linux_lvm_cmd_lvremove %>">
+					value="<%= $linux_lvm_cmd_lvremove %>">
 			</div>
 
 			<!?-- linux_lvm_cmd_mount --->
@@ -266,7 +259,7 @@
 						otherwise optional.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_cmd_mount" name="linux_lvm_cmd_mount"
-					class="configfield" value="<%= $linux_lvm_cmd_mount %>">
+					value="<%= $linux_lvm_cmd_mount %>">
 			</div>
 
 			<!?-- linux_lvm_cmd_umount --->
@@ -278,7 +271,7 @@
 						otherwise optional.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_cmd_umount" name="linux_lvm_cmd_umount"
-					class="configfield" value="<%= $linux_lvm_cmd_umount %>">
+					value="<%= $linux_lvm_cmd_umount %>">
 			</div>
 
 			<!?-- linux_lvm_snapshotsize --->
@@ -292,7 +285,7 @@
 						optional. <b>Default unit is megabytes</b></div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_snapshotsize" name="linux_lvm_snapshotsize"
-					class="configfield" value="<%= $linux_lvm_snapshotsize %>">
+					value="<%= $linux_lvm_snapshotsize %>">
 			</div>
 
 			<!?-- linux_lvm_snapshotname --->
@@ -303,7 +296,7 @@
 						the LVM logical volume snapshot(s) (lvcreate --name option)</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_snapshotname" name="linux_lvm_snapshotname"
-					class="configfield" value="<%= $linux_lvm_snapshotname %>">
+					value="<%= $linux_lvm_snapshotname %>">
 			</div>
 
 			<!?-- linux_lvm_vgpath --->
@@ -314,7 +307,7 @@
 						Path to the LVM Volume Groups.</div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_vgpath" name="linux_lvm_vgpath"
-					class="configfield" value="<%= $linux_lvm_vgpath %>">
+					value="<%= $linux_lvm_vgpath %>">
 			</div>
 
 			<!?-- linux_lvm_mountpath --->
@@ -325,16 +318,16 @@
 						mount the snapshot(s).<br/><br/><b>Example: /mnt/lvm-snapshot</b></div>"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="linux_lvm_mountpath" name="linux_lvm_mountpath"
-					class="configfield" value="<%= $linux_lvm_mountpath %>">
+					value="<%= $linux_lvm_mountpath %>">
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: Global Options 
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: Global Options
+		##########################################################-->
 		<div id="tabs-4" class="container-fluid tab-pane fade pt-4">
+
 			<!?-- rsync_numtries --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
@@ -345,7 +338,7 @@
 						rsync operation re-tried.</div>"></i>
 				</span>
 				<input type="number" min="1" class="form-control" placeholder="rsync_numtries" name="rsync_numtries"
-					class="configfield" value="<%= $rsync_numtries %>">
+					value="<%= $rsync_numtries %>">
 			</div>
 
 			<!?-- verbose --->
@@ -520,12 +513,13 @@
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: Backup Intervals
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: Backup Intervals
+		##########################################################-->
 		<div id="tabs-5" class="container-fluid tab-pane fade pt-4">
+
+			<!-- Retains -->
 			<div id="retains">
 				<% my $retain_ptr = 0; %>
 				<% foreach my $retain ( @$retains ) { %>
@@ -565,12 +559,12 @@
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: Includes/Excludes 
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: Includes/Excludes 
+		##########################################################-->
 		<div id="tabs-6" class="container-fluid tab-pane fade pt-4">
+
 			<!-- include_file --->
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
@@ -596,9 +590,9 @@
 				<input type="text" class="form-control" placeholder="exclude_file" name="exclude_file"
 					value="<%= $exclude_file %>">
 			</div>
-
-	<!-- ##### Include Patterns ##### -->
 			<hr>
+
+			<!-- ##### Include Patterns ##### -->
 			<div id="include">
 				<% my $include_ptr = 0; %>
 				<% foreach my $include ( @$includes ) { %>
@@ -641,9 +635,9 @@
 				<input type="text" class="form-control" placeholder="include">
 				<button class="btn btn-outline-danger" type="button" name="include_del" disabled>Delete</button>
 			</div>
-
-	<!-- ##### Exclude Patterns ##### -->
 			<hr>
+
+			<!-- ##### Exclude Patterns ##### -->
 			<div id="exclude">
 				<% my $exclude_ptr = 0; %>
 				<% foreach my $exclude ( @$excludes ) { %>
@@ -689,19 +683,20 @@
 			</div>
 			<hr>
 		</div>
-	<!-- 
-	##########################################################
-	Tab: backup Hosts 
-	##########################################################
-	-->
+
+	<!--##########################################################
+		Tab: backup Hosts
+		##########################################################-->
 		<div id="tabs-7" class="container-fluid tab-pane fade pt-4">
+
 			<div id="accordion" class="accordion">
 				<% foreach my $hostname (sort keys(%$backups)){ %>
+					<% my $hostname_id = $hostname =~ s/\./\\./gr; %>
 					<div class="accordion-item" id="hostname_<%= $hostname %>">
 						<h2 class="accordion-header">
 							<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-								data-bs-target="#collapse_<%= $hostname %>" aria-expanded="false"
-								aria-controls="collapse_<%= $hostname %>">
+								data-bs-target="#collapse_<%= $hostname_id %>" aria-expanded="false"
+								aria-controls="collapse_<%= $hostname_id %>">
 								<b><%= $hostname %></b>
 							</button>
 						</h2>
@@ -746,24 +741,22 @@
 					</div>
 				<% } %>
 			</div> <!-- End of Hosts Accordion -->
+
 			<div id="new_dir_entry" class="input-group d-none">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="Directory to backup"></i>
 				</span>
-				<input type="text" class="form-control" placeholder="directory"
-					name="new_dir_entry">
+				<input type="text" class="form-control" placeholder="directory" name="new_dir_entry">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
 						title="Optional directory args"></i>
 				</span>
 				<input type="text" class="form-control" placeholder="optional args">
-				<button class="btn btn-outline-danger" type="button" name="hostdir_del" disabled>
-					Delete
-				</button>
+				<button class="btn btn-outline-danger" type="button" name="hostdir_del" disabled>Delete</button>
 			</div>
 
-<!-- Add new Host -->
+			<!-- Add new Host -->
 			<div class="input-group  mt-3">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -800,7 +793,7 @@
 						</div>
 					</div>
 				</div>
-			</div> 
+			</div>
 
 			<div class="accordion-item d-none" id="host_item_new">
 				<h2 class="accordion-header">
@@ -832,14 +825,14 @@
 				</div>
 			</div>
 			<hr>
-		</div><!-- End of Tab 7 -->
-	<!-- 
-	##########################################################
-	Tab: Scripts executed while backuping 
-	##########################################################
-	-->
-<!-- backup_script -->
+		</div>
+
+	<!--##########################################################
+		Tab: Scripts executed while backuping 
+		##########################################################-->
 		<div id="tabs-8" class="container-fluid tab-pane fade pt-4">
+
+			<!-- backup_script -->
 			<div id="backup_script">
 				<% my $bkp_script_ptr = 0; %>
 				<% foreach my $backup_script ( @$backup_scripts ) { %>
@@ -906,7 +899,7 @@
 			</div>
 			<hr>
 
-<!-- backup_exec -->
+			<!-- backup_exec -->
 			<div id="backup_exec">
 				<% my $backup_exec_ptr = 0; %>
 				<% foreach my $backup_exec ( @$backup_execs ) { %>
@@ -938,6 +931,7 @@
 					</div>
 				<% } %>
 			</div>
+
 			<div class="input-group my-2">
 				<span class="border-radius input-group-text">
 					<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -979,66 +973,12 @@
 			</div>
 			<hr>
 		</div>
+
 		<button class="btn btn-outline-primary mx-4 my-1 float-end" type="submit" data-bs-toggle="tooltip" 
 			data-bs-html="true" data-bs-placement="right" title="Save the config file">Save</button>
-	</div><!-- End of Tab content -->
+	</div>
 </form>
+
 <script>
 	document.getElementById("menuEntry-config").classList.add("active");
-
-	// Handle next and prev arrows
-	document.addEventListener("DOMContentLoaded", function(){
-		// Set breakpoint for the tab menu on JS
-		const mediaQuery = window.matchMedia('(min-width: 920px)');
-		function handleTabletChange(e) {
-			var tabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'));
-			// Check if the media query is true
-			if (e.matches) {
-				tabList.forEach(function(tab){
-					tab.classList.remove("d-none","prev","next");
-				});
-			} else {
-				// Handle prev and next arrow
-				tabList.forEach(function(tab){
-					if (tab.classList.contains("active")) {
-						if( tab.parentElement.previousElementSibling ) {
-							var prev = tab.parentElement.previousElementSibling.firstElementChild;
-							prev.classList.remove("d-none");
-							prev.classList.add("prev");
-						}
-						if( tab.parentElement.nextElementSibling ) {
-							var next = tab.parentElement.nextElementSibling.firstElementChild
-							next.classList.remove("d-none");
-							next.classList.add("next");
-						}
-					} 
-					if (!tab.classList.contains("prev") && !tab.classList.contains("next") && !tab.classList.contains("active")) {
-						tab.classList.add("d-none");
-					}
-				});
-				
-				tabList.forEach(function(tab){
-					tab.addEventListener("shown.bs.tab", function(e){
-						tabList.forEach(function(tab1){
-							tab1.classList.remove("prev");
-							tab1.classList.remove("next");
-							tab1.classList.add("d-none");
-						});
-						e.target.classList.remove("d-none","next");
-						if( e.target.parentElement.previousElementSibling ) {
-							e.target.parentElement.previousElementSibling.firstElementChild.classList.remove("d-none");
-							e.target.parentElement.previousElementSibling.firstElementChild.classList.add("prev");
-						}
-						if( e.target.parentElement.nextElementSibling ) {
-							e.target.parentElement.nextElementSibling.firstElementChild.classList.remove("d-none");
-							e.target.parentElement.nextElementSibling.firstElementChild.classList.add("next");
-						}
-					});
-				});
-			}
-		}
-		// Register event listener
-		mediaQuery.addListener(handleTabletChange);
-		handleTabletChange(mediaQuery);
-	});
 </script>

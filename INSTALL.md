@@ -6,14 +6,12 @@
 ## Quick install
 ----------------
 
-* Clone Webrsnapshot git repo `git clone https://github.com/dobrevg/webrsnapshot.git`
-* Enter the directory `cd webrsnapshot`
-* Pull the required submodules. `git submodule update --init --recursive`
-* Switch to the Mojolicious Plugin directory `cd ./submodules/mojo/lib/Mojolicious/Plugin/`
+* Clone Webrsnapshot git repo `git clone --recurse-submodules https://github.com/dobrevg/webrsnapshot.git`
+* Switch to the Mojolicious Plugin directory `cd ./webrsnapshot/submodules/mojo/lib/Mojolicious/Plugin/`
 * Link the Authenticatin plugin `ln -s ../../../../Mojolicious-Plugin-Authentication/lib/Mojolicious/Plugin/Authentication.pm`
-* Copy the config file and configure it `cp webrsnapshot.sample.conf webrsnapshot.conf`
-* Run `./bin/appStart.sh` to start the server (see the requirements below)
-* Run `./bin/appStop.sh` to stop the server
+* Copy the config file and configure it `cp config/webrsnapshot.example.yml config/webrsnapshot.yml`
+* Run `./webrsnapshot/submodules/mojo/script/hypnotoad ./webrsnapshot/script/webrsnapshot` to start the server (see the requirements below)
+* Run `./webrsnapshot/submodules/mojo/script/hypnotoad -s ./webrsnapshot/script/webrsnapshot` to stop the server
 * Access the application via https://myServerIP:8080
 
 
@@ -22,7 +20,7 @@
 
 * Just execute: `git pull` in the folder where webrsnapshot is installed
 * Then update the submodules `git submodule update --remote --merge`
-* Adjust webrsnapshot.conf for your needs (optional)
+* Adjust config/webrsnapshot.yml for your needs (optional)
 * Stop and start the application server
 
 
@@ -53,4 +51,4 @@ I can not guarantee that custom templates will be compatible in a new versions o
 ## For developers and testers
 ----------------
 
-If you want to start the application server as developer to get some output just run `./bin/development.pl`. Then you can access the server on port 3000 instead of 8080. The process doesn't goes in background and you can follow the output on the console. 
+If you want to start the application server as developer to get some output just run `morbo ./script/webrsnapshot`. Then you can access the server on port 3000 instead of 8080. The process doesn't goes in background and you can follow the output on the console. 

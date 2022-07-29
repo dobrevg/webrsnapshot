@@ -1,36 +1,52 @@
-package CronHandler;
+package Webrsnapshot::CronHandler;
 
 use strict;
 use warnings;
 
-use Webrsnapshot::Webrsnapshot;
-
-# $_[0] config file
-# @result: mailto[0], cronjob[1], cronjob[2], cronjob[3]
-sub getCronContent {
-	my $configfile  = $_[0];	# /etc/rsnapshot.conf
-	my $cronfile	= $_[1];	# /etc/cron.d/rsnapshot
-	my @result		= "";
-
-	# And we open the cronfile for reading
-	my $result_ptr = 0;
-	open (CRONFILE, $cronfile);
-	while (<CRONFILE>) {
-		my $line = $_; 
-		# We save MAILTO in array[0]
-		if ("$line" =~ /MAILTO/) 		{ $result[$result_ptr++] = $line; }
-		# If we meet some cronjob with rsnapshot.conf, we get it.
-		if ("$line" =~ /$configfile/) 	{ $result[$result_ptr++] = $line; }
-		next if /^#/;	# Ignore every comment
-		chop;			# Remove the new line character
-	}
-	return @result;
+sub new {
+	my $class = shift;
+	my $self = {
+		_rs_cron_file   => shift,
+		_rs_config_file => shift,
+	};
+	bless $self, $class;
+	return $self;
 }
 
-# $_[0] cronfile inhalt
+# Read the cron file
+sub getCronContent {
+	my $self   = shift;
+	my @result;
+
+	# ToDo: Check if file exists
+	# And we open the cron file for reading
+	open (CRONFILE, $self->{_rs_cron_file});
+	while (<CRONFILE>) {
+		# MAILTO
+		if ( $_ =~ /MAILTO/ ) {
+			push(@result, $_) ;
+		}
+
+		# rsnapshot cronjobs (containing the config file)
+		if ( $_ =~ /$self->{_rs_config_file}/ ) {
+			push(@result, $_) ;
+		}
+
+		next if /^\s*$/; # Skip blank lines
+		next if /^#/;    # Skip comments
+		chop;            # Remove the new line character
+	}
+
+	# Close the cron file
+	close CRONFILE;
+
+	return \@result;
+}
+
+# Crontab content is array reference
 sub writeCronContent {
-	my($cronfile, @cronArray) = @_;
-	my $cronfile_to_test	= "/tmp/cron_tmp_".(int(rand(8999))+1000);
+	my ($self, $cronContentRef) = @_;
+	my $cronfile_to_test	= "/tmp/rs_cron_tmp_".time();
 
 	# Open the config file for writing
 	open (CRONFILE, ">$cronfile_to_test") || return $!;  
@@ -39,7 +55,7 @@ sub writeCronContent {
 	print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n");
 	print CRONFILE ("# If you use Webrsnapshot, don't edit this file manually. It can be overwritten\n\n");
 
-	foreach (@cronArray) {
+	foreach ( @{$cronContentRef} ) {
 		if (index($_, "MAILTO") != -1) { printf CRONFILE ("$_\n\n\n"); } # two empty lines after Mailto
 		elsif ($_ ne "") { printf CRONFILE ("$_\n"); }
 	}
@@ -59,11 +75,11 @@ sub writeCronContent {
 	# We have correct cron file
 	if ( scalar @configtest == 0 ) {
 		push (@configtest, "0");
-		system ("cp $cronfile_to_test $cronfile") == 0 or $configtest[0] = 3;
+		system ("cp $cronfile_to_test $self->{_rs_cron_file}") == 0 or $configtest[0] = 3;
 		if ($configtest[0] == 3) {
 			# Create an error message in case that the file can not be copied
 			$configtest[0] = "Error: The file $cronfile_to_test";
-			$configtest[1] = "can not be copied to $cronfile";
+			$configtest[1] = "can not be copied to $self->{_rs_cron_file}";
 			$configtest[2] = 3;
 		}
 	} else {

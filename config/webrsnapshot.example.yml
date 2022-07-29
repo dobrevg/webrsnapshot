@@ -1,0 +1,62 @@
+---
+# rs_config_file: </full/path/to/file>
+# Defines which file we should use for as rsnapshot config file. 
+#
+# Default: /etc/rsnapshot.conf
+rs_config_file: /etc/rsnapshot.conf
+
+# rs_cron_file: </full/path/to/file>
+# Defines which file we should use for cronjobs.
+#
+# Default: /etc/cron.d/rsnapshot
+rs_cron_file: /etc/cron.d/rsnapshot
+
+# template: <string>
+# Defines the template to use. 
+#
+# Default: default 
+template: default
+
+# rootuser: <username string>
+# Root user, who can access webrsnapshot
+# 
+# Default: root
+rootuser: root
+
+# rootpass: <password string>
+# The password for the root user
+# 
+# Default: pass
+rootpass: pass
+
+# session_timeout: <integer>
+# The Timeout specifies the timeout period assigned to the Session for the 
+# application in seconds. If the user does not refresh or request a page 
+# within the timeout period, the session ends.
+# 
+# Default: 600
+session_timeout: 600
+
+# loglines: <integer>
+# This defines how many lines from the end of
+# the rsnapshot log file should be shown. Don't put here
+# too big integer. This may cause system overload if the
+# logfile is too big.
+#
+# Default: 100
+loglines: 100
+
+# timeformat: "<string>"
+# Here you can define the time and date format displayed on the hosts pages.
+# The FORMAT from DATE can be used here since most of the strings are valid.
+# https://man7.org/linux/man-pages/man1/date.1.html
+#
+# Default: 00:04:55
+timeformat: "%T"
+# Default: 26.07.2022
+dateformat: "%d.%m.%Y"
+
+# Application secret
+secrets:
+  - c04271b394aebcf2b81f2cff7e93a2963aecde64
+...

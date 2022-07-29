@@ -1,5 +1,5 @@
-% layout $default_template;
-% title 'Webrsnapshot';
+% layout $tmpl;
+% title "Webrsnapshot";
 
 <h3 class="ms-3">Cronjobs</h3>
 <div class="container-fluid">
@@ -11,11 +11,11 @@
 			</span>
 			<% my $mailchecked  = ""; %>
 			<% my $mailreadonly = ""; %>
-			<% if ( @$retains[0] =~ m/^#/ ) { %> 
+			<% if ( @{$cron_content_ref}[0] =~ m/^#/ ) { %> 
 				<% $mailchecked  = "checked"; %> 
 				<% $mailreadonly = "readonly"; %> 
 			<% } %>
-			<% @$retains[0] =~ /"(.*)"/; %>
+			<% @{$cron_content_ref}[0] =~ /"(.*)"/; %>
 			<input type="text" class="form-control" placeholder="email" name="cron_email" id="cron_email" 
 				value="<%= $1 %>" <%= $mailreadonly %>>
 			<input type="checkbox" class="form-check-input mt-3 ms-3" name="email_disabled" id="cron_email_checkbox"
@@ -25,7 +25,7 @@
 		<hr>
 		<div id="cronjobs">
 			<% my $cron_ptr = 1; %>
-			<% while ( @$retains > $cron_ptr) { %>
+			<% while ( @{$cron_content_ref} > $cron_ptr) { %>
 				<div class="input-group" id="cron_<%= $cron_ptr %>">
 					<span class="border-radius input-group-text">
 						<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
@@ -33,11 +33,11 @@
 					</span>
 					<% my $checked; %>
 					<% my $readonly; %>
-					<% if ( @$retains[$cron_ptr] =~ m/^#/ ) { $checked = "checked"; $readonly = "readonly"; %>
-						<% @$retains[$cron_ptr] =~ s/^.//; %>
+					<% if ( @{$cron_content_ref}[$cron_ptr] =~ m/^#/ ) { $checked = "checked"; $readonly = "readonly"; %>
+						<% @{$cron_content_ref}[$cron_ptr] =~ s/^.//; %>
 					<% } %>
 					<input type="text" class="form-control" name="cronjob_<%= $cron_ptr %>" 
-						id="cronjob_<%= $cron_ptr %>" value="<%= @$retains[$cron_ptr] %>" <%= $readonly %>>
+						id="cronjob_<%= $cron_ptr %>" value="<%= @{$cron_content_ref}[$cron_ptr] %>" <%= $readonly %>>
 					<button class="btn btn-outline-danger" type="button" onclick="deleteCronjob(<%= $cron_ptr %>);">Delete</button>
 					<input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled_<%= $cron_ptr %>" id="cronCheck_<%= $cron_ptr %>"
 						onclick="disbaleCronjob(<%= $cron_ptr %>);" <%= $checked %>>
@@ -87,7 +87,7 @@
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+						<h5 class="modal-title" id="exampleModalLabel">Cronjob create form</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
@@ -101,13 +101,12 @@
 							</span>
 							<input type="text" class="form-control" name="cron_command" id="cron_command_text">
 							<% my $program = `which rsnapshot`; %>
-							<% my $command = $program . " -c " . $rs_config; %>
+							<% my $command = $program . " -c " . $rs_conf_file; %>
 							<select class="form-select" id="cron_command" onchange="changeCronSelect(this.id)">
 								<option value="">select</option>
-								<% my $retain_ptr = 0; %>
-								<% while ( @$retainnames > $retain_ptr) { %>
-									<option value="<%= $command . ' ' . @$retainnames[$retain_ptr]->[0] %>">
-										<%= @$retainnames[$retain_ptr++]->[0] %>
+								<% foreach my $retain (@$retains_ref) { %>
+									<option value="<%= $command . ' ' . $retain->{name} %>">
+										<%= $retain->{name} %>
 									</option>
 								<% } %>
 							</select>
