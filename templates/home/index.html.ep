@@ -1,21 +1,26 @@
 % layout $tmpl;
 % title "Webrsnapshot";
 
-<h3 class="ms-3">General Information</h3>
-<ul>
-	<li>Rsnapshot config file: <strong><%= $rs_config_file %></strong></li>
-	<li>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></li>
-	<li>
-		Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong>
-		with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong>
-	</li>
-	<li>
-		Allocation: <strong><%= $systemInfo->{partitionInfoPercent} %></strong>
-		(Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>, 
-		Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>,
-		Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)
-	</li> 
-</ul>
+<h4 class="ms-3">General Information</h4>
+<div class="list-group">
+	<% foreach ( @$systemInfoArr ) {
+		my $systemInfo = $_; %>
+		<div class="list-group-item list-group-item-action" aria-current="true">
+			<div class="d-flex w-100 justify-content-between">	
+			<h5 class="mb-1"><%= $systemInfo->{rs_filename} %></h5>
+			<small>Edit</small>
+			</div>
+			<p class="mb-1"></p>
+			<small>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></small><br/>
+			<small>Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong> 
+			with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong></strong></small><br/>
+			<small>Allocation: <strong><%= $systemInfo->{partitionInfoPercent} %></strong>
+			(Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>
+			Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>
+			Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)</small><br/>
+		</div>
+	<% } %>
+</div>
 <script>
 	document.getElementById("menuEntry-home").classList.add("active");
 </script>

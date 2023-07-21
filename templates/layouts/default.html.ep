@@ -28,6 +28,7 @@
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-home" href="/">Home</a>
 							</li>
+							<!--
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-hosts" href="/hosts">Hosts</a>
 							</li>
@@ -37,6 +38,7 @@
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-log" href="/log">Log</a>
 							</li>
+							-->
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-cron" href="/cron">Cronjobs</a>
 							</li>
