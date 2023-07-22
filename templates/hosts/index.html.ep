@@ -8,7 +8,7 @@
 	</tr>
 	<% foreach my $hostname ( sort keys (%$timestampHashRef) ) { %>
 		<tr>
-			<td><a href="/host/<%= $hostname %>"><%= $hostname %></a></td>
+			<td><a href="/<%= $rs_config_id %>/host/<%= $hostname %>"><%= $hostname %></a></td>
 			<td>
 			<% my $hostBackups = %$timestampHashRef{$hostname}; %>
 			<% foreach my $timestamp (reverse sort values %$hostBackups) { %>
@@ -19,5 +19,11 @@
 	<% } %>
 <table>
 <script>
+	document.getElementById("menuEntry-config").classList.remove("d-none");
+	document.getElementById("menuEntry-hosts").classList.remove("d-none");
+	document.getElementById("menuEntry-log").classList.remove("d-none");
+	document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
+	document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
+	document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
 	document.getElementById("menuEntry-hosts").classList.add("active");
 </script>

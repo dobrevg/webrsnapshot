@@ -1,7 +1,8 @@
 % layout $tmpl;
 % title "Webrsnapshot";
 
-<form method="post" action="/config" name="rsnapshotconfform">
+<form method="post" action="/<%= $rs_config_id %>/config" name="rsnapshotconfform">
+	<input type="hidden" name="rs_config_id" value="<%= $rs_config_id %>">
 	<div>
 		<ul class="nav nav-tabs nav-tabs-responsive">
 			<li class="nav-item">
@@ -980,5 +981,11 @@
 </form>
 
 <script>
+	document.getElementById("menuEntry-config").classList.remove("d-none");
+	document.getElementById("menuEntry-hosts").classList.remove("d-none");
+	document.getElementById("menuEntry-log").classList.remove("d-none");
+	document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
+	document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
+	document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
 	document.getElementById("menuEntry-config").classList.add("active");
 </script>

@@ -1,9 +1,10 @@
 ---
-# rs_config_file: </full/path/to/file>
-# Defines which file we should use for as rsnapshot config file. 
+# rs_config: </full/path>
+# Defines which path we should use for as rsnapshot config file
+# or directory. 
 #
-# Default: /etc/rsnapshot.conf
-rs_config_file: /etc/rsnapshot.conf
+# Default: /etc/rsnapshot.conf.d
+rs_config: /etc/rsnapshot.conf.d
 
 # rs_cron_file: </full/path/to/file>
 # Defines which file we should use for cronjobs.

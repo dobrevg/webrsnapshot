@@ -28,19 +28,17 @@
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-home" href="/">Home</a>
 							</li>
-							<!--
-							<li class="nav-item">
-								<a class="nav-link text-start" id="menuEntry-hosts" href="/hosts">Hosts</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-start" id="menuEntry-config" href="/config">Config</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-start" id="menuEntry-log" href="/log">Log</a>
-							</li>
-							-->
 							<li class="nav-item">
 								<a class="nav-link text-start" id="menuEntry-cron" href="/cron">Cronjobs</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start d-none" id="menuEntry-config" href="/config">Config</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start d-none" id="menuEntry-hosts" href="/hosts">Hosts</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-start d-none" id="menuEntry-log" href="/log">Log</a>
 							</li>
 							<li class="nav-item ms-md-auto">
 								<a class="nav-link text-start" id="menuEntry-cron" href="/logout">Logout</a>
