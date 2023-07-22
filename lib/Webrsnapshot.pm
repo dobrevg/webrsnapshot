@@ -37,8 +37,8 @@ sub startup ($self) {
     $authorized->post('/:id/config' => [id => qr/\d+/])->to('Config#save');
     $authorized->get('/:id/hosts' => [id => qr/\d+/])->to('Hosts#index');
     $authorized->get('/:id/log' => [id => qr/\d+/])->to('Log#index');
-    $authorized->get('/host/#name')->to('Host#index');
-    $authorized->get('/host')->to(cb => sub($c){$c->redirect_to('/hosts')});
+    $authorized->get('/:id/host/#name' => [id => qr/\d+/])->to('Host#index');
+    $authorized->get('/:id/host' => [id => qr/\d+/])->to(cb => sub($c){$c->redirect_to('/'.$c->param('id').'/hosts')});
 }
 
 1;
