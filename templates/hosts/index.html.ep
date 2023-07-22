@@ -18,6 +18,8 @@
 		</tr>
 	<% } %>
 <table>
+		<a href="/"><button class="btn btn-outline-primary mx-4 my-1 float-end" type="button" data-bs-toggle="tooltip" 
+			data-bs-html="true" data-bs-placement="right" title="Back to startpage">Close</button></a>
 <script>
 	document.getElementById("menuEntry-config").classList.remove("d-none");
 	document.getElementById("menuEntry-hosts").classList.remove("d-none");

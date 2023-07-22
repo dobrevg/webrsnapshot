@@ -975,6 +975,8 @@
 			<hr>
 		</div>
 
+		<a href="/"><button class="btn btn-outline-primary mx-4 my-1 float-end" type="button" data-bs-toggle="tooltip" 
+			data-bs-html="true" data-bs-placement="right" title="Back to startpage">Close</button></a>
 		<button class="btn btn-outline-primary mx-4 my-1 float-end" type="submit" data-bs-toggle="tooltip" 
 			data-bs-html="true" data-bs-placement="right" title="Save the config file">Save</button>
 	</div>
