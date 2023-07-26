@@ -4,212 +4,229 @@
 <h3 class="ms-3">Cronjobs</h3>
 <div class="container-fluid">
 	<form method="post" action="/cron" name="cronform">
-		<div class="input-group my-2">
-			<span class="border-radius input-group-text">
-				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-					title="Email address that will be informed if the cron jobs do not start."></i>
-			</span>
-			<% my $mailchecked  = ""; %>
-			<% my $mailreadonly = ""; %>
-			<% if ( @{$cron_content_ref}[0] =~ m/^#/ ) { %> 
-				<% $mailchecked  = "checked"; %> 
-				<% $mailreadonly = "readonly"; %> 
-			<% } %>
-			<% @{$cron_content_ref}[0] =~ /"(.*)"/; %>
-			<input type="text" class="form-control" placeholder="email" name="cron_email" id="cron_email" 
-				value="<%= $1 %>" <%= $mailreadonly %>>
-			<input type="checkbox" class="form-check-input mt-3 ms-3" name="email_disabled" id="cron_email_checkbox"
-				onclick="disableCronEmail()" <%= $mailchecked %>>
-			<label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
-		</div>
-		<hr>
-		<div id="cronjobs">
-			<% my $cron_ptr = 1; %>
-			<% while ( @{$cron_content_ref} > $cron_ptr) { %>
-				<div class="input-group" id="cron_<%= $cron_ptr %>">
-					<span class="border-radius input-group-text">
-						<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-							title="Cron job for the specific retain."></i>
-					</span>
-					<% my $checked; %>
-					<% my $readonly; %>
-					<% if ( @{$cron_content_ref}[$cron_ptr] =~ m/^#/ ) { $checked = "checked"; $readonly = "readonly"; %>
-						<% @{$cron_content_ref}[$cron_ptr] =~ s/^.//; %>
-					<% } %>
-					<input type="text" class="form-control" name="cronjob_<%= $cron_ptr %>" 
-						id="cronjob_<%= $cron_ptr %>" value="<%= @{$cron_content_ref}[$cron_ptr] %>" <%= $readonly %>>
-					<button class="btn btn-outline-danger" type="button" onclick="deleteCronjob(<%= $cron_ptr %>);">Delete</button>
-					<input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled_<%= $cron_ptr %>" id="cronCheck_<%= $cron_ptr %>"
-						onclick="disbaleCronjob(<%= $cron_ptr %>);" <%= $checked %>>
-					<label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
-				</div>
-				<% $cron_ptr++; %>
-			<% } %>
-		</div>
-		<div class="d-flex">
+        <div class="hr-sect">MAILTO</div>
+        <div class="input-group my-2">
+            <span class="border-radius input-group-text">
+                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                    title="Email address that will be informed if the cron jobs do not start."></i>
+            </span>
+            <% my $mailchecked  = ""; %>
+            <% my $mailreadonly = ""; %>
+            <% if ( $cron_content_ref->{"MAILTO"} =~ m/^#/ ) { %> 
+                <% $mailchecked  = "checked"; %> 
+                <% $mailreadonly = "readonly"; %> 
+            <% } %>
+            <% $cron_content_ref->{"MAILTO"} =~ /"(.*)"/; %>
+            <input type="text" class="form-control" placeholder="email" name="cron_email" id="cron_email" 
+                value="<%= $1 %>" <%= $mailreadonly %>>
+            <input type="checkbox" class="form-check-input mt-3 ms-3" name="email_disabled" id="cron_email_checkbox"
+                onclick="disableCronEmail()" <%= $mailchecked %>>
+            <label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
+        </div>
+        <div>
+            <% foreach ( @{ $rs_config_files_ref } ) { %>
+                <% my $rs_config_file_basename = File::Basename::basename($_); %>
+                <% if( scalar @{$cron_content_ref->{$_}} ne 0) { %>
+                    <div id="cronjobs_<%= $rs_config_file_basename %>">
+                        <div class="hr-sect"><%= $rs_config_file_basename %></div>
+                        <% for my $j (0 .. (scalar @{$cron_content_ref->{$_}} - 1)) { %>
+                            <div class="input-group" id="cron_<%= $rs_config_file_basename %>_<%= $j %>">
+                                <span class="border-radius input-group-text">
+                                    <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                        title="Cron job for the specific retain."></i>
+                                </span>
+                                <% my $checked; %>
+                                <% my $readonly; %>
+                                <% if ( $cron_content_ref->{$_}[$j] =~ m/^#/ ) { $checked = "checked"; $readonly = "readonly"; %>
+                                    <% $cron_content_ref->{$_}[$j] =~ s/^.//; %>
+                                <% } %>
+                                <input type="text" class="form-control" name="cronjob_<%= $rs_config_file_basename %>_<%= $j %>" 
+                                    id="cronjob_<%= $rs_config_file_basename %>_<%= $j %>" value="<%= $cron_content_ref->{$_}[$j] %>" 
+                                    <%= $readonly %>>
+                                <button class="btn btn-outline-danger" type="button" onclick="deleteCronjob('<%= $rs_config_file_basename %>_<%= $j %>');">
+                                    Delete</button>
+                                <input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled_<%= $rs_config_file_basename %>_<%= $j %>" 
+                                    id="cronCheck_<%= $rs_config_file_basename %>_<%= $j %>" 
+                                    onclick="disableCronjob('<%= $rs_config_file_basename %>_<%= $j %>');" <%= $checked %>>
+                                <label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <div id="cronjobs_<%= $rs_config_file_basename %>" class="d-none">
+                        <div class="hr-sect"><%= $rs_config_file_basename %></div>
+                    </div>
+                <% } %>
+            <% } %>
+        </div>
+        <div class="d-flex">
 <!-- Add new cronjob Button -->
-		<div class="input-group mt-3 w-auto me-auto">
-			<span class="border-radius input-group-text">
-				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-					title="Create here a new cron job"></i>
-			</span>
-			<button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_cron_modal">
-				Add Cron
-			</button>
-		</div>
+        <div class="input-group mt-3 w-auto me-auto">
+            <span class="border-radius input-group-text">
+                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                    title="Create here a new cron job"></i>
+            </span>
+            <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#add_cron_modal">
+                Add Cron
+            </button>
+        </div>
 <!-- Disable all cron jobs -->
-		<div class="input-group mt-3 w-auto ms-auto">
-			<button class="btn btn-outline-warning" type="button" onclick="disbaleAllCronjobs();">Disable all</button>
-			<span class="border-radius input-group-text">
-				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
-					title="Disable all cron jobs at once."></i>
-			</span>
-		</div>
-		</div>
-
-<!-- Hidden field for cronjobs count -->
-		<input type="hidden" id="newcronid" name="newcron" value="<%= $cron_ptr; %>">
-<!-- The next (empty) cronjob -->
-		<div class="input-group d-none" id="cron_new">
-			<span class="border-radius input-group-text">
-				<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-					title="Cron job for the specific retain."></i>
-			</span>
-			<input type="text" class="form-control">
-			<button class="btn btn-outline-danger" type="button">Delete</button>
-			<input type="checkbox" class="form-check-input mt-3 ms-3 d-none" name="cron_disabled">
-			<label class="form-check-label pt-1 mt-2 ms-2 d-none" >Disable</label>
-		</div>
-		<hr>
-
+        <div class="input-group mt-3 w-auto ms-auto">
+            <button class="btn btn-outline-warning" type="button" onclick="disbaleAllCronjobs();">Disable all</button>
+            <span class="border-radius input-group-text">
+                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
+                    title="Disable all cron jobs at once."></i>
+            </span>
+        </div>
+        </div>
 <!-- Add new cronjob Modal -->
-		<div class="modal fade" id="add_cron_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="exampleModalLabel">Cronjob create form</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					</div>
-					<div class="modal-body">
+        <div class="modal fade" id="add_cron_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Cronjob create form</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
 
-						<label for="cron_command_text" class="form-label mb-0 mt-2">Command</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Just select the retain from the drop-down-menu and 
-									the full command will be filled in the text field"></i>
-							</span>
-							<input type="text" class="form-control" name="cron_command" id="cron_command_text">
-							<% my $program = `which rsnapshot`; %>
-							<% my $command = $program . " -c " . $rs_conf_file; %>
-							<select class="form-select" id="cron_command" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<% foreach my $retain (@$retains_ref) { %>
-									<option value="<%= $command . ' ' . $retain->{name} %>">
-										<%= $retain->{name} %>
-									</option>
-								<% } %>
-							</select>
-						</div>
+                        <label for="cron_command_text" class="form-label mb-0 mt-2">Command</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Just select the retain from the drop-down-menu and 
+                                    the full command will be filled in the text field"></i>
+                            </span>
+                            <input type="text" class="form-control" name="cron_command" id="cron_command_text">
+                            <% my $program = `which rsnapshot`; %>
+                            
+                            <select class="form-select" id="cron_command" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <% foreach my $key ( keys %$all_configs_ref ) { %>
+                                    <% my $command = $program . " -c " . $key; %>
+                                    <optgroup label="<%= File::Basename::basename($key) %>">
+                                        <% foreach ( @{ $all_configs_ref->{$key}{'retain'} } ) { %>
+                                            <option value="<%= $command%>">
+                                                <%= $_->{'name'} %>
+                                            </option>
+                                        <% } %>
+                                    </optgroup>
+                                <% } %>
+                            </select>
+                        </div>
 
-						<label for="cron_user" class="form-label mb-0 mt-2">Username</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Username to start the cronjob.
-									Usually you want to put here <b>root</b>"></i>
-							</span>
-							<input type="text" name="cron_user" id="cron_user" value="root" class="form-control">
-						</div>
+                        <label for="cron_user" class="form-label mb-0 mt-2">Username</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Username to start the cronjob.
+                                    Usually you want to put here <b>root</b>"></i>
+                            </span>
+                            <input type="text" name="cron_user" id="cron_user" value="root" class="form-control">
+                        </div>
 
-						<label for="cron_minute" class="form-label mb-0 mt-2">Minute</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Cronjob minutes configuration."></i>
-							</span>
-							<input type="text" name="cron_minute" id="cron_minute_text" value="" class="form-control">
-							<select class="form-select" id="cron_minute" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<option value="*">every minute(*)</option>
-								<option value="*/5">every 5 minutes(*/5)</option>
-								<option value="0,15,30,45">every 15 minutes(0,15,30,45)</option>
-							</select>
-						</div>
+                        <label for="cron_minute" class="form-label mb-0 mt-2">Minute</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Cronjob minutes configuration."></i>
+                            </span>
+                            <input type="text" name="cron_minute" id="cron_minute_text" value="" class="form-control">
+                            <select class="form-select" id="cron_minute" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <option value="*">every minute(*)</option>
+                                <option value="*/5">every 5 minutes(*/5)</option>
+                                <option value="0,15,30,45">every 15 minutes(0,15,30,45)</option>
+                            </select>
+                        </div>
 
-						<label for="cron_hour" class="form-label mb-0 mt-2">Hour</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Cronjob hours configuration."></i>
-							</span>
-							<input type="text" name="cron_hour" id="cron_hour_text" value="" class="form-control">
-							<select class="form-select" id="cron_hour" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<option value="*">every hour(*)</option>
-								<option value="12">at 12 o'clock(12)</option>
-								<option value="*/6">every 6 hours(*/6)</option>
-							</select>
-						</div>
+                        <label for="cron_hour" class="form-label mb-0 mt-2">Hour</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Cronjob hours configuration."></i>
+                            </span>
+                            <input type="text" name="cron_hour" id="cron_hour_text" value="" class="form-control">
+                            <select class="form-select" id="cron_hour" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <option value="*">every hour(*)</option>
+                                <option value="12">at 12 o'clock(12)</option>
+                                <option value="*/6">every 6 hours(*/6)</option>
+                            </select>
+                        </div>
 
-						<label for="cron_day" class="form-label mb-0 mt-2">Day</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Cronjob days configuration."></i>
-							</span>
-							<input type="text" name="cron_day" id="cron_day_text" value="" class="form-control">
-							<select class="form-select" id="cron_day" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<option value="*">every day(*)</option>
-								<option value="*/2">every 2 days(*/2)</option>
-							</select>
-						</div>
+                        <label for="cron_day" class="form-label mb-0 mt-2">Day</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Cronjob days configuration."></i>
+                            </span>
+                            <input type="text" name="cron_day" id="cron_day_text" value="" class="form-control">
+                            <select class="form-select" id="cron_day" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <option value="*">every day(*)</option>
+                                <option value="*/2">every 2 days(*/2)</option>
+                            </select>
+                        </div>
 
-						<label for="cron_month" class="form-label mb-0 mt-2">Month</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Cronjob months configuration."></i>
-							</span>
-							<input type="text" name="cron_month" id="cron_month_text" value="" class="form-control">
-							<select class="form-select" id="cron_month" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<option value="*">every month(*)</option>
-								<option value="1">only in Januar(1)</option>
-							</select>
-						</div>
+                        <label for="cron_month" class="form-label mb-0 mt-2">Month</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Cronjob months configuration."></i>
+                            </span>
+                            <input type="text" name="cron_month" id="cron_month_text" value="" class="form-control">
+                            <select class="form-select" id="cron_month" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <option value="*">every month(*)</option>
+                                <option value="1">only in Januar(1)</option>
+                            </select>
+                        </div>
 
-						<label for="cron_week" class="form-label mb-0 mt-2">Weekday</label>
-						<div class="input-group">
-							<span class="border-radius input-group-text">
-								<i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
-									data-bs-placement="right" title="Cronjob weekdays configuration."></i>
-							</span>
-							<input type="text" name="cron_week" id="cron_week_text" value="" class="form-control">
-							<select class="form-select" id="cron_week" onchange="changeCronSelect(this.id)">
-								<option value="">select</option>
-								<option value="*">every weekday(*)</option>
-								<option value="1">every Monday(1)</option>
-								<option value="1-5">From Monday to Friday(1-5)</option>
-							</select>
-						</div>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-primary" id="addNextCronjob_btn" data-bs-dismiss="modal"
-							onclick="addCronjob(<%= $cron_ptr; %>);">
-							Add
-						</button>
-					</div>
-				</div>
-			</div>
-		</div><!-- End new cronjob Modal -->
-		<button class="btn btn-outline-primary float-end" type="submit" data-bs-toggle="tooltip" 
-			data-bs-html="true" data-bs-placement="right" title="Save the cronjob configuration">
-			Save
-		</button>
-	</form>
+                        <label for="cron_week" class="form-label mb-0 mt-2">Weekday</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Cronjob weekdays configuration."></i>
+                            </span>
+                            <input type="text" name="cron_week" id="cron_week_text" value="" class="form-control">
+                            <select class="form-select" id="cron_week" onchange="changeCronSelect(this.id)">
+                                <option value="">select</option>
+                                <option value="*">every weekday(*)</option>
+                                <option value="1">every Monday(1)</option>
+                                <option value="1-5">From Monday to Friday(1-5)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="addNextCronjob_btn" data-bs-dismiss="modal"
+                            onclick="addCronjob();">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div><!-- End new cronjob Modal -->
+
+<!-- The next (empty) cronjob -->
+        <div class="input-group d-none" id="cron_new">
+            <span class="border-radius input-group-text">
+                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                    title="Cron job for the specific retain."></i>
+            </span>
+            <input type="text" class="form-control">
+            <button class="btn btn-outline-danger" type="button">Delete</button>
+            <input type="checkbox" class="form-check-input mt-3 ms-3" name="cron_disabled">
+            <label class="form-check-label pt-1 mt-2 ms-2" >Disable</label>
+        </div>
+        <hr>
+
+
+        <button class="btn btn-outline-primary float-end" type="submit" data-bs-toggle="tooltip" 
+            data-bs-html="true" data-bs-placement="right" title="Save the cronjob configuration">
+            Save
+        </button>
+    </form>
 </div>
 <script>
-	document.getElementById("menuEntry-cron").classList.add("active");
+    document.getElementById("menuEntry-cron").classList.add("active");
 </script>

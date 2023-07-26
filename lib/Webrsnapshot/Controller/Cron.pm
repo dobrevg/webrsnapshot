@@ -1,62 +1,79 @@
 package Webrsnapshot::Controller::Cron;
 
+use File::Basename;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
+use Mojo::Parameters;
 use Webrsnapshot::ConfigHandler;
 use Webrsnapshot::CronHandler;
+use Webrsnapshot::Library;
 
 # This action will render a template
 sub index ($self) {
 
-	# Read the rsnapshot config file
-	my %config = %{ new Webrsnapshot::ConfigHandler($self->config->{rs_config_file})->readConfig() };
+    # Get rs_conf_id from stash
+    my $rs_config_id = $self->stash('id');
+    # Array with Rsnapshot config files
+    my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($self->config->{rs_config});
 
-	# Read the cron file
-	my $cron_content_ref = new Webrsnapshot::CronHandler(
-		$self->config->{rs_cron_file},
-		$self->config->{rs_config_file}
-	)->getCronContent();
+    my %all_configs;
+    # Iterate oder all config files found
+    for my $i (0 .. $#rs_config_files) {
+        $all_configs{"$rs_config_files[$i]"} = new Webrsnapshot::ConfigHandler($rs_config_files[$i])->readConfig();
+    }
 
-	# Render template "default/index.html.ep" with message
-	$self->render(
-		tmpl => $self->config->{template},
-		retains_ref => $config{retain},
-		cron_content_ref => $cron_content_ref,
-		rs_conf_file => $self->config->{rs_config_file},
-	);
+    # Read the cron file
+    my $cron_content_ref = new Webrsnapshot::CronHandler(
+        $self->config->{rs_cron_file},
+        \@rs_config_files
+    )->getCronContent();
+
+    # Render template "default/index.html.ep" with message
+    $self->render(
+        tmpl                => $self->config->{template},
+        all_configs_ref     => \%all_configs,
+        cron_content_ref    => $cron_content_ref,
+        rs_config_files_ref => \@rs_config_files,
+    );
 }
 
 # Save the cron jobs
 sub save {
-	my ( $self ) = @_;
+    my ( $self ) = @_;
 
-	my @cronjobs	= ();
-	my $cron_count	= $self->param('newcron');
-	my $cron_email	= $self->param('cron_email');
-	my $email_dsbl	= $self->param('email_disabled')?$self->param('email_disabled'):"off";
+    # All parameters from the post request
+    my $allParams_ref = $self->req->body_params->to_hash;
 
-	if ( $email_dsbl eq "on" ) { $cronjobs[0] = "#MAILTO=\"".$cron_email."\""; }
-		else { $cronjobs[0] = "MAILTO=\"".$cron_email."\""; }
+    # parse email
+    my $cron_email	= $allParams_ref->{'cron_email'};
+    my $email_dsbl	= $allParams_ref->{'email_disabled'}?$allParams_ref->{'email_disabled'}:"off";
+    if ( $email_dsbl eq "on" ) { $allParams_ref->{'cron_email'} = "#MAILTO=\"".$cron_email."\""; }
+        else { $allParams_ref->{'cron_email'} = "MAILTO=\"".$cron_email."\""; }
 
-	for (my $k=1; $k<$cron_count; $k++){
-		my $cron_dsbl = $self->param('cron_disabled_'.$k)?$self->param('cron_disabled_'.$k):"off";
-		if ( $cron_dsbl eq "on" ) { $cronjobs[$k] = "#".$self->param('cronjob_'.$k); }
-		else { $cronjobs[$k] = $self->param('cronjob_'.$k); }
-	}
+    # Iterate over all available config files
+    foreach my $k (sort keys %$allParams_ref) {
+        if ($k =~ m/cronjob_/) {
+            my $baseKey   = substr($k, CORE::index($k, '_')+1);
+            my $cron_dsbl = $allParams_ref->{'cron_disabled_'.$baseKey}?$allParams_ref->{'cron_disabled_'.$baseKey}:"off";
+            if ( $cron_dsbl eq "on" ) { $allParams_ref->{$k} =~ s/^(.*)/#$1/; }
+                else { $allParams_ref->{$k} =~ s/^#(.*)/$1/; }
+        }
+    }
 
-	# And send everything to the CronHandler to save
-	my @saveResult = new Webrsnapshot::CronHandler(
-		$self->config->{rs_cron_file},
-		$self->config->{rs_config_file}
-	)->writeCronContent(\@cronjobs);
 
-	# 0 - Ok
-	# 1 - error in the rsnapshot cron file
-	# 3 - error while copying the rsnapshot file
-	# If returns diferent then 0, then we have a problem
-	$self->flash(saved => pop @saveResult);
-	$self->flash(message_text => join(" ",@saveResult));
 
-	return $self->redirect_to('/cron');
+    # And send everything to the CronHandler to save
+    my @saveResult = new Webrsnapshot::CronHandler(
+        $self->config->{rs_cron_file}
+    )->writeCronContent($allParams_ref);
+
+    # 0 - Ok
+    # 1 - error in the rsnapshot cron file
+    # 3 - error while copying the rsnapshot file
+    # If returns diferent then 0, then we have a problem
+    $self->flash(saved => pop @saveResult);
+    $self->flash(message_text => join(" ",@saveResult));
+
+    return $self->redirect_to('/cron');
 }
 
 1;
