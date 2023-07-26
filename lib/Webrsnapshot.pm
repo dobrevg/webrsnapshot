@@ -13,9 +13,38 @@ sub startup ($self) {
         $self->log->info("Loaded config file: ".$config_file);
     } else {
         # Or set default values
-        $self->log->info("Exit: Config file missing: ".$config_file);
-        exit 1;
+        $self->log->info("Config file missing: $config_file");
+        $config = $self->plugin('NotYAMLConfig', {file => 'config/webrsnapshot.example.yml'});
+        $self->log->info("Load example config: config/webrsnapshot.example.yml");
     }
+
+    # Set default values if not set
+    $config->{rs_config} = $config->{rs_config}?$config->{rs_config}:"/etc/rsnapshot.conf.d";
+    $self->log->info("\$config->{rs_config}: ".$config->{rs_config});
+
+    $config->{rs_cron_file} = $config->{rs_cron_file}?$config->{rs_cron_file}:"/etc/cron.d/rsnapshot";
+    $self->log->info("\$config->{rs_cron_file}: ".$config->{rs_cron_file});
+
+    $config->{template} = $config->{template}?$config->{template}:"default";
+    $self->log->info("\$config->{template}: ".$config->{template});
+
+    $config->{session_timeout} = $config->{session_timeout}?$config->{session_timeout}:"600";
+    $self->log->info("\$config->{session_timeout}: ".$config->{session_timeout});
+
+    $config->{loglines} = $config->{loglines}?$config->{loglines}:"100";
+    $self->log->info("\$config->{loglines}: ".$config->{loglines});
+
+    $config->{timeformat} = $config->{timeformat}?$config->{timeformat}:"%T";
+    $self->log->info("\$config->{timeformat}: ".$config->{timeformat});
+
+    $config->{dateformat} = $config->{dateformat}?$config->{dateformat}:"%d.%m.%Y";
+    $self->log->info("\$config->{dateformat}: ".$config->{dateformat});
+
+    $config->{rootuser} = $config->{rootuser}?$config->{rootuser}:"root";
+    $self->log->info("\$config->{rootuser}: ".$config->{rootuser});
+
+    $config->{rootpass} = $config->{rootpass}?$config->{rootpass}:"root";
+    $self->log->info("Admin password is set");
 
     # Configure the application
     $self->secrets($config->{secrets});
