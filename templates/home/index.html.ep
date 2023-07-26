@@ -9,7 +9,6 @@
 			<a href="<%= $i %>/config">
 				<div class="d-flex w-100 justify-content-between">	
 				<h5 class="mb-1"><%= $systemInfo->{rs_filename} %></h5>
-				<small>Edit</small>
 				</div>
 			</a>
 			<p class="mb-1"></p>
