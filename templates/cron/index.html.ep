@@ -101,7 +101,7 @@
                             
                             <select class="form-select" id="cron_command" onchange="changeCronSelect(this.id)">
                                 <option value="">select</option>
-                                <% foreach my $key ( keys %$all_configs_ref ) { %>
+                                <% foreach my $key ( sort keys %$all_configs_ref ) { %>
                                     <% my $command = $program . " -c " . $key; %>
                                     <optgroup label="<%= File::Basename::basename($key) %>">
                                         <% foreach ( @{ $all_configs_ref->{$key}{'retain'} } ) { %>
