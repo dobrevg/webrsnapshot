@@ -3,14 +3,25 @@ package Webrsnapshot::Controller::Home;
 use File::Basename;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 use Webrsnapshot::Library;
+use Fcntl ':mode';
 
 # This action will render a template
 sub index ($self) {
+    # is rs_config file or directory to enable add button
+    my $writeEnabled = 0;
+    if(-d $self->config->{rs_config}) {
+        my $mode = (stat($self->config->{rs_config}))[2];
+        my $user_rwx      = ($mode & S_IRWXU) >> 6;
+        if(($user_rwx eq 2) or ($user_rwx eq 3) or ($user_rwx eq 6) or ($user_rwx eq 7)) {
+            $writeEnabled = 1;
+        }
+    }
 
-    # Render template "default/index.html.ep" with message
+    # Render template "home/index.html.ep" with message
     $self->render(
-      tmpl          => $self->config->{template},
-      systemInfoArr => $self->getSystemInfo($self->config->{rs_config}),
+        tmpl           => $self->config->{template},
+        systemInfoArr  => $self->getSystemInfo($self->config->{rs_config}),
+        writeEnabled   => $writeEnabled,
     );
 }
 

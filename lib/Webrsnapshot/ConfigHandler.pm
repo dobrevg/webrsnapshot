@@ -16,13 +16,17 @@ sub new {
 # and save the config File
 # Parameters is all post data from config
 sub saveConfig {
-	my ( $self, $config ) = @_;
+	my ( $self, $config, $skipCheck) = @_;
 
 	# Set Timestamp for random filename
 	my $config_to_test	= "/tmp/rsnapshot_".time();
 
 	# Open the config file for writing
-	open (CONFIG, ">$config_to_test") || die $!;
+    if($skipCheck) {
+        open (CONFIG, ">$self->{_rs_config_file}") || die $!;
+    } else {
+        open (CONFIG, ">$config_to_test") || die $!;
+    }
 	
 	# Root ####################
 	# config_version (required)
@@ -279,27 +283,33 @@ sub saveConfig {
 	# Close the config file
 	close CONFIG;
 
-	# Check here if the config is well formed and return any warnings and errors
-	# $configtest{'message'} from STDOUT/STDERR
-	# $configtest{'exit_code'} the exit code
-	my %configtest = ();
+    # Check here if the config is well formed and return any warnings and errors
+    # $configtest{'message'} from STDOUT/STDERR
+    # $configtest{'exit_code'} the exit code
+    my %configtest = ();
 
-	$configtest{'message'} = `rsnapshot -c $config_to_test configtest 2>&1`;
-	$configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
+    if($skipCheck) {
+        $configtest{'message'} = "The file was saved successfully.";
+        $configtest{'exit_code'} = 0;
+    } else {
+        $configtest{'message'} = `rsnapshot -c $config_to_test configtest 2>&1`;
+        $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
 
-	# if Syntax ok, then copy the temp config file to /etc
-	if ( $configtest{'exit_code'} eq 0 ) {
-		my $copyStdout = `cp -f $config_to_test $self->{_rs_config_file}`;
-		$configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
+        # if Syntax ok, then copy the temp config file to /etc
+        if ( $configtest{'exit_code'} eq 0 ) {
+            my $copyStdout = `cp -f $config_to_test $self->{_rs_config_file}`;
+            $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
 
-		# move the Stdout from copy to return message only if the exit code is not zero
-		if ( $configtest{'exit_code'} ne 0 ) {
-			$configtest{'message'} = $copyStdout;
-		}
-	}
+            # move the Stdout from copy to return message only if the exit code is not zero
+            if ( $configtest{'exit_code'} ne 0 ) {
+                $configtest{'message'} = $copyStdout;
+            }
+        }
 
-	system ("rm", "-f",$config_to_test);
-	return \%configtest;
+        system ("rm", "-f",$config_to_test);
+    }
+    # Return the status message
+    return \%configtest;
 }
 
 sub readConfig {

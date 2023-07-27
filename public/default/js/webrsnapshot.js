@@ -260,3 +260,38 @@ function addBackupExec(id) {
 function delBackupExec(id) {
     document.getElementById("backup_exec_"+id).remove();
 }
+
+// Create new rsnapshot configuration file
+function createNewRSFile() {
+    var configsCount = document.getElementsByClassName("rs_filename").length;
+    let f = document.getElementById("newconfigform");
+    f.action = "/"+configsCount+"/newconfig";
+    f.submit();
+}
+
+// Check the new rsnapshot file while typing
+function checkRSFilename() {
+    let x = document.getElementById("new_rs_filename");
+    let b = document.getElementById("add_rsconf_btn");
+    const rs_reserved_names = document.getElementsByClassName("rs_filename");
+    var wrongvalue = 0;
+    for (rsname of rs_reserved_names) {
+        if(rsname.innerHTML === x.value) { wrongvalue = 1; }
+    }
+    if(wrongvalue) { 
+        x.classList.add("wrong-input");
+        b.disabled = true;
+    } else { 
+        x.classList.remove("wrong-input");
+        b.disabled = false;
+    }
+    var fileExt = x.value.split('.').pop();
+    var confExt = "conf";
+    if(fileExt === confExt) { 
+        console.log("Extentions are the same");
+        b.disabled = false;
+    } else {
+        console.log("Extentions are not the same");
+        b.disabled = true; 
+    }
+}

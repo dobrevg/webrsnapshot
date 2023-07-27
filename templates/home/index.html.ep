@@ -3,25 +3,69 @@
 
 <h4 class="ms-3">General Information</h4>
 <div class="list-group">
-	<% for (my $i=0; $i<$#$systemInfoArr; ++$i) {
-		my $systemInfo = $systemInfoArr->[$i]; %>
-		<div class="list-group-item list-group-item-action" aria-current="true">
-			<a href="<%= $i %>/config">
-				<div class="d-flex w-100 justify-content-between">	
-				<h5 class="mb-1"><%= $systemInfo->{rs_filename} %></h5>
-				</div>
-			</a>
-			<p class="mb-1"></p>
-			<small>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></small><br/>
-			<small>Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong> 
-			with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong></strong></small><br/>
-			<small>Allocation: <strong><%= $systemInfo->{partitionInfoPercent} %></strong>
-			(Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>
-			Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>
-			Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)</small><br/>
-		</div>
-	<% } %>
+    <% for (my $i=0; $i<=$#$systemInfoArr; $i++) {
+        my $systemInfo = $systemInfoArr->[$i]; %>
+        <div class="list-group-item list-group-item-action" aria-current="true">
+            <a href="<%= $i %>/config">
+                <div class="d-flex w-100 justify-content-between">	
+                <h5 class="mb-1 rs_filename"><%= $systemInfo->{rs_filename} %></h5>
+                </div>
+            </a>
+            <p class="mb-1"></p>
+            <small>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></small><br/>
+            <small>Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong> 
+            with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong></strong></small><br/>
+            <small>Allocation: <strong><%= $systemInfo->{partitionInfoPercent} %></strong>
+            (Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>
+            Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>
+            Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)</small><br/>
+        </div>
+    <% } %>
 </div>
+<br/>
+<% if($writeEnabled eq 1 ) { %>
+<!-- Add new config Button -->
+    <div class="input-group mt-3 w-auto me-auto float-end">
+        <button class="btn btn-outline-primary " type="button" data-bs-toggle="modal" data-bs-target="#add_rsconf_modal">
+            New File
+        </button>
+        <span class="border-radius input-group-text">
+            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                title="Create new rsnapshot configuration file. The file extension must be '.conf'."></i>
+        </span>
+    </div>
+<!-- Add new cronjob Modal/Form -->
+    <form method="post" action="/newconfig" name="newconfigform" id="newconfigform">
+        <div class="modal fade" id="add_rsconf_modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">New Rsnapshot config</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="cron_user" class="form-label mb-0 mt-2">New file name</label>
+                        <div class="input-group">
+                            <span class="border-radius input-group-text">
+                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
+                                    data-bs-placement="right" title="Type a file name for new Rsnapshot 
+                                    configuration file."></i>
+                            </span>
+                            <input type="text" name="new_rs_filename" id="new_rs_filename" class="form-control"
+                                onkeyup="checkRSFilename();">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="add_rsconf_btn" data-bs-dismiss="modal"
+                            disabled onclick="createNewRSFile();">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div><!-- End new cronjob Modal -->
+    </form>
+<% } %>
 <script>
 	document.getElementById("menuEntry-home").classList.add("active");
 </script>

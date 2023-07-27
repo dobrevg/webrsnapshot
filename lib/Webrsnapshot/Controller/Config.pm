@@ -217,4 +217,93 @@ sub save {
     return $self->redirect_to('/'.$id.'/config');
 }
 
+# Create new rsnapshot configuration
+sub touch {
+    my ( $self ) = @_;
+
+    my @backup  = ();
+    my @retain  = ();
+    my @include = ();
+    my @exclude = ();
+    my @backup_exec   = ();
+    my @backup_script = ();
+
+    my $rsync  = `which rsync`;
+    my $cp     = `which cp`;
+    my $rm     = `which rm`;
+    my $ssh    = `which ssh`;
+    my $logger = `which logger`;
+    my $du     = `which du`;
+    my $diff   = `which rsnapshot_diff`;
+
+    # Build config hash
+    my %config = (
+        # Root
+        'config_version' => '1.2',
+        'snapshot_root'  => '',
+        'include_conf'   => '',
+        'no_create_root' => 'off',
+        'one_fs'         => 'off',
+        # Commands
+        'cmd_rsync'          => $rsync?$rsync:"",
+        'cmd_cp'             => $cp?$cp:"",
+        'cmd_rm'             => $rm?$rm:"",
+        'cmd_ssh'            => $ssh?$ssh:"",
+        'cmd_logger'         => $logger?$logger:"",
+        'cmd_du'             => $du?$du:"",
+        'cmd_rsnapshot_diff' => $diff?$diff:"",
+        'cmd_preexec'        => '',
+        'cmd_postexec'       => '',
+        # Tab - LVM Config
+        'linux_lvm_cmd_lvcreate' => '',
+        'linux_lvm_cmd_lvremove' => '',
+        'linux_lvm_cmd_mount'    => '',
+        'linux_lvm_cmd_umount'   => '',
+        'linux_lvm_vgpath'       => '',
+        'linux_lvm_snapshotname' => '',
+        'linux_lvm_snapshotsize' => '',
+        'linux_lvm_mountpath'    => '',
+        # Global Config
+        'rsync_numtries'         => '',
+        'verbose'                => '',
+        'loglevel'               => '',
+        'logfile'                => '',
+        'lockfile'               => '',
+        'rsync_short_args'       => '-a',
+        'rsync_long_args'        => '--delete --numeric-ids --relative --delete-excluded',
+        'ssh_args'               => '',
+        'du_args'                => '',
+        'stop_on_stale_lockfile' => 'off',
+        'link_dest'              => 'off',
+        'sync_first'             => 'off',
+        'use_lazy_deletes'       => 'off',
+        # Intervals
+        'retain' => \@retain,
+        # Include/Exclude
+        'include_file'  => '',
+        'exclude_file'  => '',
+        'include'       => \@include,
+        'exclude'       => \@exclude,
+        # Backup / Hosts 
+        'backup'        => \@backup,
+        # Scripts
+        'backup_script' => \@backup_script,
+        'backup_exec'   => \@backup_exec,
+    );
+
+    # Get the file id
+    my $id = $self->stash->{id};
+    # Get post variables
+    my $configparams = $self->req->params->to_hash;
+    # # And send everything to the ConfigHandler::saveConfig
+    my $saveResult = new Webrsnapshot::ConfigHandler($self->config->{rs_config}.'/'.$configparams->{new_rs_filename})->saveConfig(\%config,"skipCheck");
+
+    # 0 - Ok
+    # If returns diferent then 0, then we have a problem
+    $self->flash(saved => ${$saveResult}{'exit_code'});
+    $self->flash(message_text => ${$saveResult}{'message'});
+
+    return $self->redirect_to('/');
+}
+
 1;

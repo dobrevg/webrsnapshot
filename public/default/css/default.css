@@ -32,3 +32,8 @@ max-width: 320px;
     line-height: 0px;
     margin: 0px 8px;
 }
+
+#rs_filename.wrong-input,
+.wrong-input {
+    color: red !important;
+}
