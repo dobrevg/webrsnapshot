@@ -52,7 +52,7 @@
                                     configuration file."></i>
                             </span>
                             <input type="text" name="new_rs_filename" id="new_rs_filename" class="form-control"
-                                onkeyup="checkRSFilename();">
+                                oninput="checkRSFilename();">
                         </div>
                     </div>
                     <div class="modal-footer">
