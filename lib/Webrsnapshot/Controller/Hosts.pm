@@ -26,7 +26,7 @@ sub getLastBackupTime {
     # Array with Rsnapshot config files
     my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($rs_config);
 
-    our $rs_configuration = new Webrsnapshot::ConfigHandler($rs_config_files[$rs_config_id])->readConfig();
+    our $rs_configuration = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$rs_config_id])->readConfig();
     my $backups = $rs_configuration->{backup};
 
     # Sort all hostnames and assign the values to an array	

@@ -18,7 +18,7 @@ sub index ($self) {
     my %all_configs;
     # Iterate oder all config files found
     for my $i (0 .. $#rs_config_files) {
-        $all_configs{"$rs_config_files[$i]"} = new Webrsnapshot::ConfigHandler($rs_config_files[$i])->readConfig();
+        $all_configs{"$rs_config_files[$i]"} = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$i])->readConfig();
     }
 
     # Read the cron file

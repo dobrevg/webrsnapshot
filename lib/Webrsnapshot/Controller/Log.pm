@@ -25,7 +25,7 @@ sub getLogContent {
     # Array with Rsnapshot config files
     my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($rs_config);
 
-    my $rs_configuration = new Webrsnapshot::ConfigHandler($rs_config_files[$rs_config_id])->readConfig();
+    my $rs_configuration = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$rs_config_id])->readConfig();
     my $logfile = $rs_configuration->{logfile};
     my $linecounter = $loglines? $loglines:100;
     my $result;

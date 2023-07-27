@@ -12,7 +12,7 @@ sub index ($self) {
     my $rs_config_id = $self->stash('id');
     # Array with Rsnapshot config files
     my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($self->config->{rs_config});
-    my $rs_configuration = new Webrsnapshot::ConfigHandler($rs_config_files[$rs_config_id])->readConfig();
+    my $rs_configuration = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$rs_config_id])->readConfig();
 
     # Render template "default/index.html.ep" with message
     $self->render(
