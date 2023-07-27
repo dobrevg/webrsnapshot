@@ -975,12 +975,37 @@
 			<hr>
 		</div>
 
+        <button class="btn btn-outline-danger mx-4 my-1 float-start" type="button" data-bs-toggle="modal" 
+			data-bs-html="true" data-bs-placement="right" title="Delete the config file"
+            data-bs-target="#delete_rs_config">Delete</button>
 		<a href="/"><button class="btn btn-outline-primary mx-4 my-1 float-end" type="button" data-bs-toggle="tooltip" 
 			data-bs-html="true" data-bs-placement="right" title="Back to startpage">Close</button></a>
 		<button class="btn btn-outline-primary mx-4 my-1 float-end" type="submit" data-bs-toggle="tooltip" 
 			data-bs-html="true" data-bs-placement="right" title="Save the config file">Save</button>
 	</div>
 </form>
+
+<!-- Delete Configfile modal form -->
+<form method="post" action="/<%= $rs_config_id %>/delconfig" name="delete_rs_configfile">
+    <div class="modal fade" id="delete_rs_config" tabindex="-1" aria-labelledby="delete_rs_config" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="delete_rs_config_title">Delete</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this file?<br/>
+            <strong><%= $rs_config_file %></strong></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </div>
+        </div>
+    </div>
+    </div>
+<form>
 
 <script>
 	document.getElementById("menuEntry-config").classList.remove("d-none");

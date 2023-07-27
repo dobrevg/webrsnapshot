@@ -38,7 +38,7 @@ sub getSystemInfo {
         # Get filename from path
         my $filename = basename($rs_config_files[$i]);
         # Get the configuraiton saved in the file
-        my $rs_configuration = new Webrsnapshot::ConfigHandler($rs_config_files[$i])->readConfig();
+        my $rs_configuration = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$i])->readConfig();
         # Get partition info and parse result
         my $partInfo = `df -h $rs_configuration->{snapshot_root} | tail -1`;
         $partInfo =~ /^(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+(.*[^\s+])\s+/;

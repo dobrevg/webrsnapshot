@@ -53,7 +53,7 @@
 				<div class="alert alert-dismissible fade" id="alert-message" role="alert">
 					<b>CODE: <%= flash 'saved' %></b>
 					<hr>
-					<%= flash 'message_text' %>
+					<%= flash "message_text" %>
 					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 				</div>
 			</div>

@@ -69,6 +69,7 @@ sub startup ($self) {
     $authorized->get('/:id/host/#name' => [id => qr/\d+/])->to('Host#index');
     $authorized->get('/:id/host' => [id => qr/\d+/])->to(cb => sub($c){$c->redirect_to('/'.$c->param('id').'/hosts')});
     $authorized->post('/:id/newconfig' => [id => qr/\d+/])->to('Config#touch');
+    $authorized->post('/:id/delconfig' => [id => qr/\d+/])->to('Config#delete');
 }
 
 1;

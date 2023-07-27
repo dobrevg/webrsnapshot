@@ -12,12 +12,13 @@ sub index ($self) {
     # Array with Rsnapshot config files
     my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($self->config->{rs_config});
     # Read the rsnapshot config file
-    my %config = %{ new Webrsnapshot::ConfigHandler($rs_config_files[$rs_config_id])->readConfig() };
+    my %config = %{ new Webrsnapshot::ConfigHandler($self->config,$rs_config_files[$rs_config_id])->readConfig() };
 
     # Render template "default/index.html.ep" with message
     $self->render(
         tmpl           => $self->config->{template},
         rs_config_id   => $rs_config_id,
+        rs_config_file => $rs_config_files[$rs_config_id],
 
         # ToDo: Empty config file?!? Create new one?!?
         # Root config
@@ -207,7 +208,7 @@ sub save {
     # Get the file id
     my $id = $self->param('rs_config_id');
     # And send everything to the ConfigHandler::saveConfig
-    my $saveResult = new Webrsnapshot::ConfigHandler($rs_config_files[$id])->saveConfig(\%config);
+    my $saveResult = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$id])->saveConfig(\%config);
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
@@ -295,13 +296,28 @@ sub touch {
     my $id = $self->stash->{id};
     # Get post variables
     my $configparams = $self->req->params->to_hash;
-    # # And send everything to the ConfigHandler::saveConfig
-    my $saveResult = new Webrsnapshot::ConfigHandler($self->config->{rs_config}.'/'.$configparams->{new_rs_filename})->saveConfig(\%config,"skipCheck");
+    # And send everything to the ConfigHandler::saveConfig
+    my $saveResult = new Webrsnapshot::ConfigHandler($self->config, $self->config->{rs_config}.'/'.$configparams->{new_rs_filename})->saveConfig(\%config,"skipCheck");
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
     $self->flash(saved => ${$saveResult}{'exit_code'});
     $self->flash(message_text => ${$saveResult}{'message'});
+
+    return $self->redirect_to('/');
+}
+
+# Delete rsnapshot configuration file
+sub delete {
+    my ( $self ) = @_;
+
+    # And let the ConfigHandler delete the file
+    my $deleteResult = new Webrsnapshot::ConfigHandler($self->config, $self->config->{rs_config})->deleteConfig($self->stash('id'));
+
+    # 0 - Ok
+    # If returns diferent then 0, then we have a problem
+    $self->flash(saved => ${$deleteResult}{'exit_code'});
+    $self->flash(message_text => ${$deleteResult}{'message'});
 
     return $self->redirect_to('/');
 }
