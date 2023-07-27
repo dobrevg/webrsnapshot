@@ -457,16 +457,22 @@ sub readConfig {
 
 # Delete config file
 sub deleteConfig {
-    my ( $self, $fileid ) = @_;
+    my ( $self, $delete_logs ) = @_;
 
-    # Array with Rsnapshot config files
-    my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($self->{_config}->{rs_config});
+    # If logs have to be deletd too
+    if($delete_logs) {
+        my $logfile = $self->readConfig->{logfile};
+        print "Logfile will be deleted: ".$logfile."\n";
+        my $log_delete = `rm -f $logfile 2>&1`;
+    }
+
+
     # Check here if the config is well formed and return any warnings and errors
     # $result{'message'} from STDOUT/STDERR
     # $result{'exit_code'} the exit code
     my %result = ();
 
-    $result{'message'} = `rm -f $rs_config_files[$fileid] 2>&1`;
+    $result{'message'} = `rm -f $self->{_rs_config_file} 2>&1`;
     $result{'exit_code'} = ${^CHILD_ERROR_NATIVE};
     
     # if the exit code is zero, write sucessfuly message

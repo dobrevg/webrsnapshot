@@ -311,13 +311,23 @@ sub touch {
 sub delete {
     my ( $self ) = @_;
 
+    # Array with Rsnapshot config files
+    my @rs_config_files = Webrsnapshot::Library::getRSConfigFiles($self->config->{rs_config});
+
+    # Get post variables
+    my $configparams = $self->req->params->to_hash;
+    print "Delete Logs: " .$configparams->{delete_logs};
+    my $delete_logs = $configparams->{delete_logs}?$configparams->{delete_logs}:"";
+
+    my $CH = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$self->stash('id')]);
+
     # And let the ConfigHandler delete the file
-    my $deleteResult = new Webrsnapshot::ConfigHandler($self->config, $self->config->{rs_config})->deleteConfig($self->stash('id'));
+    my $deleteResult = $CH->deleteConfig($delete_logs);
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
-    $self->flash(saved => ${$deleteResult}{'exit_code'});
-    $self->flash(message_text => ${$deleteResult}{'message'});
+    #$self->flash(saved => ${$deleteResult}{'exit_code'});
+    #$self->flash(message_text => ${$deleteResult}{'message'});
 
     return $self->redirect_to('/');
 }

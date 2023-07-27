@@ -996,7 +996,11 @@
         </div>
         <div class="modal-body">
             <p>Are you sure you want to delete this file?<br/>
-            <strong><%= $rs_config_file %></strong></p>
+            <strong><%= $rs_config_file %></strong></p><br/>
+            <% my $delete_logs_checked = ""; %>
+            <% if($logfile) { $delete_logs_checked = "checked"; } %>
+            <input type="checkbox" class="form-check-input mt-3 ms-3" name="delete_logs" id="delete_logs" <%= $delete_logs_checked %> >
+            <label class="form-check-label pt-1 mt-2 ms-2" >Also delete log files.</label>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
