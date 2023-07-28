@@ -18,7 +18,7 @@
 							<p class="mb-3">Please enter your login and password!</p>
 
 							<div class="form-outline form-white mb-4">
-								<input type="text" class="form-control" name="username" placeholder="Username">
+								<input type="text" class="form-control" name="username" placeholder="Username" autofocus>
 							</div>
 
 							<div class="form-outline form-white mb-4">
