@@ -316,7 +316,6 @@ sub delete {
 
     # Get post variables
     my $configparams = $self->req->params->to_hash;
-    print "Delete Logs: " .$configparams->{delete_logs};
     my $delete_logs = $configparams->{delete_logs}?$configparams->{delete_logs}:"";
 
     my $CH = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$self->stash('id')]);
