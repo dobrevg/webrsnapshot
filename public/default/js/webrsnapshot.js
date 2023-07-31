@@ -163,11 +163,12 @@ function addCronjob() {
         newcronjob += " " + document.getElementById('cron_command_text').value;
 
     // Define the rsnapshot config file and the cronjobs count
-    var commandline     = document.getElementById('cron_command_text').value;
-    var configname      = commandline.slice(commandline.indexOf('-c') + 3);
-    var confignameShort = configname.slice(configname.lastIndexOf('/')+1);
-    var searchString    = "cron_"+confignameShort;
-    var cronjobsCount   = document.querySelectorAll('[id^="'+searchString+'"]').length
+    var commandline      = document.getElementById('cron_command_text').value;
+    var configname       = commandline.slice(commandline.indexOf('-c') + 3);
+    var confignameRetain = configname.slice(configname.lastIndexOf('/')+1);
+    var confignameShort  = confignameRetain.slice(0, confignameRetain.indexOf(' '));
+    var searchString     = "cron_"+confignameShort;
+    var cronjobsCount    = document.querySelectorAll('[id^="'+searchString+'"]').length
     var newCronjobID = confignameShort+"_"+cronjobsCount;
 
     // Get the hidden element and create a copy of it

@@ -105,7 +105,7 @@
                                     <% my $command = $program . " -c " . $key; %>
                                     <optgroup label="<%= File::Basename::basename($key) %>">
                                         <% foreach ( @{ $all_configs_ref->{$key}{'retain'} } ) { %>
-                                            <option value="<%= $command%>">
+                                            <option value="<%= $command . ' ' . $_->{'name'} %>">
                                                 <%= $_->{'name'} %>
                                             </option>
                                         <% } %>
