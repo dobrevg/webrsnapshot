@@ -27,8 +27,6 @@ sub index ($self) {
         \@rs_config_files
     )->getCronContent();
 
-print "Cron Ref: ".$cron_content_ref."\n";
-
     # Render template "default/index.html.ep" with message
     $self->render(
         tmpl                => $self->config->{template},
