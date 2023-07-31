@@ -191,6 +191,7 @@ function addCronjob() {
 
     // Empty the modal
     document.getElementById("cron_command_text").value = "";
+    document.getElementById("cron_command").selectedIndex = 0;
     document.getElementById("cron_minute_text").value = "";
     document.getElementById("cron_hour_text").value = "";
     document.getElementById("cron_day_text").value = "";
