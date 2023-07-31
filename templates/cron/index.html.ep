@@ -12,11 +12,11 @@
             </span>
             <% my $mailchecked  = ""; %>
             <% my $mailreadonly = ""; %>
-            <% if ( $cron_content_ref->{"MAILTO"} =~ m/^#/ ) { %> 
+            <% if ($cron_content_ref->{"MAILTO"} and ($cron_content_ref->{"MAILTO"} =~ m/^#/)) { %> 
                 <% $mailchecked  = "checked"; %> 
                 <% $mailreadonly = "readonly"; %> 
             <% } %>
-            <% $cron_content_ref->{"MAILTO"} =~ /"(.*)"/; %>
+            <% if ($cron_content_ref->{"MAILTO"}) { $cron_content_ref->{"MAILTO"} =~ /"(.*)"/; } %>
             <input type="text" class="form-control" placeholder="email" name="cron_email" id="cron_email" 
                 value="<%= $1 %>" <%= $mailreadonly %>>
             <input type="checkbox" class="form-check-input mt-3 ms-3" name="email_disabled" id="cron_email_checkbox"

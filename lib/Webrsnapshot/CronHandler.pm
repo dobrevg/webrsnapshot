@@ -21,6 +21,12 @@ sub getCronContent {
     # create the result hash from the rs filenames
     %result = map { $self->{_rs_config_files}[$_] => [] } 0 .. $#{$self->{_rs_config_files}};
 
+    # If the cron file doesn't exists, just create it
+    unless(-e $self->{_rs_cron_file}) { 
+        open my $fc, ">", $self->{_rs_cron_file}; 
+        close $fc; 
+    }
+
     # And we open the cron file for reading
     open (CRONFILE, $self->{_rs_cron_file});
     while (<CRONFILE>) {
