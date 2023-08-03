@@ -54,10 +54,9 @@ sub user_login {
 	my $auth_key = $self->authenticate($username, $password );
 
 	if ( $auth_key )  {
-		$self->flash( message => 'Login Success.');
 		return $self->redirect_to('/');
 	} else {
-		$self->flash( error => 'Invalid username or password.');
+		$self->flash( login_failed => 'Invalid username or password.');
 		$self->redirect_to('/login');
 	}
 }

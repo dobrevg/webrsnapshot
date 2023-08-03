@@ -27,7 +27,7 @@
 
 							<button class="btn btn-primary btn-lg px-5" type="submit">Login</button>
 						</form>
-						<div class="alert alert-danger d-flex align-items-center alert-dismissible fade show mt-3 invisible"
+						<div class="alert alert-danger d-flex align-items-center alert-dismissible fade show mt-3 d-none"
 							id="error-alert" role="alert">
 							<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img"
 								aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/>
@@ -45,7 +45,7 @@
 	</script>
 	<script>
 		if ("<%= flash 'login_failed' %>" != "") {
-			document.getElementById("error-alert").classList.remove("invisible");
+			document.getElementById("error-alert").classList.remove("d-none");
 		}
 	</script>
 </body>
