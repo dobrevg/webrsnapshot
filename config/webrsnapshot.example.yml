@@ -25,10 +25,11 @@
 # rootuser: root
 
 # rootpass: <password string>
-# The password for the root user
+# The password for the root user. Use contrib/passwd.pl 
+# to be able to create a new desired password hash.
 # 
 # Default: pass
-# rootpass: pass
+# rootpass: {X-PBKDF2}HMACSHA3+256:AAAnEA:rnoT4S2DydQMgg==:ptwlSeP6hmEyWtX54QXCY66zxJ0eFBfNey76LdZ3BwQ=
 
 # session_timeout: <integer>
 # The Timeout specifies the timeout period assigned to the Session for the 

@@ -1,6 +1,7 @@
 package Webrsnapshot::Controller::Authorize;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 use Mojolicious::Plugin::Authentication;
+use Crypt::PBKDF2;
 
 # Show login page
 sub index {
@@ -15,6 +16,16 @@ sub index {
 # Post redirect from login page
 sub user_login {
 	my $self = shift;
+
+    # Define the 
+    my $pbkdf2 = Crypt::PBKDF2->new(
+        hash_class => 'HMACSHA3',
+        hash_args => {
+            sha_size => 256,
+        },
+        iterations => 10000,
+        salt_len => 10,
+    );
 
 	my $username = $self->param('username');   # From the login form
 	my $password = $self->param('password');   # From the login form
@@ -63,8 +74,18 @@ sub validate_user_login {
 
 # To validate the Password
 sub validate_password {
-	my ( $user_pass, $password ) = @_;
-	if ( $user_pass eq $password ) {
+    my ( $config_pass, $password ) = @_;
+
+    # User PBKDF2 encryptor
+    my $pbkdf2 = Crypt::PBKDF2->new(
+        hash_class => 'HMACSHA3',
+        hash_args => {
+            sha_size => 256,
+        },
+        iterations => 10000,
+        salt_len => 10,
+    );
+	if ( $pbkdf2->validate($config_pass, $password) ) {
 		return 1
 	}
 }

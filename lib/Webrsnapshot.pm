@@ -43,7 +43,7 @@ sub startup ($self) {
     $config->{rootuser} = $config->{rootuser}?$config->{rootuser}:"root";
     $self->log->info("\$config->{rootuser}: ".$config->{rootuser});
 
-    $config->{rootpass} = $config->{rootpass}?$config->{rootpass}:"pass";
+    $config->{rootpass} = $config->{rootpass}?$config->{rootpass}:"{X-PBKDF2}HMACSHA3+256:AAAnEA:rnoT4S2DydQMgg==:ptwlSeP6hmEyWtX54QXCY66zxJ0eFBfNey76LdZ3BwQ=";
     $self->log->info("Admin password is set");
 
     # Configure the application

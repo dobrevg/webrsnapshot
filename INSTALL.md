@@ -35,6 +35,7 @@
 * Mojolicious Framework (required)
 * Mojolicious::Plugin::Authentication (required)
 * File::ReadBackwards (required)
+* Crypt::PBKDF2 (required)
 * perl-IO-Socket-SSL 1.75 or better (optional) if you plan to use HTTPS
 
 
