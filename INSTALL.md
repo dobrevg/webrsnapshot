@@ -6,14 +6,11 @@
 ## Quick install
 ----------------
 
-* Clone Webrsnapshot git repo `git clone --recurse-submodules https://github.com/dobrevg/webrsnapshot.git`
-* Switch to the Mojolicious Plugin directory `cd ./webrsnapshot/submodules/mojo/lib/Mojolicious/Plugin/`
-* Link the Authenticatin plugin `ln -s ../../../../Mojolicious-Plugin-Authentication/lib/Mojolicious/Plugin/Authentication.pm`
+* Clone Webrsnapshot git repo `git clone https://github.com/dobrevg/webrsnapshot.git`
 * Copy the config file and configure it `cp config/webrsnapshot.example.yml config/webrsnapshot.yml`
-* Change the shebang to absolute path of the perl interpreter in all scripts: `PERL=$(which perl) && sed -i '1 s|^.*$|#!'"$PERL"'|' ./webrsnapshot/submodules/mojo/script/*`
-* If you get the error `Can't locate Mojo/Base.pm in @INC` just install Mojolicious on your system 
-* Run `./webrsnapshot/submodules/mojo/script/hypnotoad ./webrsnapshot/script/webrsnapshot` to start the server (see the requirements below)
-* Run `./webrsnapshot/submodules/mojo/script/hypnotoad -s ./webrsnapshot/script/webrsnapshot` to stop the server
+* Install Mojolicious and the required modules. See the requirements below. 
+* Edit and install the service: `cp contrib/webrsnapshot.service /etc/systemd/system/ && systemctl daemon-reload`
+* Start the service: `service webrsnapshot start`
 * Access the application via https://myServerIP:8080
 
 
@@ -21,9 +18,8 @@
 ----------------
 
 * Just execute: `git pull` in the folder where webrsnapshot is installed
-* Then update the submodules `git submodule update --remote --merge`
 * Adjust config/webrsnapshot.yml for your needs (optional)
-* Stop and start the application server
+* Restart/Reload the application server
 
 
 ## Requirements
