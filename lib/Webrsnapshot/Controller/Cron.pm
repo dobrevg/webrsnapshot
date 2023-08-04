@@ -62,16 +62,14 @@ sub save {
 
 
     # And send everything to the CronHandler to save
-    my @saveResult = new Webrsnapshot::CronHandler(
+    my %saveResult = new Webrsnapshot::CronHandler(
         $self->config->{rs_cron_file}
     )->writeCronContent($allParams_ref);
 
-    # 0 - Ok
-    # 1 - error in the rsnapshot cron file
-    # 3 - error while copying the rsnapshot file
-    # If returns diferent then 0, then we have a problem
-    $self->flash(saved => pop @saveResult);
-    $self->flash(message_text => join(" ",@saveResult));
+    # ==0 - Ok
+    # !=0 - Something went wrong
+    $self->flash(exit_code => $saveResult{exit_code});
+    $self->flash(message   => $saveResult{message});
 
     return $self->redirect_to('/cron');
 }

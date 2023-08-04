@@ -48,19 +48,19 @@
 				</div>
 			</nav>
 			<hr class="mt-0">
-			<!-- ToDo: Toast message ?!? -->
+			<!-- Alert message -->
 			<div class="position-absolute p-3 top-50 start-50 translate-middle" style="z-index: 10;">
 				<div class="alert alert-dismissible fade" id="alert-message" role="alert">
-					<b>CODE: <%= flash 'saved' %></b>
+					<b>CODE: <%= flash 'exit_code' %></b>
 					<hr>
-					<%= flash "message_text" %>
+					<p class="mb-0"></p>
 					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 				</div>
 			</div>
-	
+
 			<!-- Placeholder -->
 			<%= content %>
-		</div>					
+		</div>
 
 		<script>
 			// Initialize tooltips
@@ -72,14 +72,15 @@
 				})
 			});
 			var x;
-			if("<%= flash 'saved' %>" != "") {
-				switch (x = parseInt(<%= flash 'saved' %>)) {
+			if("<%= flash 'exit_code' %>" != "") {
+				switch (x = parseInt(<%= flash 'exit_code' %>)) {
 					case 0:
 						document.getElementById("alert-message").classList.add("alert-success");
 						break;
 					default:
 						document.getElementById("alert-message").classList.add("alert-danger");
 				}
+				document.getElementById('alert-message').getElementsByTagName('p')[0].innerHTML = htmlDecode("<%= flash 'message' %>");
 				document.getElementById("alert-message").classList.add("show");
 			}
 		</script>

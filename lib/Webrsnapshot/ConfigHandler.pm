@@ -290,7 +290,7 @@ sub saveConfig {
     my %configtest = ();
 
     if($skipCheck) {
-        $configtest{'message'} = "The file was saved successfully.";
+        $configtest{'message'} = "The file was created successfully.";
         $configtest{'exit_code'} = 0;
     } else {
         $configtest{'message'} = `rsnapshot -c $config_to_test configtest 2>&1`;
@@ -298,19 +298,21 @@ sub saveConfig {
 
         # if Syntax ok, then copy the temp config file to /etc
         if ( $configtest{'exit_code'} eq 0 ) {
-            my $copyStdout = `cp -f $config_to_test $self->{_rs_config_file}`;
+            $configtest{'message'} = `cp -f $config_to_test $self->{_rs_config_file}`;
             $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
 
-            # move the Stdout from copy to return message only if the exit code is not zero
-            if ( $configtest{'exit_code'} ne 0 ) {
-                $configtest{'message'} = $copyStdout;
+            # if everything is ok, write successfully message
+            if ( !$configtest{'message'} ) {
+                $configtest{'message'} = "Config file saved successfully";
             }
         }
 
+        # Replace every new line character with the html new line
+        $configtest{'message'} =~ s/\n/<br>/g;
         system ("rm", "-f",$config_to_test);
     }
     # Return the status message
-    return \%configtest;
+    return %configtest;
 }
 
 sub readConfig {
@@ -480,7 +482,7 @@ sub deleteConfig {
         $result{'message'} = "The file was deleted successfully.";
     }
 
-    return \%result;
+    return %result;
 }
 
 1;

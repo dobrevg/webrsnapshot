@@ -90,29 +90,24 @@ sub writeCronContent {
     # Close the crontab file
     close CRONFILE;
 
+    my %configtest = ();
     # Check here if the config is well formed and return any warnings and errors
-    my @configtest = `crontab $cronfile_to_test 2>&1`;
-    # Set configtest array with following code in the last cell
-    # $configtest[-1] = 0 - No Errors, File Saved
-    # $configtest[-1] = 2 - Error, wrong cron format
-    # $configtest[-1] = 3 - Error, File not Saved
+    $configtest{'message'}   = `crontab $cronfile_to_test 2>&1`;
+    $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
+    # The following exit codes are possible
+    # 0 - No Errors, File Saved
+    # 256 - Error, wrong cron format
 
     # We have correct cron file
-    if ( scalar @configtest == 0 ) {
-        push (@configtest, "0");
-        system ("cp $cronfile_to_test $self->{_rs_cron_file}") == 0 or $configtest[0] = 3;
+    if ( $configtest{'exit_code'} eq 0 ) {
+        $configtest{'message'} = `cp $cronfile_to_test $self->{_rs_cron_file} 2>&1`;
+        $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
         system ("rm -f $cronfile_to_test");
-        if ($configtest[0] == 3) {
-            # Create an error message in case that the file can not be copied
-            $configtest[0] = "Error: The file $cronfile_to_test";
-            $configtest[1] = "can not be copied to $self->{_rs_cron_file}";
-            $configtest[2] = 3;
+        if(!$configtest{'message'}) {
+            $configtest{'message'} = "Cron file saved successfully"
         }
-    } else {
-        push (@configtest, "2");
     }
-
-    return @configtest;
+    return %configtest;
 }
 
 1;

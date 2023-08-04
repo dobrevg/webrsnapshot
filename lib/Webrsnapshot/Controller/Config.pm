@@ -208,12 +208,12 @@ sub save {
     # Get the file id
     my $id = $self->param('rs_config_id');
     # And send everything to the ConfigHandler::saveConfig
-    my $saveResult = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$id])->saveConfig(\%config);
+    my %saveResult = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$id])->saveConfig(\%config);
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
-    $self->flash(saved => ${$saveResult}{'exit_code'});
-    $self->flash(message_text => ${$saveResult}{'message'});
+    $self->flash(exit_code => $saveResult{'exit_code'});
+    $self->flash(message   => $saveResult{'message'});
 
     return $self->redirect_to('/'.$id.'/config');
 }
@@ -297,12 +297,12 @@ sub touch {
     # Get post variables
     my $configparams = $self->req->params->to_hash;
     # And send everything to the ConfigHandler::saveConfig
-    my $saveResult = new Webrsnapshot::ConfigHandler($self->config, $self->config->{rs_config}.'/'.$configparams->{new_rs_filename})->saveConfig(\%config,"skipCheck");
+    my %saveResult = new Webrsnapshot::ConfigHandler($self->config, $self->config->{rs_config}.'/'.$configparams->{new_rs_filename})->saveConfig(\%config,"skipCheck");
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
-    $self->flash(saved => ${$saveResult}{'exit_code'});
-    $self->flash(message_text => ${$saveResult}{'message'});
+    $self->flash(exit_code => $saveResult{'exit_code'});
+    $self->flash(message   => $saveResult{'message'});
 
     return $self->redirect_to('/');
 }
@@ -321,12 +321,12 @@ sub delete {
     my $CH = new Webrsnapshot::ConfigHandler($self->config, $rs_config_files[$self->stash('id')]);
 
     # And let the ConfigHandler delete the file
-    my $deleteResult = $CH->deleteConfig($delete_logs);
+    my %deleteResult = $CH->deleteConfig($delete_logs);
 
     # 0 - Ok
     # If returns diferent then 0, then we have a problem
-    #$self->flash(saved => ${$deleteResult}{'exit_code'});
-    #$self->flash(message_text => ${$deleteResult}{'message'});
+    $self->flash(exit_code => $deleteResult{'exit_code'});
+    $self->flash(message   => $deleteResult{'message'});
 
     return $self->redirect_to('/');
 }
