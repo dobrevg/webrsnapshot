@@ -229,6 +229,19 @@ sub touch {
     my @backup_exec   = ();
     my @backup_script = ();
 
+    # Define at least one retain entry
+    my %retain_entry = ();
+    $retain_entry{'name'}  = "daily";
+    $retain_entry{'count'} = "7";
+    push( @retain, \%retain_entry );
+
+    # Define a tleast one backup host entry
+    my %backup_host = ();
+    $backup_host{'hostname'} = "localhost";
+    $backup_host{'source'} = "/";
+    $backup_host{'args'}   = "";
+    push( @backup, \%backup_host);
+
     my $rsync  = `which rsync`;
     my $cp     = `which cp`;
     my $rm     = `which rm`;
@@ -241,7 +254,7 @@ sub touch {
     my %config = (
         # Root
         'config_version' => '1.2',
-        'snapshot_root'  => '',
+        'snapshot_root'  => '/',
         'include_conf'   => '',
         'no_create_root' => 'off',
         'one_fs'         => 'off',
