@@ -6,12 +6,9 @@
     <% for (my $i=0; $i<=$#$systemInfoArr; $i++) {
         my $systemInfo = $systemInfoArr->[$i]; %>
         <div class="list-group-item list-group-item-action" aria-current="true">
-            <a href="<%= $i %>/config">
-                <div class="d-flex w-100 justify-content-between">	
+            <div class="d-flex w-100 justify-content-between">	
                 <h5 class="mb-1 rs_filename"><%= $systemInfo->{rs_filename} %></h5>
-                </div>
-            </a>
-            <p class="mb-1"></p>
+            </div>
             <small>Rsnapshot backup folder: <strong><%= $systemInfo->{rs_snapshot_root} %></strong></small><br/>
             <small>Backup device:<strong> <%= $systemInfo->{partitionInfoDev} %></strong> 
             with mount point: <strong><%= $systemInfo->{partitionInfoMountPt} %></strong></strong></small><br/>
@@ -19,6 +16,11 @@
             (Size: <strong><%= $systemInfo->{partitionInfoSize} %></strong>
             Used: <strong><%= $systemInfo->{partitionInfoUsed} %></strong>
             Free: <strong><%= $systemInfo->{partitionInfoFree} %></strong>)</small><br/>
+            <p class="mb-1">
+                <a href="<%= $i %>/config" role="button" class="btn btn-outline-primary btn-sm">Config</a>
+                <a href="<%= $i %>/hosts" role="button" class="btn btn-outline-primary btn-sm">Hosts</a>
+                <a href="<%= $i %>/log" role="button" class="btn btn-outline-primary btn-sm">Log</a>
+            </p>
         </div>
     <% } %>
 </div>
