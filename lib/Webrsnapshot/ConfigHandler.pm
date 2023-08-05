@@ -326,12 +326,6 @@ sub readConfig {
 	my @backup_script;
 	my @backup_exec;
 
-	# Check if rsync and rsnapshot are installed
-	# ToDo: move this checks to webrsnapshot.pl
-	system ("which rsync > /dev/null")		== 0 or die "Rsync not found on this server!";
-	system ("which rsnapshot > /dev/null")	== 0 or die "Rsnapshot not found on this server!";
-	die "$self->{_rs_config_file} is missing.\n" unless (-e $self->{_rs_config_file});
-
 	# Open rsnapshot config file for reading
 	open (CONFIG, $self->{_rs_config_file}) || die $!;
 	while (<CONFIG>) {
@@ -467,7 +461,6 @@ sub deleteConfig {
         print "Logfile will be deleted: ".$logfile."\n";
         my $log_delete = `rm -f $logfile 2>&1`;
     }
-
 
     # Check here if the config is well formed and return any warnings and errors
     # $result{'message'} from STDOUT/STDERR

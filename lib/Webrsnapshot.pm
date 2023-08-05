@@ -5,6 +5,15 @@ use Mojo::Base 'Mojolicious', -signatures;
 # This method will run once at server start
 sub startup ($self) {
 
+    # Check if needed commands are installed
+    system ("which df > /dev/null")         == 0 or die "Command: df not found on this server!";
+    system ("which cp > /dev/null")         == 0 or die "Command: cp not found on this server!";
+    system ("which crontab > /dev/null")    == 0 or die "Command: crontab not found on this server!";
+    system ("which rm > /dev/null")         == 0 or die "Command: rm not found on this server!";
+    system ("which rsync > /dev/null")      == 0 or die "Command: rsync not found on this server!";
+    system ("which rsnapshota > /dev/null") == 0 or die "Command: rsnapshot not found on this server!";
+
+
     my $config_file = 'config/webrsnapshot.yml';
     my $config;
     if (-f $config_file) {
