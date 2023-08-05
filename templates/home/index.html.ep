@@ -37,7 +37,7 @@
         </span>
     </div>
 <!-- Add new cronjob Modal/Form -->
-    <form method="post" action="/newconfig" name="newconfigform" id="newconfigform">
+    <form method="post" action="/<%= scalar @$systemInfoArr %>/newconfig" name="newconfigform" id="newconfigform">
         <div class="modal fade" id="add_rsconf_modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
