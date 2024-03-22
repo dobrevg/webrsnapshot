@@ -2,33 +2,33 @@
 % title 'Webrsnapshot';
 
 <table class="table table-striped">
-	<tr>
-		<th colspan="5" style="text-align: center;"><%= $hostname %></th>
-	</tr>
-	<tr>
-		<th>Backup</th>
-		<th>Backup Age (Days)</th>
-		<th>Backup Path</th>
-		<th>Backup Time</th>
-		<th>Backup Date</th>
-	</tr>
-	<% foreach my $retainDir ( sort {%$timestamps{$b} <=> %$timestamps{$a}} keys %$timestamps ) { %>
-		<tr>
-			<td><%= $retainDir %></td>
-			<td><%= sprintf("%.1f",(time - %$timestamps{$retainDir})/86400) %></td>
-			<td><%= $backuproot.$retainDir."/".$hostname %></td>
-			<td><%= POSIX::strftime($timeformat, localtime(%$timestamps{$retainDir})) %></td>
-			<td><%= POSIX::strftime($dateformat, localtime(%$timestamps{$retainDir})) %></td>
-		</tr>
-	<% } %>
+    <tr>
+        <th colspan="5" style="text-align: center;"><%= $hostname %></th>
+    </tr>
+    <tr>
+        <th>Backup</th>
+        <th>Backup Age (Days)</th>
+        <th>Backup Path</th>
+        <th>Backup Time</th>
+        <th>Backup Date</th>
+    </tr>
+    <% foreach my $retainDir ( sort {%$timestamps{$b} <=> %$timestamps{$a}} keys %$timestamps ) { %>
+        <tr>
+            <td><%= $retainDir %></td>
+            <td><%= sprintf("%.1f",(time - %$timestamps{$retainDir})/86400) %></td>
+            <td><%= $backuproot.$retainDir."/".$hostname %></td>
+            <td><%= POSIX::strftime($timeformat, localtime(%$timestamps{$retainDir})) %></td>
+            <td><%= POSIX::strftime($dateformat, localtime(%$timestamps{$retainDir})) %></td>
+        </tr>
+    <% } %>
 <table>
 <a href="/"><button class="btn btn-outline-primary mx-4 my-1 float-end" type="button" data-bs-toggle="tooltip" 
     data-bs-html="true" data-bs-placement="right" title="Back to startpage">Close</button></a>
 <script>
-	document.getElementById("menuEntry-config").classList.remove("d-none");
-	document.getElementById("menuEntry-hosts").classList.remove("d-none");
-	document.getElementById("menuEntry-log").classList.remove("d-none");
-	document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
-	document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
-	document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
+    document.getElementById("menuEntry-config").classList.remove("d-none");
+    document.getElementById("menuEntry-hosts").classList.remove("d-none");
+    document.getElementById("menuEntry-log").classList.remove("d-none");
+    document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
+    document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
+    document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
 </script>

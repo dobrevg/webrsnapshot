@@ -3,19 +3,19 @@
 
 <h3 class="ms-3">Log</h3>
 <div class="form-floating">
-	<textarea class="form-control" id="logtextarea" readonly style="height: 75vh;">
+    <textarea class="form-control" id="logtextarea" readonly style="height: 75vh;">
 <%= $log_content %>
-	</textarea>
+    </textarea>
 </div>
 <a href="/"><button class="btn btn-outline-primary mx-4 my-1 float-end" type="button" data-bs-toggle="tooltip" 
     data-bs-html="true" data-bs-placement="right" title="Back to startpage">Close</button></a>
 
 <script>
-	document.getElementById("menuEntry-config").classList.remove("d-none");
-	document.getElementById("menuEntry-hosts").classList.remove("d-none");
-	document.getElementById("menuEntry-log").classList.remove("d-none");
-	document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
-	document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
-	document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
-	document.getElementById("menuEntry-log").classList.add("active");
+    document.getElementById("menuEntry-config").classList.remove("d-none");
+    document.getElementById("menuEntry-hosts").classList.remove("d-none");
+    document.getElementById("menuEntry-log").classList.remove("d-none");
+    document.getElementById("menuEntry-config").href = "/<%= $rs_config_id %>/config";
+    document.getElementById("menuEntry-hosts").href = "/<%= $rs_config_id %>/hosts";
+    document.getElementById("menuEntry-log").href = "/<%= $rs_config_id %>/log";
+    document.getElementById("menuEntry-log").classList.add("active");
 </script>
