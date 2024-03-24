@@ -55,11 +55,10 @@ sub getCronContent {
 # Crontab content is array reference
 sub writeCronContent {
     my ($self, $cronContentRef) = @_;
-    my $cronfile_to_test = "/tmp/rs_cron_tmp_".time();
     my $separateLine     = "# ------------------------------------------------------------------------------";
 
     # Open the config file for writing
-    open (CRONFILE, ">$cronfile_to_test") || return $!;  
+    open (CRONFILE, ">$self->{_rs_cron_file}") || return $!;  
     print CRONFILE ("# Copyright© (2013-2024) Webrsnapshot\n");
     print CRONFILE ("$separateLine\n");
     print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n");
@@ -91,22 +90,8 @@ sub writeCronContent {
     close CRONFILE;
 
     my %configtest = ();
-    # Check here if the config is well formed and return any warnings and errors
-    $configtest{'message'}   = `crontab $cronfile_to_test 2>&1`;
-    $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
-    # The following exit codes are possible
-    # 0 - No Errors, File Saved
-    # 256 - Error, wrong cron format
-
-    # We have correct cron file
-    if ( $configtest{'exit_code'} eq 0 ) {
-        $configtest{'message'} = `cp $cronfile_to_test $self->{_rs_cron_file} 2>&1`;
-        $configtest{'exit_code'} = ${^CHILD_ERROR_NATIVE};
-        system ("rm -f $cronfile_to_test");
-        if(!$configtest{'message'}) {
-            $configtest{'message'} = "Cron file saved successfully"
-        }
-    }
+    $configtest{'exit_code'} = 0;
+    $configtest{'message'}   = "Cron file saved successfully";
     return %configtest;
 }
 
