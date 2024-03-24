@@ -60,7 +60,7 @@ sub writeCronContent {
 
     # Open the config file for writing
     open (CRONFILE, ">$cronfile_to_test") || return $!;  
-    print CRONFILE ("# Copyright© (2013-2023) Webrsnapshot\n");
+    print CRONFILE ("# Copyright© (2013-2024) Webrsnapshot\n");
     print CRONFILE ("$separateLine\n");
     print CRONFILE ("# This is a cronjob file for the rsnapshot Server created by Webrsnapshot.\n");
     print CRONFILE ("# If you use Webrsnapshot, don't edit this file manually. It can be overwritten\n\n");
