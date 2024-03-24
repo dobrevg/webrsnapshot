@@ -71,7 +71,7 @@ function hostAddDir(hostname, dirid) {
 }
 
 //Add new Host
-function addNewHost(hostname) {
+function addNewHost() {
     var hostname = document.getElementById('new_hostname').value;
     var lastKnownHostElement = document.getElementById("host_item_new");
     var newHostEntryClone = lastKnownHostElement.cloneNode(true);
@@ -99,6 +99,16 @@ function addNewHost(hostname) {
     document.getElementById("modal_add_host").getElementsByTagName("input")[0].value = "";
     // Add element to the page
     document.getElementById("accordion").append(newHostEntryClone);
+}
+
+//Validate function for add new host 
+function addNewHostValidation() {
+    var hostnameObj = document.getElementById('new_hostname');
+    if (hostnameObj.checkValidity() && hostnameObj.value.length > 0) {
+        document.getElementById('modal_add_host_btn').disabled = false;
+    } else {
+        document.getElementById('modal_add_host_btn').disabled = true;
+    }
 }
 
 //Add line to backup_script 

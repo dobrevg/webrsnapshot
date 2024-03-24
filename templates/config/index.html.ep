@@ -781,14 +781,16 @@
                                     <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" 
                                         data-bs-placement="right" title="Add new host to the configuration. This 
                                         hostname can be any name and is only used to better identify the server. 
-                                        Then enter the first directory name and immediately save the configuration."></i>
+                                        Then enter the first directory name and immediately save the configuration.
+                                        Excluded characters: \, /, ., #,  whitespace"></i>
                                 </span>
-                                <input type="text" class="form-control" placeholder="hostname" id="new_hostname">
+                                <input type="text" class="form-control" placeholder="hostname" id="new_hostname"
+                                    pattern="[^/.#]*"  onkeyup="addNewHostValidation()">
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-primary" id="modal_add_host_btn" data-bs-dismiss="modal" 
-                                onclick="addNewHost()">
+                                onclick="addNewHost()" disabled>
                                 Add
                             </button>
                         </div>

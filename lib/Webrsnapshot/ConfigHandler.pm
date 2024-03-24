@@ -402,6 +402,8 @@ sub readConfig {
 
 			# Remove tha trailing slash
 			$hostname =~ s|/$||;
+            # Remove reserved chars if any:., #, /, and whitespace
+            $hostname =~ s/(\.|#|\/)/_/g;
 
 			# create the source entry
 			my %dirEntry;
