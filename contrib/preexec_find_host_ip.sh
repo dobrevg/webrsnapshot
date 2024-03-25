@@ -30,7 +30,7 @@ command_exists sed
 for i in "${MAC_ARRAY[@]}"
 do
     # Get the ip address from the arp table
-    IP=$(grep $i /proc/net/arp | awk '{print $1}')
+    IP=$(grep $i /proc/net/arp | grep '0x2' | awk '{print $1}')
 
     # Check if there is an ip address 
     if [ -n ${IP} ] ; then
